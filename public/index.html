@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Friburger Hölle-Leue e.V. — Narrenzunft Freiburg-Rieselfeld</title>
+<meta name="description" content="Narrenzunft Friburger Hölle-Leue e.V. — alemannische Fasnet im Freiburger Stadtteil Rieselfeld, seit 1994.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,900&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+
+  :root{
+    --wood-dark:   #241509;
+    --wood:        #5c3a21;
+    --wood-light:  #8a5a34;
+    --red:         #a3271b;
+    --red-dark:    #7a1d14;
+    --gold:        #d9a441;
+    --gold-light:  #efc873;
+    --cream:       #f3e8cf;
+    --cream-dark:  #e6d5ac;
+    --ink:         #2a1d10;
+    --shadow: 0 10px 30px rgba(36,21,9,0.25);
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--cream);
+    color:var(--ink);
+    font-family:'Work Sans', sans-serif;
+    font-size:17px;
+    line-height:1.6;
+  }
+  h1,h2,h3{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    margin:0 0 .4em 0;
+    color:var(--wood-dark);
+    letter-spacing:-0.01em;
+  }
+  a{color:inherit;}
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    text-transform:uppercase;
+    letter-spacing:.14em;
+    font-size:.72rem;
+    color:var(--red-dark);
+    font-weight:500;
+  }
+  img{max-width:100%; display:block;}
+  .wrap{max-width:1080px; margin:0 auto; padding:0 24px;}
+  section{padding:88px 0;}
+  @media(max-width:640px){ section{padding:56px 0;} }
+
+  /* -------- carved rope divider -------- */
+  .rope{
+    height:10px;
+    background-image: repeating-linear-gradient(115deg, var(--gold) 0 6px, var(--wood) 6px 12px);
+    box-shadow: inset 0 2px 3px rgba(0,0,0,.35);
+  }
+
+  /* -------- nav -------- */
+  header{
+    position:sticky; top:0; z-index:50;
+    background:var(--wood-dark);
+    border-bottom:3px solid var(--red);
+  }
+  nav.wrap{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 24px;
+  }
+  .brand{
+    display:flex; align-items:center; gap:12px;
+    text-decoration:none;
+  }
+  .brand-mark{
+    width:38px; height:38px; flex:none;
+  }
+  .brand-name{
+    font-family:'Fraunces', serif;
+    color:var(--cream);
+    font-weight:700;
+    font-size:1.15rem;
+    line-height:1.05;
+  }
+  .brand-sub{
+    display:block;
+    font-family:'JetBrains Mono', monospace;
+    font-size:.62rem;
+    letter-spacing:.1em;
+    color:var(--gold-light);
+    text-transform:uppercase;
+    margin-top:2px;
+  }
+  .navlinks{
+    display:flex; gap:26px; list-style:none; margin:0; padding:0;
+  }
+  .navlinks a{
+    text-decoration:none;
+    color:var(--cream-dark);
+    font-size:.92rem;
+    font-weight:500;
+    position:relative;
+    padding:4px 0;
+  }
+  .navlinks a:hover{color:var(--gold-light);}
+  #navToggle{display:none;}
+  .navBtn{display:none;}
+  @media(max-width:820px){
+    .navlinks{
+      position:absolute; top:100%; left:0; right:0;
+      flex-direction:column; gap:0;
+      background:var(--wood-dark);
+      max-height:0; overflow:hidden;
+      transition:max-height .3s ease;
+      border-bottom:3px solid var(--red);
+    }
+    .navlinks a{padding:14px 24px; display:block; border-top:1px solid rgba(255,255,255,.08);}
+    #navToggle:checked ~ .navlinks{max-height:400px;}
+    .navBtn{
+      display:block; background:none; border:none; color:var(--cream);
+      font-size:1.6rem; cursor:pointer; line-height:1;
+    }
+  }
+
+  /* -------- hero -------- */
+  .hero{
+    position:relative;
+    background:
+      repeating-linear-gradient(100deg, rgba(255,255,255,0.02) 0 2px, transparent 2px 26px),
+      linear-gradient(160deg, var(--wood-dark), var(--wood) 60%, var(--wood-light));
+    color:var(--cream);
+    padding:110px 0 90px;
+    overflow:hidden;
+  }
+  .hero::after{
+    content:"";
+    position:absolute; inset:0;
+    background:radial-gradient(ellipse at 20% 0%, rgba(163,39,27,.35), transparent 60%);
+    pointer-events:none;
+  }
+  .hero-inner{position:relative; z-index:2; display:grid; grid-template-columns:1.3fr 1fr; gap:50px; align-items:center;}
+  @media(max-width:820px){ .hero-inner{grid-template-columns:1fr;} }
+  .hero h1{
+    color:var(--cream);
+    font-size:clamp(2.4rem, 5vw, 3.6rem);
+    line-height:1.02;
+  }
+  .hero h1 span{color:var(--gold-light);}
+  .hero p.lead{
+    font-size:1.1rem;
+    color:var(--cream-dark);
+    max-width:46ch;
+    margin-top:14px;
+  }
+  .cta-row{display:flex; gap:14px; margin-top:30px; flex-wrap:wrap;}
+  .btn{
+    display:inline-block;
+    padding:13px 26px;
+    border-radius:3px;
+    font-weight:600;
+    text-decoration:none;
+    font-size:.95rem;
+    border:2px solid transparent;
+    transition:transform .15s ease;
+  }
+  .btn:hover{transform:translateY(-2px);}
+  .btn-primary{background:var(--red); color:var(--cream); border-color:var(--red);}
+  .btn-ghost{border-color:var(--gold); color:var(--gold-light);}
+
+  /* countdown card - signature element */
+  .countdown{
+    background:var(--cream);
+    color:var(--ink);
+    border-radius:6px;
+    padding:26px 26px 22px;
+    box-shadow:var(--shadow);
+    border:3px solid var(--wood-dark);
+    position:relative;
+  }
+  .countdown::before{
+    content:"";
+    position:absolute; top:-3px; left:-3px; right:-3px; bottom:-3px;
+    border:2px dashed var(--gold);
+    border-radius:8px;
+    pointer-events:none;
+  }
+  .countdown .eyebrow{margin-bottom:6px; display:block;}
+  .countdown-target{font-family:'Fraunces', serif; font-weight:700; font-size:1.25rem; margin-bottom:14px;}
+  .countdown-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; text-align:center;}
+  .countdown-grid div{
+    background:var(--wood-dark);
+    color:var(--gold-light);
+    border-radius:4px;
+    padding:10px 4px;
+  }
+  .countdown-grid .num{
+    font-family:'JetBrains Mono', monospace;
+    font-size:1.5rem;
+    font-weight:600;
+    display:block;
+    color:var(--cream);
+  }
+  .countdown-grid .lbl{
+    font-size:.62rem;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--gold);
+  }
+
+  /* -------- generic section headers -------- */
+  .section-head{max-width:640px; margin-bottom:44px;}
+  .section-head .eyebrow{display:block; margin-bottom:10px;}
+
+  /* -------- über uns -------- */
+  .about-grid{display:grid; grid-template-columns:1.1fr .9fr; gap:56px; align-items:start;}
+  @media(max-width:820px){ .about-grid{grid-template-columns:1fr;} }
+  .fact-card{
+    background:var(--wood-dark); color:var(--cream);
+    border-radius:6px; padding:26px 28px;
+  }
+  .fact-card + .fact-card{margin-top:16px;}
+  .fact-card .num{font-family:'Fraunces',serif; font-size:2.1rem; color:var(--gold-light); font-weight:700; display:block;}
+  .fact-card .lbl{font-size:.85rem; color:var(--cream-dark);}
+
+  /* -------- häs (costume) -------- */
+  .haes{background:var(--wood-dark); color:var(--cream);}
+  .haes .section-head h2{color:var(--cream);}
+  .haes-grid{display:grid; grid-template-columns:.8fr 1.2fr; gap:56px; align-items:center;}
+  @media(max-width:820px){ .haes-grid{grid-template-columns:1fr;} }
+  .haes ul{padding-left:1.1em; margin:0;}
+  .haes li{margin-bottom:10px; color:var(--cream-dark);}
+  .haes li strong{color:var(--gold-light);}
+
+  /* -------- termine -------- */
+  .event-list{display:flex; flex-direction:column; border-top:1px solid var(--wood-light);}
+  .event{
+    display:grid; grid-template-columns:120px 1fr auto;
+    gap:20px; align-items:center;
+    padding:20px 0;
+    border-bottom:1px solid var(--cream-dark);
+  }
+  @media(max-width:640px){ .event{grid-template-columns:1fr; gap:6px;} }
+  .event .date{
+    font-family:'JetBrains Mono', monospace;
+    background:var(--red); color:var(--cream);
+    padding:6px 10px; border-radius:4px; text-align:center; font-size:.85rem; font-weight:500;
+  }
+  .event h3{font-size:1.1rem; margin:0;}
+  .event p{margin:2px 0 0; color:#5a4a36; font-size:.92rem;}
+  .event .tag{
+    font-family:'JetBrains Mono', monospace; font-size:.68rem; text-transform:uppercase;
+    color:var(--wood); letter-spacing:.06em; white-space:nowrap;
+  }
+
+  /* -------- galerie -------- */
+  .gallery-grid{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:14px;
+  }
+  @media(max-width:700px){ .gallery-grid{grid-template-columns:repeat(2,1fr);} }
+  .gallery-grid .ph{
+    aspect-ratio:4/3;
+    background:linear-gradient(135deg, var(--wood-light), var(--wood));
+    border-radius:6px;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--cream-dark); font-family:'JetBrains Mono',monospace; font-size:.72rem;
+    text-align:center; padding:10px;
+    position:relative; overflow:hidden;
+  }
+  .gallery-grid .ph img{
+    position:absolute; inset:0; width:100%; height:100%;
+    object-fit:cover; border-radius:6px;
+  }
+
+  /* -------- mitglied werden -------- */
+  .join{
+    background:linear-gradient(135deg, var(--red-dark), var(--red));
+    color:var(--cream); border-radius:10px; padding:50px;
+    display:grid; grid-template-columns:1.3fr .7fr; gap:40px; align-items:center;
+  }
+  @media(max-width:820px){ .join{grid-template-columns:1fr; padding:34px;} }
+  .join h2{color:var(--cream);}
+  .join p{color:#f4d9d4;}
+  .join .btn-primary{background:var(--gold); border-color:var(--gold); color:var(--wood-dark);}
+
+  /* -------- kontakt / footer -------- */
+  footer{background:var(--wood-dark); color:var(--cream-dark); padding:56px 0 26px;}
+  .foot-grid{display:grid; grid-template-columns:1.3fr .7fr .7fr; gap:40px;}
+  @media(max-width:700px){ .foot-grid{grid-template-columns:1fr; gap:26px;} }
+  footer h3{color:var(--gold-light); font-size:1rem;}
+  footer a{text-decoration:none; color:var(--cream-dark);}
+  footer a:hover{color:var(--gold-light);}
+  .foot-bottom{
+    margin-top:44px; padding-top:20px; border-top:1px solid rgba(255,255,255,.1);
+    font-size:.8rem; color:#a99b82;
+    display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;
+  }
+
+  ::selection{background:var(--gold); color:var(--wood-dark);}
+</style>
+</head>
+<body>
+
+<header>
+  <nav class="wrap">
+    <a href="#top" class="brand">
+      <svg class="brand-mark" viewBox="0 0 48 48" fill="none">
+        <circle cx="24" cy="24" r="22" fill="#a3271b" stroke="#d9a441" stroke-width="2"/>
+        <path d="M14 20 Q24 10 34 20" stroke="#d9a441" stroke-width="2" fill="none"/>
+        <circle cx="18" cy="22" r="2.4" fill="#f3e8cf"/>
+        <circle cx="30" cy="22" r="2.4" fill="#f3e8cf"/>
+        <path d="M15 30 Q24 38 33 30" stroke="#f3e8cf" stroke-width="2" fill="none"/>
+        <path d="M20 12 L18 6 M28 12 L30 6" stroke="#d9a441" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <span>
+        <span class="brand-name">Hölle-Leue</span>
+        <span class="brand-sub">Narrenzunft Freiburg</span>
+      </span>
+    </a>
+    <input type="checkbox" id="navToggle">
+    <label class="navBtn" for="navToggle">☰</label>
+    <ul class="navlinks">
+      <li><a href="#ueber-uns">Über uns</a></li>
+      <li><a href="#haes">Häs</a></li>
+      <li><a href="#termine">Termine</a></li>
+      <li><a href="#galerie">Galerie</a></li>
+      <li><a href="#mitmachen">Mitmachen</a></li>
+      <li><a href="#kontakt">Kontakt</a></li>
+      <li><a href="/mitglieder.html">Mitgliederbereich</a></li>
+    </ul>
+  </nav>
+</header>
+<div class="rope"></div>
+
+<section class="hero" id="top">
+  <div class="wrap hero-inner">
+    <div>
+      <span class="eyebrow" style="color:var(--gold-light)">Narrenzunft · Freiburg-Rieselfeld · gegr. 1994</span>
+      <h1>Friburger<br><span>Hölle-Leue</span> e.V.</h1>
+      <p class="lead">Wir pflegen die alemannische Fasnet im Rieselfeld — mit Hemdglunkerumzug, Narrenbaum, Schülerbefreiung und der Fasnetverbrennung. Laut, närrisch und mit Herz dabei seit drei Jahrzehnten.</p>
+      <div class="cta-row">
+        <a href="#mitmachen" class="btn btn-primary">Zunft kennenlernen</a>
+        <a href="#termine" class="btn btn-ghost">Termine ansehen</a>
+      </div>
+    </div>
+
+    <div class="countdown">
+      <span class="eyebrow">Nächster Höhepunkt</span>
+      <div class="countdown-target" id="cdTarget">wird berechnet …</div>
+      <div class="countdown-grid" id="cdGrid">
+        <div><span class="num" id="cdDays">–</span><span class="lbl">Tage</span></div>
+        <div><span class="num" id="cdHours">–</span><span class="lbl">Std</span></div>
+        <div><span class="num" id="cdMin">–</span><span class="lbl">Min</span></div>
+        <div><span class="num" id="cdSec">–</span><span class="lbl">Sek</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="ueber-uns">
+  <div class="wrap about-grid">
+    <div>
+      <div class="section-head">
+        <span class="eyebrow">Über uns</span>
+        <h2>Eine junge Zunft für einen jungen Stadtteil</h2>
+      </div>
+      <p>Die Idee entstand im Juni 1994: eine Handvoll Fasnetbegeisterte wollte dem Rieselfeld eine eigene Stadtteilfasnet geben. Nach einigen Arbeitstreffen war es am 11. November 1994 soweit — die Gründungsversammlung fand statt. Diesen Tag feiern wir bis heute jedes Jahr mit einer internen Fasnetseröffnung.</p>
+      <p>1998 zeigten sich die Hölle-Leue erstmals beim Hemdglunkerumzug im Rieselfeld, seit 2003 gehört die Kinderfasnet im Glashaus fest zu unserem Programm. Wir sind eingetragener, gemeinnütziger Verein und fühlen uns dem alemannischen Fasnetbrauchtum verpflichtet — mit einem besonderen Blick auf die Jugend, damit sie das Brauchtum an die nächste Generation weitergibt.</p>
+      <p>Ob Familie oder Single, jung oder alt: Bei uns ist jede und jeder willkommen, der Lust auf Gemeinschaft, Brauchtum und ein bisschen Wahnsinn in der fünften Jahreszeit hat — und auch das restliche Jahr über.</p>
+    </div>
+    <div>
+      <div class="fact-card">
+        <span class="num">1994</span>
+        <span class="lbl">Gründung der Zunft, Gründungsversammlung am 11.11.</span>
+      </div>
+      <div class="fact-card">
+        <span class="num">31 + 37</span>
+        <span class="lbl">Hästräger:innen und passive Mitglieder (inkl. Kinder &amp; Jugend)</span>
+      </div>
+      <div class="fact-card">
+        <span class="num">Rieselfeld</span>
+        <span class="lbl">Unsere Heimat im Westen von Freiburg</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="haes" id="haes">
+  <div class="wrap haes-grid">
+    <svg viewBox="0 0 220 300" width="100%">
+      <rect x="0" y="0" width="220" height="300" rx="10" fill="#3a2413"/>
+      <ellipse cx="110" cy="90" rx="46" ry="52" fill="#e6d5ac"/>
+      <circle cx="92" cy="82" r="7" fill="#241509"/>
+      <circle cx="128" cy="82" r="7" fill="#241509"/>
+      <path d="M85 110 Q110 128 135 110" stroke="#241509" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M70 45 Q110 20 150 45" stroke="#a3271b" stroke-width="6" fill="none"/>
+      <rect x="70" y="150" width="80" height="90" rx="6" fill="#a3271b"/>
+      <circle cx="90" cy="170" r="6" fill="#d9a441"/>
+      <circle cx="130" cy="170" r="6" fill="#d9a441"/>
+      <circle cx="90" cy="195" r="6" fill="#d9a441"/>
+      <circle cx="130" cy="195" r="6" fill="#d9a441"/>
+      <circle cx="90" cy="220" r="6" fill="#d9a441"/>
+      <circle cx="130" cy="220" r="6" fill="#d9a441"/>
+      <rect x="78" y="245" width="64" height="45" fill="#1a1108"/>
+    </svg>
+    <div>
+      <div class="section-head">
+        <span class="eyebrow" style="color:var(--gold-light)">Unser Häs</span>
+        <h2>Erkennungszeichen einer Zunft</h2>
+      </div>
+      <ul>
+        <li><strong>Oberteil:</strong> mit aufgenähten Spättle in unseren Zunftfarben — von Weitem klappern sie im Takt des Umzugs.</li>
+        <li><strong>Hose:</strong> schwarz, schlicht gehalten als Kontrast zum farbigen Oberteil.</li>
+        <li><strong>Narrenzepter:</strong> jede und jeder Hästräger:in trägt eines in der Hand — mit der Narrenmaske der Zunft als Abbild.</li>
+        <li><strong>Larve:</strong> geschnitzt nach alemannischer Tradition, das Gesicht der Hölle-Leue.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="termine">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">Termine</span>
+      <h2>Wo ihr uns in der Fasnet trefft</h2>
+    </div>
+    <div class="event-list" id="eventList">
+      <!-- wird per JS mit echten Jahresdaten befüllt -->
+    </div>
+    <p style="margin-top:18px; color:#5a4a36; font-size:.9rem;">Genaue Uhrzeiten und Treffpunkte veröffentlichen wir rechtzeitig vor der jeweiligen Fasnet auf dieser Seite und unseren Social-Media-Kanälen.</p>
+  </div>
+</section>
+
+<section id="galerie" style="background:var(--cream-dark);">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">Galerie</span>
+      <h2>Impressionen aus dem Zunftleben</h2>
+    </div>
+    <div class="gallery-grid">
+      <div class="ph"><img src="/images/gallery/hemdglunkerumzug.jpg" alt="Hemdglunkerumzug" loading="lazy" onerror="this.remove()">Foto: Hemdglunkerumzug</div>
+      <div class="ph"><img src="/images/gallery/narrenbaumstellen.jpg" alt="Narrenbaumstellen" loading="lazy" onerror="this.remove()">Foto: Narrenbaumstellen</div>
+      <div class="ph"><img src="/images/gallery/fasnetverbrennung.jpg" alt="Fasnetverbrennung" loading="lazy" onerror="this.remove()">Foto: Fasnetverbrennung</div>
+      <div class="ph"><img src="/images/gallery/kinderfasnet-glashaus.jpg" alt="Kinderfasnet Glashaus" loading="lazy" onerror="this.remove()">Foto: Kinderfasnet Glashaus</div>
+      <div class="ph"><img src="/images/gallery/gruendungsfeier.jpg" alt="Gründungsfeier" loading="lazy" onerror="this.remove()">Foto: Gründungsfeier</div>
+      <div class="ph"><img src="/images/gallery/haes-larve.jpg" alt="Häs &amp; Larve" loading="lazy" onerror="this.remove()">Foto: Häs &amp; Larve</div>
+    </div>
+    <p style="margin-top:18px; color:#5a4a36; font-size:.9rem;">Sobald echte Fotos unter <code>/images/gallery/</code> mit den passenden Dateinamen abgelegt werden, erscheinen sie hier automatisch anstelle der Platzhalter.</p>
+  </div>
+</section>
+
+<section id="mitmachen">
+  <div class="wrap">
+    <div class="join">
+      <div>
+        <h2>Lust auf nette Leute, viel Spaß und Fasnet?</h2>
+        <p>Wenn du alle drei Fragen mit Ja beantworten kannst, bist du bei uns richtig. Egal ob als aktive:r Hästräger:in oder passives Mitglied — wir freuen uns, dich kennenzulernen.</p>
+      </div>
+      <a href="#kontakt" class="btn btn-primary">Jetzt Kontakt aufnehmen</a>
+    </div>
+  </div>
+</section>
+
+<footer id="kontakt">
+  <div class="wrap foot-grid">
+    <div>
+      <h3>Friburger Hölle-Leue e.V.</h3>
+      <p>Narrenzunft im Freiburger Stadtteil Rieselfeld. Eingetragener, gemeinnütziger Verein — der Pflege des alemannischen Fasnetbrauchtums verpflichtet.</p>
+    </div>
+    <div>
+      <h3>Kontakt</h3>
+      <p><a href="mailto:info@hoelle-leue.de">info@hoelle-leue.de</a><br>
+      Rieselfeld, Freiburg im Breisgau</p>
+    </div>
+    <div>
+      <h3>Folgt uns</h3>
+      <p><a href="https://www.instagram.com/friburger_hoelle_leue/" target="_blank" rel="noopener">Instagram</a></p>
+    </div>
+  </div>
+  <div class="wrap foot-bottom">
+    <span>© <span id="year"></span> Friburger Hölle-Leue e.V.</span>
+    <span>Impressum · Datenschutz</span>
+  </div>
+</footer>
+
+<script>
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  /* ---------- Ostern (Gauß'sche Osterformel) ---------- */
+  function easterDate(year){
+    const a = year % 19;
+    const b = Math.floor(year / 100);
+    const c = year % 100;
+    const d = Math.floor(b / 4);
+    const e = b % 4;
+    const f = Math.floor((b + 8) / 25);
+    const g = Math.floor((b - f + 1) / 3);
+    const h = (19*a + b - d - g + 15) % 30;
+    const i = Math.floor(c / 4);
+    const k = c % 4;
+    const l = (32 + 2*e + 2*i - h - k) % 7;
+    const m = Math.floor((a + 11*h + 22*l) / 451);
+    const month = Math.floor((h + l - 7*m + 114) / 31);
+    const day = ((h + l - 7*m + 114) % 31) + 1;
+    return new Date(year, month - 1, day);
+  }
+  function addDays(date, days){
+    const d = new Date(date);
+    d.setDate(d.getDate() + days);
+    return d;
+  }
+
+  function fasnetDates(year){
+    const easter = easterDate(year);
+    return {
+      "Schmutziger Dunschtig": addDays(easter, -52),
+      "Fasnetsonntag": addDays(easter, -49),
+      "Fasnetmendig": addDays(easter, -48),
+      "Fasnetzieschdig": addDays(easter, -47),
+      "Fasnetverbrennung (Aschermittwoch)": addDays(easter, -46)
+    };
+  }
+
+  const eventDescriptions = {
+    "Schmutziger Dunschtig": "Startschuss der Straßenfasnet — Schülerbefreiung und Umzüge im Rieselfeld.",
+    "Fasnetsonntag": "Hemdglunkerumzug durch das Rieselfeld — kommt im Nachthemd!",
+    "Fasnetmendig": "Narrenbaumstellen und großer Umzugstag.",
+    "Fasnetzieschdig": "Letzter großer Straßentag vor dem Fasten.",
+    "Fasnetverbrennung (Aschermittwoch)": "Wir verbrennen die Fasnet symbolisch — bis nächstes Jahr!"
+  };
+
+  // Zusätzliche Termine außerhalb der Fasnet, die beim "Nächster Höhepunkt"-Countdown mitzählen
+  const specialEvents = {
+    "Stadtteilfest Rieselfeld": new Date(2026, 6, 24)
+  };
+
+  function buildEventList(){
+    const now = new Date();
+    let year = now.getFullYear();
+    let dates = fasnetDates(year);
+    // Falls die diesjährige Fasnet schon vorbei ist, zeige nächstes Jahr
+    if (addDays(dates["Fasnetverbrennung (Aschermittwoch)"], 1) < now) {
+      year += 1;
+      dates = fasnetDates(year);
+    }
+    const list = document.getElementById('eventList');
+    const fmt = d => d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
+    Object.entries(dates).forEach(([name, date]) => {
+      const row = document.createElement('div');
+      row.className = 'event';
+      row.innerHTML = `
+        <div class="date">${fmt(date)}</div>
+        <div>
+          <h3>${name}</h3>
+          <p>${eventDescriptions[name]}</p>
+        </div>
+        <div class="tag">Fasnet ${year}</div>`;
+      list.appendChild(row);
+    });
+    return dates;
+  }
+
+  function startCountdown(dates){
+    // nächstes bevorstehendes Ereignis finden
+    const now = new Date();
+    const upcoming = Object.entries(dates)
+      .map(([name, date]) => ({name, date}))
+      .filter(e => e.date > now)
+      .sort((a,b) => a.date - b.date);
+
+    const target = upcoming.length ? upcoming[0] : {name:"Fasnet", date: fasnetDates(now.getFullYear()+1)["Fasnetsonntag"]};
+
+    document.getElementById('cdTarget').textContent = target.name;
+
+    function tick(){
+      const diff = target.date - new Date();
+      const d = Math.max(0, Math.floor(diff / 86400000));
+      const h = Math.max(0, Math.floor((diff % 86400000) / 3600000));
+      const m = Math.max(0, Math.floor((diff % 3600000) / 60000));
+      const s = Math.max(0, Math.floor((diff % 60000) / 1000));
+      document.getElementById('cdDays').textContent = d;
+      document.getElementById('cdHours').textContent = String(h).padStart(2,'0');
+      document.getElementById('cdMin').textContent = String(m).padStart(2,'0');
+      document.getElementById('cdSec').textContent = String(s).padStart(2,'0');
+    }
+    tick();
+    setInterval(tick, 1000);
+  }
+
+  const dates = buildEventList();
+  startCountdown({...dates, ...specialEvents});
+
+  // Nav-Menü nach Klick auf Link schließen (mobil)
+  document.querySelectorAll('.navlinks a').forEach(a => {
+    a.addEventListener('click', () => { document.getElementById('navToggle').checked = false; });
+  });
+</script>
+
+</body>
+</html>
