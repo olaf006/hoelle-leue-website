@@ -361,7 +361,10 @@
             <span class="eyebrow" id="tvCategory"></span>
             <h2 id="tvTitle"></h2>
           </div>
-          <button class="btn btn-sm btn-ghost" id="tvPinBtn" style="display:none;"></button>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-sm btn-ghost" id="tvPinBtn" style="display:none;"></button>
+            <button class="btn btn-sm btn-danger" id="tvPurgeBtn" style="display:none;">🗑️ Endgültig löschen</button>
+          </div>
         </div>
         <div id="tvRsvpBlock"></div>
         <div id="tvPosts"></div>
@@ -813,6 +816,21 @@
         pinBtn.style.display = 'none';
       }
 
+      const purgeBtn = document.getElementById('tvPurgeBtn');
+      if (me.isAdmin) {
+        purgeBtn.style.display = 'inline-block';
+        purgeBtn.onclick = async () => {
+          if (!confirm(`Thema „${thread.title}" WIRKLICH endgültig löschen? Das entfernt es komplett samt aller Beiträge und Antworten — das kann NICHT rückgängig gemacht werden (anders als die normale Löschfunktion).`)) return;
+          if (!confirm('Ganz sicher? Es gibt kein Zurück mehr.')) return;
+          const res = await fetch(API_MOD, { method:'POST', headers: authHeaders(true), body: JSON.stringify({ action:'purgeThread', threadId: id }) });
+          const data = await res.json();
+          if (!res.ok) { alert(data.error || 'Löschen fehlgeschlagen.'); return; }
+          showTab('list');
+        };
+      } else {
+        purgeBtn.style.display = 'none';
+      }
+
       quoteData = null;
       renderQuotePreview();
 
@@ -1154,16 +1172,30 @@
     const res = await fetch('/api/admin/users', { headers: authHeaders() });
     const data = await res.json();
     const users = (data.users || []).filter(u => u.status === 'active');
+    const catalog = data.manualBadgeCatalog || [];
     el.innerHTML = '';
     users.forEach(u => {
       const row = document.createElement('div');
       row.className = 'user-row';
+      row.style.flexDirection = 'column';
+      row.style.alignItems = 'stretch';
       const officeOpts = OFFICES.map(o => `<option value="${o.id}" ${o.id===u.office?'selected':''}>${o.label}</option>`).join('');
-      row.innerHTML = `<div class="who-info"><strong>${escapeHtml(u.displayName)}</strong><span style="font-size:.8rem; color:#6f6350;">@${escapeHtml(u.username)} · ${u.postCount||0} Beiträge</span></div>
-        <div style="display:flex; align-items:center; gap:14px;">
-          <select data-username="${u.username}" class="office-select">${officeOpts}</select>
-          <label class="admin-toggle"><input type="checkbox" data-username="${u.username}" class="admin-check" ${u.isAdmin?'checked':''}> Admin</label>
-        </div>`;
+      const badgeChecks = catalog.map(b => `
+        <label style="display:flex; align-items:center; gap:5px; font-size:.8rem; background:var(--cream-dark); padding:4px 10px; border-radius:12px;">
+          <input type="checkbox" data-badge-username="${u.username}" data-badge-id="${b.id}" class="manual-badge-check" ${(u.manualBadges||[]).includes(b.id)?'checked':''}> ${b.icon} ${b.label}
+        </label>`).join('');
+      row.innerHTML = `
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px;">
+          <div class="who-info"><strong>${escapeHtml(u.displayName)}</strong><span style="font-size:.8rem; color:#6f6350;">@${escapeHtml(u.username)} · ${u.postCount||0} Beiträge</span></div>
+          <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+            <label style="display:flex; align-items:center; gap:6px; font-size:.82rem;">Mitglied seit
+              <input type="number" data-membersince-username="${u.username}" class="membersince-input" value="${u.memberSince}" min="1900" max="2100" style="width:80px; padding:6px 8px; border-radius:5px; border:1.5px solid var(--cream-dark); background:var(--cream-dark);">
+            </label>
+            <select data-username="${u.username}" class="office-select">${officeOpts}</select>
+            <label class="admin-toggle"><input type="checkbox" data-username="${u.username}" class="admin-check" ${u.isAdmin?'checked':''}> Admin</label>
+          </div>
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:12px;">${badgeChecks}</div>`;
       el.appendChild(row);
     });
     el.querySelectorAll('.office-select').forEach(sel => sel.addEventListener('change', async () => {
@@ -1171,6 +1203,15 @@
     }));
     el.querySelectorAll('.admin-check').forEach(chk => chk.addEventListener('change', async () => {
       await fetch('/api/admin/update-user', { method:'POST', headers: authHeaders(true), body: JSON.stringify({ username: chk.dataset.username, isAdmin: chk.checked }) });
+    }));
+    el.querySelectorAll('.membersince-input').forEach(inp => inp.addEventListener('change', async () => {
+      await fetch('/api/admin/update-user', { method:'POST', headers: authHeaders(true), body: JSON.stringify({ username: inp.dataset.membersinceUsername, memberSince: parseInt(inp.value,10) }) });
+    }));
+    el.querySelectorAll('.manual-badge-check').forEach(chk => chk.addEventListener('change', async () => {
+      const uname = chk.dataset.badgeUsername;
+      const checks = el.querySelectorAll(`.manual-badge-check[data-badge-username="${uname}"]`);
+      const selected = Array.from(checks).filter(c => c.checked).map(c => c.dataset.badgeId);
+      await fetch('/api/admin/update-user', { method:'POST', headers: authHeaders(true), body: JSON.stringify({ username: uname, manualBadges: selected }) });
     }));
   }
 
