@@ -359,6 +359,16 @@
   @media(max-width:520px){ .event-gallery-grid{grid-template-columns:repeat(2,1fr);} }
   .event-gallery-grid .photo{--ar:4/3;}
   #eventGalleryView{display:none;}
+
+  /* -------- Wetter-Box im Termin-Pop-up -------- */
+  .weather-box{
+    display:flex; align-items:center; gap:14px; background:var(--cream-dark); border-radius:8px;
+    padding:14px 18px; margin-bottom:20px;
+  }
+  .weather-box .w-ico{font-size:2rem; line-height:1;}
+  .weather-box .w-temp{font-family:'JetBrains Mono',monospace; font-weight:700; font-size:1.1rem; color:var(--wood-dark);}
+  .weather-box .w-desc{font-size:.85rem; color:#3a332c;}
+  .weather-box.w-loading, .weather-box.w-unavailable{color:#6f6350; font-size:.85rem; padding:12px 18px;}
 </style>
 </head>
 <body>
@@ -590,6 +600,7 @@
       <span class="event-date-badge" id="eventModalDate"></span>
       <h2 id="eventModalTitle"></h2>
       <p class="event-modal-desc" id="eventModalDesc"></p>
+      <div id="eventWeatherBox"></div>
       <div class="modal-actions">
         <button type="button" class="btn btn-primary btn-sm" id="eventModalGalleryBtn">Bilder vergangener Jahre ansehen</button>
         <button type="button" class="btn btn-ghost btn-sm" id="eventModalGCalBtn">📅 Google Kalender</button>
@@ -786,6 +797,52 @@
     eventGalleryView.style.display = 'none';
     eventModalBackdrop.classList.add('open');
     document.body.style.overflow = 'hidden';
+    loadEventWeather(date);
+  }
+
+  // ---------- Wetter für Umzugstage (Open-Meteo, kein API-Key nötig) ----------
+  const WEATHER_ICONS = {
+    0:['☀️','Klarer Himmel'], 1:['🌤️','Überwiegend klar'], 2:['⛅','Teilweise bewölkt'], 3:['☁️','Bewölkt'],
+    45:['🌫️','Nebel'], 48:['🌫️','Reifnebel'],
+    51:['🌦️','Leichter Nieselregen'], 53:['🌦️','Nieselregen'], 55:['🌧️','Starker Nieselregen'],
+    61:['🌦️','Leichter Regen'], 63:['🌧️','Regen'], 65:['🌧️','Starker Regen'],
+    71:['🌨️','Leichter Schneefall'], 73:['🌨️','Schneefall'], 75:['❄️','Starker Schneefall'],
+    80:['🌦️','Regenschauer'], 81:['🌧️','Schauer'], 82:['⛈️','Heftige Schauer'],
+    95:['⛈️','Gewitter'], 96:['⛈️','Gewitter mit Hagel'], 99:['⛈️','Starkes Gewitter mit Hagel']
+  };
+  async function loadEventWeather(date){
+    const box = document.getElementById('eventWeatherBox');
+    const today = new Date(); today.setHours(0,0,0,0);
+    const target = new Date(date); target.setHours(0,0,0,0);
+    const daysAhead = Math.round((target - today) / 86400000);
+
+    if (daysAhead < 0) { box.innerHTML = ''; return; }
+    if (daysAhead > 15) {
+      box.innerHTML = `<div class="weather-box w-unavailable">🌤️ Die Wettervorhersage ist erst ca. 15 Tage vorher verfügbar.</div>`;
+      return;
+    }
+    box.innerHTML = `<div class="weather-box w-loading">Lädt Wettervorhersage …</div>`;
+    try {
+      const dateStr = target.toISOString().slice(0,10);
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=47.999&longitude=7.842&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=Europe%2FBerlin&start_date=${dateStr}&end_date=${dateStr}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const code = data.daily && data.daily.weathercode ? data.daily.weathercode[0] : null;
+      const tmax = data.daily && data.daily.temperature_2m_max ? Math.round(data.daily.temperature_2m_max[0]) : null;
+      const tmin = data.daily && data.daily.temperature_2m_min ? Math.round(data.daily.temperature_2m_min[0]) : null;
+      if (code === null || tmax === null) throw new Error('keine Daten');
+      const [icon, desc] = WEATHER_ICONS[code] || ['🌡️', 'Wetterdaten'];
+      box.innerHTML = `
+        <div class="weather-box">
+          <span class="w-ico">${icon}</span>
+          <div>
+            <div class="w-temp">${tmin}° – ${tmax}°C</div>
+            <div class="w-desc">${desc} in Freiburg-Rieselfeld, ${target.toLocaleDateString('de-DE',{weekday:'long', day:'2-digit', month:'2-digit'})}</div>
+          </div>
+        </div>`;
+    } catch (err) {
+      box.innerHTML = `<div class="weather-box w-unavailable">🌤️ Wettervorhersage aktuell nicht verfügbar.</div>`;
+    }
   }
   function closeEventModal(){
     eventModalBackdrop.classList.remove('open');
