@@ -11,17 +11,18 @@ const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4 MB
 const SESSION_DAYS = 30;
 const MAX_LOG_ENTRIES = 400;
 
-// Ämter der Zunft. "moderator: true" bedeutet: Inhaber:innen dieses Amts
-// dürfen Themen/Beiträge moderieren (löschen/wiederherstellen), zusätzlich
-// zur separaten, vollen Admin-Rolle.
+// Ämter der Zunft. "adminByDefault: true" bedeutet: Wer dieses Amt hat,
+// bekommt automatisch volle Admin-Rechte (Freischalten, Rollen vergeben,
+// Log einsehen, alles moderieren).
 const OFFICES = [
-  { id: 'mitglied',        label: 'Mitglied',              moderator: false },
-  { id: 'zunftvogt',       label: 'Zunftvogt',              moderator: true  },
-  { id: 'stellv_zunftvogt',label: 'Stellv. Zunftvogt',      moderator: true  },
-  { id: 'schriftfuehrer',  label: 'Schriftführer',          moderator: true  },
-  { id: 'kassenwart',      label: 'Kassenwart',             moderator: true  },
-  { id: 'jugendwart',      label: 'Jugendwart',             moderator: true  },
-  { id: 'beisitzer',       label: 'Beisitzer',              moderator: false }
+  { id: 'mitglied',        label: 'Mitglied',              adminByDefault: false },
+  { id: 'admin',           label: 'Admin',                  adminByDefault: true  },
+  { id: 'zunftvogt',       label: 'Zunftvogt',              adminByDefault: true  },
+  { id: 'stellv_zunftvogt',label: 'Stellv. Zunftvogt',      adminByDefault: true  },
+  { id: 'schriftfuehrer',  label: 'Schriftführer',          adminByDefault: true  },
+  { id: 'kassenwart',      label: 'Kassenwart',             adminByDefault: false },
+  { id: 'jugendwart',      label: 'Jugendwart',             adminByDefault: false },
+  { id: 'beisitzer',       label: 'Beisitzer',              adminByDefault: false }
 ];
 function officeInfo(id){ return OFFICES.find(o => o.id === id) || OFFICES[0]; }
 
@@ -35,10 +36,7 @@ function json(data, status) {
 }
 function makeId(){ return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8); }
 function sanitize(str, max){ if (typeof str !== 'string') return ''; return str.trim().slice(0, max || 4000); }
-function sanitizeUsername(str){
-  const s = sanitize(str, 30).toLowerCase().replace(/[^a-z0-9_.-]/g, '');
-  return s;
-}
+function sanitizeUsername(str){ return sanitize(str, 30).toLowerCase().replace(/[^a-z0-9_.-]/g, ''); }
 async function getJSON(kv, key, fallback){
   const val = await kv.get(key, { type: 'json' });
   return val === null ? fallback : val;
@@ -62,14 +60,8 @@ async function verifyPassword(password, saltHex, hashHex){
 function publicUser(u){
   const off = officeInfo(u.office);
   return {
-    username: u.username,
-    displayName: u.displayName,
-    office: u.office,
-    officeLabel: off.label,
-    isAdmin: !!u.isAdmin,
-    canModerate: !!u.isAdmin || off.moderator,
-    status: u.status,
-    createdAt: u.createdAt
+    username: u.username, displayName: u.displayName, office: u.office, officeLabel: off.label,
+    isAdmin: !!u.isAdmin, canModerate: !!u.isAdmin, status: u.status, createdAt: u.createdAt
   };
 }
 
@@ -104,7 +96,6 @@ function getToken(request, url){
   if (qp) return qp;
   return null;
 }
-
 async function getSessionUser(request, url, kv){
   const token = getToken(request, url);
   if (!token) return null;
@@ -112,25 +103,17 @@ async function getSessionUser(request, url, kv){
   if (!session || session.expiresAt < Date.now()) return null;
   const user = await getJSON(kv, 'user:' + session.username, null);
   if (!user || user.status !== 'active') return null;
-  return user;
+  return { user, token };
 }
-
 async function requireAuth(request, url, kv){
-  const user = await getSessionUser(request, url, kv);
-  if (!user) return { error: json({ error: 'Bitte melde dich an.' }, 401) };
-  return { user };
-}
-async function requireModerator(request, url, kv){
-  const r = await requireAuth(request, url, kv);
-  if (r.error) return r;
-  const off = officeInfo(r.user.office);
-  if (!r.user.isAdmin && !off.moderator) return { error: json({ error: 'Keine Moderationsrechte.' }, 403) };
-  return r;
+  const s = await getSessionUser(request, url, kv);
+  if (!s) return { error: json({ error:'Bitte melde dich an.' }, 401) };
+  return { user: s.user, token: s.token };
 }
 async function requireAdmin(request, url, kv){
   const r = await requireAuth(request, url, kv);
   if (r.error) return r;
-  if (!r.user.isAdmin) return { error: json({ error: 'Nur für Admins.' }, 403) };
+  if (!r.user.isAdmin) return { error: json({ error:'Nur für Admins.' }, 403) };
   return r;
 }
 
@@ -152,7 +135,6 @@ async function handleRegister(request, kv){
   const existing = await getJSON(kv, 'user:' + username, null);
   if (existing) return json({ error:'Dieser Benutzername ist bereits vergeben.' }, 409);
 
-  // Ist das der allererste Account? Dann wird er automatisch Admin & sofort aktiv.
   const listResult = await kv.list({ prefix: 'user:', limit: 1 });
   const isFirstUser = listResult.keys.length === 0;
 
@@ -161,7 +143,7 @@ async function handleRegister(request, kv){
   const user = {
     username, displayName, office,
     passwordHash: hash, passwordSalt: salt,
-    isAdmin: isFirstUser,
+    isAdmin: isFirstUser || officeInfo(office).adminByDefault,
     status: isFirstUser ? 'active' : 'pending',
     createdAt: now
   };
@@ -169,7 +151,7 @@ async function handleRegister(request, kv){
   await addLogEntry(kv, {
     action: isFirstUser ? 'register_first_admin' : 'register_pending',
     actorUsername: username, actorDisplayName: displayName,
-    summary: isFirstUser ? `${displayName} hat sich als erstes Mitglied registriert und ist automatisch Admin geworden.` : `${displayName} hat sich registriert und wartet auf Freischaltung.`
+    summary: isFirstUser ? `${displayName} hat sich als erstes Mitglied registriert und ist automatisch Admin geworden.` : `${displayName} hat sich registriert (${officeInfo(office).label}) und wartet auf Freischaltung.`
   });
 
   if (isFirstUser) {
@@ -190,7 +172,6 @@ async function handleLogin(request, kv){
   if (!user) return json({ error:'Ungültige Zugangsdaten.' }, 401);
   const ok = await verifyPassword(password, user.passwordSalt, user.passwordHash);
   if (!ok) return json({ error:'Ungültige Zugangsdaten.' }, 401);
-
   if (user.status === 'pending') return json({ error:'Dein Konto wartet noch auf Freischaltung durch den Admin.' }, 403);
   if (user.status === 'rejected') return json({ error:'Dieses Konto wurde nicht freigeschaltet.' }, 403);
 
@@ -199,17 +180,25 @@ async function handleLogin(request, kv){
   return json({ token, user: publicUser(user) });
 }
 
+async function handleDeleteAccount(kv, currentUser, currentToken){
+  await kv.delete('user:' + currentUser.username);
+  await kv.delete('session:' + currentToken);
+  await addLogEntry(kv, {
+    action:'delete_own_account', actorUsername: currentUser.username, actorDisplayName: currentUser.displayName,
+    summary: `${currentUser.displayName} (@${currentUser.username}) hat das eigene Konto gelöscht.`
+  });
+  return json({ ok:true });
+}
+
 // ---------------- Forum-Handler ----------------
 
-function visiblePost(p, canModerate){
-  if (p.deleted && !canModerate) {
-    return { id:p.id, deleted:true, createdAt:p.createdAt };
-  }
+function visiblePost(p, canSeeDeleted){
+  if (p.deleted && !canSeeDeleted) return { id:p.id, deleted:true, createdAt:p.createdAt };
   return p;
 }
 
 async function handleForumGet(request, url, kv, currentUser){
-  const canModerate = currentUser.isAdmin || officeInfo(currentUser.office).moderator;
+  const canModerate = !!currentUser.isAdmin;
   const action = url.searchParams.get('action');
 
   if (action === 'thread') {
@@ -217,12 +206,13 @@ async function handleForumGet(request, url, kv, currentUser){
     const thread = await getJSON(kv, 'thread:' + id, null);
     if (!thread) return json({ error:'Thema nicht gefunden.' }, 404);
     if (thread.deleted && !canModerate) return json({ error:'Thema nicht gefunden.' }, 404);
-    const out = { ...thread, posts: thread.posts.map(p => visiblePost(p, canModerate)) };
+    // Beitragseigene dürfen ihre eigenen gelöschten Beiträge auch weiterhin sehen (mit Hinweis)
+    const out = { ...thread, posts: thread.posts.map(p => visiblePost(p, canModerate || p.author === currentUser.username)) };
     return json(out);
   }
 
   const threads = await getJSON(kv, THREADS_KEY, []);
-  const visible = threads.filter(t => canModerate || !t.deleted);
+  const visible = threads.filter(t => canModerate || !t.deleted || t.author === currentUser.username);
   visible.sort((a,b) => b.lastActivity - a.lastActivity);
   return json({ threads: visible, me: publicUser(currentUser) });
 }
@@ -247,7 +237,7 @@ async function handleForumPost(request, kv, currentUser){
     const id = makeId();
     const now = Date.now();
     const firstPost = { id: makeId(), author, authorDisplayName, authorOffice, message, createdAt: now, attachments, deleted:false };
-    const threadDoc = { id, title, category, createdAt: now, lastActivity: now, deleted:false, posts:[firstPost] };
+    const threadDoc = { id, title, category, author, authorDisplayName, createdAt: now, lastActivity: now, deleted:false, posts:[firstPost] };
     await kv.put('thread:' + id, JSON.stringify(threadDoc));
 
     const threads = await getJSON(kv, THREADS_KEY, []);
@@ -283,7 +273,42 @@ async function handleForumPost(request, kv, currentUser){
   return json({ error:'Unbekannte Aktion.' }, 400);
 }
 
-// ---------------- Moderation ----------------
+// ---------------- Eigene Beiträge bearbeiten ----------------
+
+async function handleEditPost(request, kv, currentUser){
+  let body;
+  try { body = await request.json(); } catch(e){ return json({ error:'Ungültige Anfrage.' }, 400); }
+  const threadId = sanitize(body.threadId, 100);
+  const postId = sanitize(body.postId, 100);
+  const message = sanitize(body.message, 4000);
+  if (!threadId || !postId || !message) return json({ error:'Nachricht darf nicht leer sein.' }, 400);
+
+  const threadDoc = await getJSON(kv, 'thread:' + threadId, null);
+  if (!threadDoc) return json({ error:'Thema nicht gefunden.' }, 404);
+  const post = threadDoc.posts.find(p => p.id === postId);
+  if (!post) return json({ error:'Beitrag nicht gefunden.' }, 404);
+
+  if (!currentUser.isAdmin && post.author !== currentUser.username) {
+    return json({ error:'Du kannst nur eigene Beiträge bearbeiten.' }, 403);
+  }
+
+  const wasOthers = post.author !== currentUser.username;
+  post.message = message;
+  post.editedAt = Date.now();
+  post.editedBy = currentUser.username;
+  await kv.put('thread:' + threadId, JSON.stringify(threadDoc));
+
+  if (wasOthers) {
+    await addLogEntry(kv, {
+      action:'edit_post', actorUsername: currentUser.username, actorDisplayName: currentUser.displayName,
+      threadId, postId,
+      summary: `${currentUser.displayName} hat einen Beitrag von ${post.authorDisplayName} im Thema „${threadDoc.title}" bearbeitet.`
+    });
+  }
+  return json(threadDoc);
+}
+
+// ---------------- Moderation / Löschen (eigene Beiträge oder Admin) ----------------
 
 async function handleModerate(request, kv, currentUser){
   let body;
@@ -298,15 +323,20 @@ async function handleModerate(request, kv, currentUser){
     const post = threadDoc.posts.find(p => p.id === postId);
     if (!post) return json({ error:'Beitrag nicht gefunden.' }, 404);
 
+    const isOwner = post.author === currentUser.username;
+
     if (body.action === 'deletePost') {
+      if (!currentUser.isAdmin && !isOwner) return json({ error:'Keine Berechtigung.' }, 403);
       post.deleted = true; post.deletedAt = Date.now(); post.deletedBy = currentUser.username; post.deletedReason = reason;
       await addLogEntry(kv, {
         action:'delete_post', actorUsername: currentUser.username, actorDisplayName: currentUser.displayName,
         threadId, postId, reason,
-        summary: `${currentUser.displayName} hat einen Beitrag von ${post.authorDisplayName} im Thema „${threadDoc.title}" gelöscht.`,
+        summary: `${currentUser.displayName} hat ${isOwner ? 'seinen/ihren eigenen' : 'einen'} Beitrag von ${post.authorDisplayName} im Thema „${threadDoc.title}" gelöscht.`,
         deletedContent: { author: post.authorDisplayName, message: post.message, createdAt: post.createdAt }
       });
     } else {
+      const canRestore = currentUser.isAdmin || (isOwner && post.deletedBy === currentUser.username);
+      if (!canRestore) return json({ error:'Nur ein Admin kann diesen Beitrag wiederherstellen.' }, 403);
       post.deleted = false; post.deletedAt = null; post.deletedBy = null; post.deletedReason = null;
       await addLogEntry(kv, {
         action:'restore_post', actorUsername: currentUser.username, actorDisplayName: currentUser.displayName,
@@ -327,13 +357,22 @@ async function handleModerate(request, kv, currentUser){
     const threadId = sanitize(body.threadId, 100);
     const threadDoc = await getJSON(kv, 'thread:' + threadId, null);
     if (!threadDoc) return json({ error:'Thema nicht gefunden.' }, 404);
+    const isOwner = threadDoc.author === currentUser.username;
     const del = body.action === 'deleteThread';
-    threadDoc.deleted = del;
+
+    if (del) {
+      if (!currentUser.isAdmin && !isOwner) return json({ error:'Keine Berechtigung.' }, 403);
+      threadDoc.deleted = true; threadDoc.deletedBy = currentUser.username;
+    } else {
+      const canRestore = currentUser.isAdmin || (isOwner && threadDoc.deletedBy === currentUser.username);
+      if (!canRestore) return json({ error:'Nur ein Admin kann dieses Thema wiederherstellen.' }, 403);
+      threadDoc.deleted = false; threadDoc.deletedBy = null;
+    }
     await kv.put('thread:' + threadId, JSON.stringify(threadDoc));
 
     const threads = await getJSON(kv, THREADS_KEY, []);
     const idx = threads.findIndex(t => t.id === threadId);
-    if (idx !== -1) { threads[idx].deleted = del; await kv.put(THREADS_KEY, JSON.stringify(threads)); }
+    if (idx !== -1) { threads[idx].deleted = threadDoc.deleted; await kv.put(THREADS_KEY, JSON.stringify(threads)); }
 
     await addLogEntry(kv, {
       action: del ? 'delete_thread' : 'restore_thread',
@@ -365,8 +404,7 @@ async function handleUpload(request, kv, currentUser){
 
   return json({ id, name, type, size: file.size, url: '/api/file?id=' + encodeURIComponent(id) });
 }
-
-async function handleFileGet(url, kv, currentUser){
+async function handleFileGet(url, kv){
   const id = url.searchParams.get('id');
   const fileDoc = await getJSON(kv, 'file:' + id, null);
   if (!fileDoc) return new Response('Nicht gefunden', { status:404 });
@@ -379,25 +417,17 @@ async function handleFileGet(url, kv, currentUser){
 async function handleAdminPending(kv){
   const list = await kv.list({ prefix: 'user:' });
   const users = [];
-  for (const k of list.keys) {
-    const u = await getJSON(kv, k.name, null);
-    if (u && u.status === 'pending') users.push(publicUser(u));
-  }
+  for (const k of list.keys) { const u = await getJSON(kv, k.name, null); if (u && u.status === 'pending') users.push(publicUser(u)); }
   users.sort((a,b) => a.createdAt - b.createdAt);
   return json({ users });
 }
-
 async function handleAdminUsers(kv){
   const list = await kv.list({ prefix: 'user:' });
   const users = [];
-  for (const k of list.keys) {
-    const u = await getJSON(kv, k.name, null);
-    if (u) users.push(publicUser(u));
-  }
+  for (const k of list.keys) { const u = await getJSON(kv, k.name, null); if (u) users.push(publicUser(u)); }
   users.sort((a,b) => a.displayName.localeCompare(b.displayName, 'de'));
   return json({ users, offices: OFFICES });
 }
-
 async function handleAdminApprove(request, kv, currentUser){
   let body; try { body = await request.json(); } catch(e){ return json({ error:'Ungültige Anfrage.' }, 400); }
   const username = sanitizeUsername(body.username);
@@ -407,13 +437,11 @@ async function handleAdminApprove(request, kv, currentUser){
   await kv.put('user:' + username, JSON.stringify(user));
   await addLogEntry(kv, {
     action: body.approve ? 'approve_user' : 'reject_user',
-    actorUsername: currentUser.username, actorDisplayName: currentUser.displayName,
-    targetUsername: username,
+    actorUsername: currentUser.username, actorDisplayName: currentUser.displayName, targetUsername: username,
     summary: `${currentUser.displayName} hat das Konto von ${user.displayName} ${body.approve ? 'freigeschaltet' : 'abgelehnt'}.`
   });
   return json({ ok:true });
 }
-
 async function handleAdminUpdateUser(request, kv, currentUser){
   let body; try { body = await request.json(); } catch(e){ return json({ error:'Ungültige Anfrage.' }, 400); }
   const username = sanitizeUsername(body.username);
@@ -423,23 +451,27 @@ async function handleAdminUpdateUser(request, kv, currentUser){
   const changes = [];
   if (typeof body.office === 'string') {
     const off = officeInfo(sanitize(body.office, 40));
-    if (off.id !== user.office) { changes.push(`Amt: ${officeInfo(user.office).label} → ${off.label}`); user.office = off.id; }
+    if (off.id !== user.office) changes.push(`Amt: ${officeInfo(user.office).label} → ${off.label}`);
+    user.office = off.id;
+    if (typeof body.isAdmin !== 'boolean') {
+      const newAdmin = off.adminByDefault;
+      if (newAdmin !== user.isAdmin) changes.push(`Admin-Rechte: ${user.isAdmin?'ja':'nein'} → ${newAdmin?'ja':'nein'} (durch Amt)`);
+      user.isAdmin = newAdmin;
+    }
   }
   if (typeof body.isAdmin === 'boolean' && body.isAdmin !== user.isAdmin) {
-    changes.push(`Admin-Rechte: ${user.isAdmin ? 'ja' : 'nein'} → ${body.isAdmin ? 'ja' : 'nein'}`);
+    changes.push(`Admin-Rechte: ${user.isAdmin?'ja':'nein'} → ${body.isAdmin?'ja':'nein'}`);
     user.isAdmin = body.isAdmin;
   }
   await kv.put('user:' + username, JSON.stringify(user));
   if (changes.length) {
     await addLogEntry(kv, {
-      action:'update_user', actorUsername: currentUser.username, actorDisplayName: currentUser.displayName,
-      targetUsername: username,
+      action:'update_user', actorUsername: currentUser.username, actorDisplayName: currentUser.displayName, targetUsername: username,
       summary: `${currentUser.displayName} hat das Profil von ${user.displayName} geändert: ${changes.join(', ')}.`
     });
   }
   return json({ ok:true, user: publicUser(user) });
 }
-
 async function handleAdminLog(kv){
   const log = await getJSON(kv, AUDITLOG_KEY, []);
   return json({ log });
@@ -462,62 +494,50 @@ export default {
       if (path === '/api/auth/login' && request.method === 'POST') return await handleLogin(request, kv);
 
       if (path === '/api/me' && request.method === 'GET') {
-        const user = await getSessionUser(request, url, kv);
-        if (!user) return json({ error:'Nicht angemeldet.' }, 401);
-        return json({ user: publicUser(user) });
+        const s = await getSessionUser(request, url, kv);
+        if (!s) return json({ error:'Nicht angemeldet.' }, 401);
+        return json({ user: publicUser(s.user) });
+      }
+
+      if (path === '/api/account/delete' && request.method === 'POST') {
+        const r = await requireAuth(request, url, kv); if (r.error) return r.error;
+        return await handleDeleteAccount(kv, r.user, r.token);
       }
 
       if (path === '/api/forum') {
-        const r = await requireAuth(request, url, kv);
-        if (r.error) return r.error;
+        const r = await requireAuth(request, url, kv); if (r.error) return r.error;
         if (request.method === 'GET') return await handleForumGet(request, url, kv, r.user);
         if (request.method === 'POST') return await handleForumPost(request, kv, r.user);
       }
-
+      if (path === '/api/forum/edit' && request.method === 'POST') {
+        const r = await requireAuth(request, url, kv); if (r.error) return r.error;
+        return await handleEditPost(request, kv, r.user);
+      }
       if (path === '/api/forum/moderate' && request.method === 'POST') {
-        const r = await requireModerator(request, url, kv);
-        if (r.error) return r.error;
+        const r = await requireAuth(request, url, kv); if (r.error) return r.error;
         return await handleModerate(request, kv, r.user);
       }
 
       if (path === '/api/upload' && request.method === 'POST') {
-        const r = await requireAuth(request, url, kv);
-        if (r.error) return r.error;
+        const r = await requireAuth(request, url, kv); if (r.error) return r.error;
         return await handleUpload(request, kv, r.user);
       }
       if (path === '/api/file' && request.method === 'GET') {
-        const r = await requireAuth(request, url, kv);
-        if (r.error) return r.error;
-        return await handleFileGet(url, kv, r.user);
+        const r = await requireAuth(request, url, kv); if (r.error) return r.error;
+        return await handleFileGet(url, kv);
       }
 
-      if (path === '/api/admin/pending' && request.method === 'GET') {
-        const r = await requireAdmin(request, url, kv); if (r.error) return r.error;
-        return await handleAdminPending(kv);
-      }
-      if (path === '/api/admin/users' && request.method === 'GET') {
-        const r = await requireAdmin(request, url, kv); if (r.error) return r.error;
-        return await handleAdminUsers(kv);
-      }
-      if (path === '/api/admin/approve' && request.method === 'POST') {
-        const r = await requireAdmin(request, url, kv); if (r.error) return r.error;
-        return await handleAdminApprove(request, kv, r.user);
-      }
-      if (path === '/api/admin/update-user' && request.method === 'POST') {
-        const r = await requireAdmin(request, url, kv); if (r.error) return r.error;
-        return await handleAdminUpdateUser(request, kv, r.user);
-      }
-      if (path === '/api/admin/log' && request.method === 'GET') {
-        const r = await requireAdmin(request, url, kv); if (r.error) return r.error;
-        return await handleAdminLog(kv);
-      }
+      if (path === '/api/admin/pending' && request.method === 'GET') { const r = await requireAdmin(request, url, kv); if (r.error) return r.error; return await handleAdminPending(kv); }
+      if (path === '/api/admin/users' && request.method === 'GET') { const r = await requireAdmin(request, url, kv); if (r.error) return r.error; return await handleAdminUsers(kv); }
+      if (path === '/api/admin/approve' && request.method === 'POST') { const r = await requireAdmin(request, url, kv); if (r.error) return r.error; return await handleAdminApprove(request, kv, r.user); }
+      if (path === '/api/admin/update-user' && request.method === 'POST') { const r = await requireAdmin(request, url, kv); if (r.error) return r.error; return await handleAdminUpdateUser(request, kv, r.user); }
+      if (path === '/api/admin/log' && request.method === 'GET') { const r = await requireAdmin(request, url, kv); if (r.error) return r.error; return await handleAdminLog(kv); }
 
       if (path.startsWith('/api/')) return json({ error:'Nicht gefunden.' }, 404);
     } catch (err) {
       return json({ error: 'Serverfehler: ' + (err && err.message ? err.message : String(err)) }, 500);
     }
 
-    // Alles andere: statische Website ausliefern
     return env.ASSETS.fetch(request);
   }
 };
