@@ -28,7 +28,6 @@
   @keyframes popIn{0%{opacity:0; transform:scale(.94) translateY(10px);} 100%{opacity:1; transform:scale(1) translateY(0);}}
   @keyframes shake{10%,90%{transform:translateX(-1px);} 20%,80%{transform:translateX(2px);} 30%,50%,70%{transform:translateX(-4px);} 40%,60%{transform:translateX(4px);}}
   @keyframes spin{to{transform:rotate(360deg);}}
-  @keyframes ropeShimmer{0%{background-position:0 0;} 100%{background-position:120px 0;}}
 
   header{position:sticky; top:0; z-index:50; background:var(--wood-dark); border-bottom:3px solid var(--red); animation:fadeIn .5s var(--ease) both;}
   nav.wrap{display:flex; align-items:center; justify-content:space-between; padding:14px 24px; max-width:1080px;}
@@ -45,7 +44,7 @@
   .who{font-family:'JetBrains Mono',monospace; font-size:.76rem; color:var(--gold-light); background:rgba(201,162,39,.12); padding:6px 12px; border-radius:20px; border:1px solid rgba(201,162,39,.3);}
   @media(max-width:900px){ .navlinks{display:none;} }
 
-  .rope{height:10px; background-image:repeating-linear-gradient(115deg, var(--gold) 0 6px, var(--wood) 6px 12px); background-size:120px 10px; box-shadow:inset 0 2px 3px rgba(0,0,0,.35); animation:ropeShimmer 6s linear infinite;}
+  .rope{height:3px; background:linear-gradient(90deg, transparent, var(--red) 15%, var(--red) 85%, transparent); box-shadow:0 1px 12px rgba(180,34,44,.3);}
 
   main{padding:56px 0 100px;}
   @media(max-width:640px){ main{padding:36px 0 70px;} }
