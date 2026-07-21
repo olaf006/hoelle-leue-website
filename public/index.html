@@ -331,6 +331,24 @@
   .modal-actions{margin-top:8px; display:flex; gap:10px; flex-wrap:wrap;}
   .modal-actions .btn-ghost{border-color:var(--wood-light); color:var(--wood-dark);}
   .modal-actions .btn-ghost:hover{background:rgba(201,162,39,.18); border-color:var(--wood-dark);}
+
+  /* -------- Termin-Pop-up (größer) -------- */
+  .event-modal-card{max-width:600px;}
+  .event-date-badge{
+    display:inline-block; font-family:'JetBrains Mono', monospace; font-size:.72rem; font-weight:600;
+    background:var(--red); color:#fff; padding:6px 12px; border-radius:20px; margin-bottom:14px;
+  }
+  .event-modal-desc{color:#3a332c; font-size:1rem; line-height:1.65; margin-bottom:22px;}
+  .event-back-link{
+    display:inline-flex; align-items:center; gap:6px; font-size:.86rem; color:var(--red-dark);
+    text-decoration:none; margin-bottom:16px; font-weight:600; background:none; border:none; cursor:pointer;
+    padding:0; font-family:inherit; transition:gap .2s var(--ease);
+  }
+  .event-back-link:hover{gap:10px; color:var(--red);}
+  .event-gallery-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
+  @media(max-width:520px){ .event-gallery-grid{grid-template-columns:repeat(2,1fr);} }
+  .event-gallery-grid .photo{--ar:4/3;}
+  #eventGalleryView{display:none;}
 </style>
 </head>
 <body>
@@ -510,6 +528,28 @@
   </div>
 </footer>
 
+<div class="modal-backdrop" id="eventModalBackdrop">
+  <div class="modal-card event-modal-card" role="dialog" aria-modal="true" aria-labelledby="eventModalTitle">
+    <button type="button" class="modal-close" id="eventModalClose" aria-label="Schließen">✕</button>
+
+    <div id="eventDetailView">
+      <span class="event-date-badge" id="eventModalDate"></span>
+      <h2 id="eventModalTitle"></h2>
+      <p class="event-modal-desc" id="eventModalDesc"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-primary btn-sm" id="eventModalGalleryBtn">Bilder vergangener Jahre ansehen</button>
+      </div>
+    </div>
+
+    <div id="eventGalleryView">
+      <button type="button" class="event-back-link" id="eventBackToDetail">← Zurück zur Beschreibung</button>
+      <h2 id="eventGalleryTitle" style="font-size:1.2rem;"></h2>
+      <div class="event-gallery-grid" id="eventGalleryGrid"></div>
+      <p style="margin-top:14px; font-size:.82rem; color:#6f6350;">Noch keine oder wenige Fotos? Einfach eigene Bilder in <code id="eventGalleryPath"></code> hochladen — sie erscheinen dann automatisch hier.</p>
+    </div>
+  </div>
+</div>
+
 <div class="modal-backdrop" id="contactModalBackdrop">
   <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="contactModalTitle">
     <button type="button" class="modal-close" id="contactModalClose" aria-label="Schließen">✕</button>
@@ -585,6 +625,30 @@
     "Fasnetverbrennung (Aschermittwoch)": "Wir verbrennen die Fasnet symbolisch — bis nächstes Jahr!"
   };
 
+  // Ausführliche Beschreibungen fürs Pop-up + Slug für den Bilderordner der jeweiligen Galerie
+  const eventDetails = {
+    "Schmutziger Dunschtig": {
+      slug: "schmutziger-dunschtig",
+      long: "Der Schmutzige Dunschtig eröffnet bei uns die Straßenfasnet. Traditionell befreien die Narren an diesem Tag die Schulkinder für die Fasnetstage aus dem Unterricht — daher auch der Beiname \"Schülerbefreiung\". Ab dem Vormittag ziehen die Hölle-Leue mit Musik und viel Radau durchs Rieselfeld, übernehmen symbolisch das Regiment und läuten damit die tollen Tage endgültig ein."
+    },
+    "Fasnetsonntag": {
+      slug: "fasnetsonntag",
+      long: "Am Fasnetsonntag findet unser Hemdglunkerumzug statt — ein abendlicher Laternenumzug, bei dem Groß und Klein im Nachthemd durchs Rieselfeld zieht. Der Umzug hat einen verspielten, familiären Charakter und ist bei uns fest im Programm verankert, seit die Hölle-Leue 1998 erstmals daran teilgenommen haben. Laternen, Musik und jede Menge gute Laune erwarten euch."
+    },
+    "Fasnetmendig": {
+      slug: "fasnetmendig",
+      long: "Der Fasnetmendig ist einer unserer Hauptumzugstage. Traditionell wird an diesem Tag der Narrenbaum gestellt — ein geschälter Baumstamm, der symbolisch die närrische Zeit markiert. Anschließend ziehen die Hölle-Leue gemeinsam mit befreundeten Zünften durch die Straßen, begleitet von Guggenmusiken und jeder Menge Konfetti."
+    },
+    "Fasnetzieschdig": {
+      slug: "fasnetzieschdig",
+      long: "Der Fasnetzieschdig ist der letzte große Straßenfasnet-Tag vor dem Aschermittwoch. Noch einmal ziehen wir mit vollem Häs durchs Rieselfeld, bevor am Abend langsam der Ernst des Alltags zurückkehrt. Ein Tag, an dem man die Fasnet noch einmal in vollen Zügen genießt."
+    },
+    "Fasnetverbrennung (Aschermittwoch)": {
+      slug: "fasnetverbrennung",
+      long: "Am Aschermittwoch verbrennen wir symbolisch die Fasnet — meist in Form einer Strohpuppe — und verabschieden damit offiziell die tollen Tage. Ein besinnlicherer, aber genauso wichtiger Programmpunkt, der die Fasnetzeit für die Hölle-Leue jedes Jahr feierlich abrundet, bevor die Vorbereitungen fürs nächste Jahr beginnen."
+    }
+  };
+
   const specialEvents = {
     "Stadtteilfest Rieselfeld": new Date(2026, 6, 24)
   };
@@ -602,6 +666,7 @@
     Object.entries(dates).forEach(([name, date]) => {
       const row = document.createElement('div');
       row.className = 'event';
+      row.style.cursor = 'pointer';
       row.innerHTML = `
         <div class="date">${fmt(date)}</div>
         <div>
@@ -609,6 +674,7 @@
           <p>${eventDescriptions[name]}</p>
         </div>
         <div class="tag">Fasnet ${year}</div>`;
+      row.addEventListener('click', () => openEventModal(name, date, year));
       list.appendChild(row);
     });
     return dates;
@@ -647,6 +713,49 @@
     a.addEventListener('click', () => { document.getElementById('navToggle').checked = false; });
   });
 
+  /* ---------- Termin-Pop-up ---------- */
+  const eventModalBackdrop = document.getElementById('eventModalBackdrop');
+  const eventDetailView = document.getElementById('eventDetailView');
+  const eventGalleryView = document.getElementById('eventGalleryView');
+
+  function openEventModal(name, date, year){
+    const info = eventDetails[name] || { slug:'termin', long: eventDescriptions[name] || '' };
+    document.getElementById('eventModalDate').textContent = date.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' }) + ' · Fasnet ' + year;
+    document.getElementById('eventModalTitle').textContent = name;
+    document.getElementById('eventModalDesc').textContent = info.long;
+    eventModalBackdrop.dataset.slug = info.slug;
+    eventModalBackdrop.dataset.title = name;
+    eventDetailView.style.display = 'block';
+    eventGalleryView.style.display = 'none';
+    eventModalBackdrop.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeEventModal(){
+    eventModalBackdrop.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  function showEventGallery(){
+    const slug = eventModalBackdrop.dataset.slug;
+    const title = eventModalBackdrop.dataset.title;
+    document.getElementById('eventGalleryTitle').textContent = 'Bilder: ' + title;
+    document.getElementById('eventGalleryPath').textContent = 'images/termine/' + slug + '-1.jpg';
+    const grid = document.getElementById('eventGalleryGrid');
+    grid.innerHTML = '';
+    for (let i = 1; i <= 3; i++) {
+      const path = '/images/termine/' + slug + '-' + i + '.jpg';
+      const cell = document.createElement('div');
+      cell.className = 'photo';
+      cell.innerHTML = `<img src="${path}" alt="${title} — Foto ${i}" loading="lazy" onerror="handleImgError(this)"><div class="ph-fallback"><span class="ico">📷</span>images/termine/${slug}-${i}.jpg</div>`;
+      grid.appendChild(cell);
+    }
+    eventDetailView.style.display = 'none';
+    eventGalleryView.style.display = 'block';
+  }
+  document.getElementById('eventModalGalleryBtn').addEventListener('click', showEventGallery);
+  document.getElementById('eventBackToDetail').addEventListener('click', () => { eventDetailView.style.display = 'block'; eventGalleryView.style.display = 'none'; });
+  document.getElementById('eventModalClose').addEventListener('click', closeEventModal);
+  eventModalBackdrop.addEventListener('click', (e) => { if (e.target === eventModalBackdrop) closeEventModal(); });
+
   /* ---------- Kontakt-Pop-up ---------- */
   const contactBackdrop = document.getElementById('contactModalBackdrop');
   function openContactModal(){ contactBackdrop.classList.add('open'); document.body.style.overflow = 'hidden'; }
@@ -654,7 +763,7 @@
   document.getElementById('btnContactPopup').addEventListener('click', openContactModal);
   document.getElementById('contactModalClose').addEventListener('click', closeContactModal);
   contactBackdrop.addEventListener('click', (e) => { if (e.target === contactBackdrop) closeContactModal(); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeContactModal(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeContactModal(); closeEventModal(); } });
 
   /* ---------- Scroll-Reveal-Animationen ---------- */
   if ('IntersectionObserver' in window) {
