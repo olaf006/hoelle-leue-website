@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Impressum — Friburger Hölle-Leue e.V.</title>
+<link rel="preconnect" href="https://fonts.bunny.net">
+<link href="https://fonts.bunny.net/css?family=fraunces:500,600,700,900|work-sans:400,500,600|jetbrains-mono:400,500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --wood-dark:#241509; --wood:#5c3a21; --wood-light:#8a5a34;
+    --red:#a3271b; --red-dark:#7a1d14; --gold:#d9a441; --gold-light:#efc873;
+    --cream:#f3e8cf; --cream-dark:#e6d5ac; --ink:#2a1d10; --ease:cubic-bezier(.22,.9,.32,1);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--cream); color:var(--ink); font-family:'Work Sans', sans-serif; font-size:17px; line-height:1.65;}
+  h1,h2{font-family:'Fraunces', serif; font-weight:700; color:var(--wood-dark); letter-spacing:-0.01em;}
+  a{color:var(--red-dark);}
+  .wrap{max-width:760px; margin:0 auto; padding:0 24px;}
+  header{background:var(--wood-dark); border-bottom:3px solid var(--red);}
+  nav.wrap{display:flex; align-items:center; justify-content:space-between; padding:14px 24px; max-width:1080px;}
+  .brand{display:flex; align-items:center; gap:12px; text-decoration:none;}
+  .brand-mark{width:38px; height:38px;}
+  .brand-name{font-family:'Fraunces', serif; color:var(--cream); font-weight:700; font-size:1.15rem; line-height:1.05;}
+  .brand-sub{display:block; font-family:'JetBrains Mono', monospace; font-size:.62rem; letter-spacing:.1em; color:var(--gold-light); text-transform:uppercase; margin-top:2px;}
+  .navlinks{display:flex; gap:22px; list-style:none; margin:0; padding:0;}
+  .navlinks a{text-decoration:none; color:var(--cream-dark); font-size:.9rem; font-weight:500;}
+  .navlinks a:hover{color:var(--gold-light);}
+  @media(max-width:700px){ .navlinks{display:none;} }
+  .rope{height:10px; background-image:repeating-linear-gradient(115deg, var(--gold) 0 6px, var(--wood) 6px 12px);}
+  main{padding:64px 0 90px;}
+  .eyebrow{font-family:'JetBrains Mono', monospace; text-transform:uppercase; letter-spacing:.14em; font-size:.72rem; color:var(--red-dark); font-weight:500; display:block; margin-bottom:10px;}
+  .card{background:#fff; border:1px solid var(--cream-dark); border-radius:10px; padding:38px 40px; box-shadow:0 10px 30px rgba(36,21,9,.12);}
+  @media(max-width:640px){ .card{padding:26px;} }
+  .card h2{font-size:1.15rem; margin-top:34px; margin-bottom:10px;}
+  .card h2:first-of-type{margin-top:0;}
+  .card p{margin:0 0 8px;}
+  footer{background:var(--wood-dark); color:var(--cream-dark); padding:30px 0; text-align:center; font-size:.85rem;}
+  footer a{color:var(--gold-light); text-decoration:none;}
+</style>
+</head>
+<body>
+
+<header>
+  <nav class="wrap">
+    <a href="/index.html" class="brand">
+      <svg class="brand-mark" viewBox="0 0 48 48" fill="none">
+        <circle cx="24" cy="24" r="22" fill="#a3271b" stroke="#d9a441" stroke-width="2"/>
+        <path d="M14 20 Q24 10 34 20" stroke="#d9a441" stroke-width="2" fill="none"/>
+        <circle cx="18" cy="22" r="2.4" fill="#f3e8cf"/>
+        <circle cx="30" cy="22" r="2.4" fill="#f3e8cf"/>
+        <path d="M15 30 Q24 38 33 30" stroke="#f3e8cf" stroke-width="2" fill="none"/>
+        <path d="M20 12 L18 6 M28 12 L30 6" stroke="#d9a441" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <span><span class="brand-name">Hölle-Leue</span><span class="brand-sub">Narrenzunft Freiburg</span></span>
+    </a>
+    <ul class="navlinks">
+      <li><a href="/index.html">Zur Website</a></li>
+      <li><a href="/mitglieder.html">Mitgliederbereich</a></li>
+    </ul>
+  </nav>
+</header>
+<div class="rope"></div>
+
+<main>
+  <div class="wrap">
+    <span class="eyebrow">Rechtliches</span>
+    <h1 style="margin-bottom:28px;">Impressum</h1>
+    <div class="card">
+      <h2>Angaben gemäß § 5 TMG / § 18 Abs. 2 MStV</h2>
+      <p>Friburger Hölle-Leue e.V.<br>
+      Selma-Stern-Weg 6<br>
+      79111 Freiburg im Breisgau<br>
+      Deutschland</p>
+
+      <h2>Kontakt</h2>
+      <p>Telefon: 0761 89829807<br>
+      E-Mail: <a href="mailto:hoelle-leue@web.de">hoelle-leue@web.de</a></p>
+
+      <h2>Andere zur Verfügung gestellte Online-Kommunikationsmittel</h2>
+      <p>Website: <a href="/index.html">www.hoelle-leue.de</a></p>
+
+      <h2>Vertretungsberechtigter Vorstand</h2>
+      <p>Jürgen Rieder (Vorsitzender)<br>
+      Marco Müller</p>
+
+      <h2>Registereintrag</h2>
+      <p>Vereinsregister: Amtsgericht Freiburg<br>
+      Registernummer: 2713</p>
+
+      <h2>Verbraucherstreitbeilegung / Universalschlichtungsstelle</h2>
+      <p>Zur Teilnahme an einem Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle sind wir nicht verpflichtet und nicht bereit.</p>
+
+      <h2>Haftung für Inhalte</h2>
+      <p>Als Diensteanbieter sind wir gemäß § 7 Abs. 1 TMG für eigene Inhalte auf diesen Seiten nach den allgemeinen Gesetzen verantwortlich. Nach §§ 8 bis 10 TMG sind wir als Diensteanbieter jedoch nicht verpflichtet, übermittelte oder gespeicherte fremde Informationen zu überwachen oder nach Umständen zu forschen, die auf eine rechtswidrige Tätigkeit hinweisen. Verpflichtungen zur Entfernung oder Sperrung der Nutzung von Informationen nach den allgemeinen Gesetzen bleiben hiervon unberührt. Eine diesbezügliche Haftung ist jedoch erst ab dem Zeitpunkt der Kenntnis einer konkreten Rechtsverletzung möglich. Bei Bekanntwerden von entsprechenden Rechtsverletzungen werden wir diese Inhalte umgehend entfernen.</p>
+
+      <h2>Haftung für Links</h2>
+      <p>Unser Angebot enthält Links zu externen Websites Dritter, auf deren Inhalte wir keinen Einfluss haben. Deshalb können wir für diese fremden Inhalte auch keine Gewähr übernehmen. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber der Seiten verantwortlich. Die verlinkten Seiten wurden zum Zeitpunkt der Verlinkung auf mögliche Rechtsverstöße überprüft. Rechtswidrige Inhalte waren zum Zeitpunkt der Verlinkung nicht erkennbar. Eine permanente inhaltliche Kontrolle der verlinkten Seiten ist jedoch ohne konkrete Anhaltspunkte einer Rechtsverletzung nicht zumutbar. Bei Bekanntwerden von Rechtsverletzungen werden wir derartige Links umgehend entfernen.</p>
+
+      <h2>Urheberrecht</h2>
+      <p>Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen Urheberrecht. Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der Grenzen des Urheberrechtes bedürfen der schriftlichen Zustimmung des jeweiligen Autors bzw. Erstellers.</p>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">Friburger Hölle-Leue e.V. · <a href="/index.html">zurück zur Hauptseite</a> · <a href="/datenschutz.html">Datenschutz</a></div>
+</footer>
+</body>
+</html>
