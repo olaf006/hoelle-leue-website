@@ -6,5 +6,8 @@
   "assets": {
     "directory": "./public",
     "binding": "ASSETS"
-  }
+  },
+  "kv_namespaces": [
+    { "binding": "FORUM_KV", "id": "7e96f8a769c84987b55e5e9129a0aa63" }
+  ]
 }
