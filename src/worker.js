@@ -1,6 +1,6 @@
 // Haupt-Worker: liefert die statische Website aus und stellt die komplette
-// Forum-API bereit — inkl. Mitgliederkonten, Ämtern/Rollen, Moderation,
-// Datei-Uploads und Admin-Audit-Log.
+// Forum-API bereit — Mitgliederkonten, Ämter/Rollen, Moderation, Datei-Uploads,
+// Admin-Audit-Log, Reaktionen, angepinnte Themen und Beitragszähler.
 //
 // WICHTIG: Im Cloudflare-Dashboard unter "Bindings" muss eine KV-Namespace
 // mit dem Variablennamen FORUM_KV verbunden sein.
@@ -10,10 +10,8 @@ const AUDITLOG_KEY = 'auditlog';
 const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4 MB
 const SESSION_DAYS = 30;
 const MAX_LOG_ENTRIES = 400;
+const REACTION_EMOJIS = ['👍','❤️','😂','😮'];
 
-// Ämter der Zunft. "adminByDefault: true" bedeutet: Wer dieses Amt hat,
-// bekommt automatisch volle Admin-Rechte (Freischalten, Rollen vergeben,
-// Log einsehen, alles moderieren).
 const OFFICES = [
   { id: 'mitglied',        label: 'Mitglied',              adminByDefault: false },
   { id: 'admin',           label: 'Admin',                  adminByDefault: true  },
@@ -25,8 +23,6 @@ const OFFICES = [
   { id: 'beisitzer',       label: 'Beisitzer',              adminByDefault: false }
 ];
 function officeInfo(id){ return OFFICES.find(o => o.id === id) || OFFICES[0]; }
-
-// ---------------- Hilfsfunktionen ----------------
 
 function json(data, status) {
   return new Response(JSON.stringify(data), {
@@ -61,7 +57,8 @@ function publicUser(u){
   const off = officeInfo(u.office);
   return {
     username: u.username, displayName: u.displayName, office: u.office, officeLabel: off.label,
-    isAdmin: !!u.isAdmin, canModerate: !!u.isAdmin, status: u.status, createdAt: u.createdAt
+    isAdmin: !!u.isAdmin, canModerate: !!u.isAdmin, status: u.status, createdAt: u.createdAt,
+    postCount: u.postCount || 0
   };
 }
 
@@ -145,6 +142,7 @@ async function handleRegister(request, kv){
     passwordHash: hash, passwordSalt: salt,
     isAdmin: isFirstUser || officeInfo(office).adminByDefault,
     status: isFirstUser ? 'active' : 'pending',
+    postCount: 0,
     createdAt: now
   };
   await kv.put('user:' + username, JSON.stringify(user));
@@ -206,15 +204,14 @@ async function handleForumGet(request, url, kv, currentUser){
     const thread = await getJSON(kv, 'thread:' + id, null);
     if (!thread) return json({ error:'Thema nicht gefunden.' }, 404);
     if (thread.deleted && !canModerate) return json({ error:'Thema nicht gefunden.' }, 404);
-    // Beitragseigene dürfen ihre eigenen gelöschten Beiträge auch weiterhin sehen (mit Hinweis)
     const out = { ...thread, posts: thread.posts.map(p => visiblePost(p, canModerate || p.author === currentUser.username)) };
     return json(out);
   }
 
   const threads = await getJSON(kv, THREADS_KEY, []);
   const visible = threads.filter(t => canModerate || !t.deleted || t.author === currentUser.username);
-  visible.sort((a,b) => b.lastActivity - a.lastActivity);
-  return json({ threads: visible, me: publicUser(currentUser) });
+  visible.sort((a,b) => (b.pinned?1:0) - (a.pinned?1:0) || b.lastActivity - a.lastActivity);
+  return json({ threads: visible, me: publicUser(currentUser), reactionEmojis: REACTION_EMOJIS });
 }
 
 async function handleForumPost(request, kv, currentUser){
@@ -227,6 +224,15 @@ async function handleForumPost(request, kv, currentUser){
   const attachments = Array.isArray(body.attachments) ? body.attachments.slice(0, 5).map(a => ({
     id: sanitize(a.id, 100), name: sanitize(a.name, 150), type: sanitize(a.type, 100), size: Number(a.size) || 0
   })) : [];
+  let quote = null;
+  if (body.quote && typeof body.quote === 'object') {
+    quote = { author: sanitize(body.quote.author, 60), message: sanitize(body.quote.message, 300) };
+  }
+
+  // Beitragszähler des Users erhöhen
+  const userRecord = await getJSON(kv, 'user:' + author, null);
+  const newPostCount = ((userRecord && userRecord.postCount) || 0) + 1;
+  if (userRecord) { userRecord.postCount = newPostCount; await kv.put('user:' + author, JSON.stringify(userRecord)); }
 
   if (body.action === 'newThread') {
     const title = sanitize(body.title, 150);
@@ -236,12 +242,12 @@ async function handleForumPost(request, kv, currentUser){
 
     const id = makeId();
     const now = Date.now();
-    const firstPost = { id: makeId(), author, authorDisplayName, authorOffice, message, createdAt: now, attachments, deleted:false };
-    const threadDoc = { id, title, category, author, authorDisplayName, createdAt: now, lastActivity: now, deleted:false, posts:[firstPost] };
+    const firstPost = { id: makeId(), author, authorDisplayName, authorOffice, authorPostCount: newPostCount, message, createdAt: now, attachments, deleted:false, reactions:{} };
+    const threadDoc = { id, title, category, author, authorDisplayName, createdAt: now, lastActivity: now, deleted:false, pinned:false, posts:[firstPost] };
     await kv.put('thread:' + id, JSON.stringify(threadDoc));
 
     const threads = await getJSON(kv, THREADS_KEY, []);
-    threads.push({ id, title, category, author, authorDisplayName, createdAt: now, lastActivity: now, replyCount:0, deleted:false });
+    threads.push({ id, title, category, author, authorDisplayName, createdAt: now, lastActivity: now, replyCount:0, deleted:false, pinned:false });
     await kv.put(THREADS_KEY, JSON.stringify(threads));
 
     return json(threadDoc);
@@ -256,7 +262,7 @@ async function handleForumPost(request, kv, currentUser){
     if (!threadDoc || threadDoc.deleted) return json({ error:'Thema nicht gefunden.' }, 404);
 
     const now = Date.now();
-    threadDoc.posts.push({ id: makeId(), author, authorDisplayName, authorOffice, message, createdAt: now, attachments, deleted:false });
+    threadDoc.posts.push({ id: makeId(), author, authorDisplayName, authorOffice, authorPostCount: newPostCount, message, createdAt: now, attachments, deleted:false, reactions:{}, quote });
     threadDoc.lastActivity = now;
     await kv.put('thread:' + threadId, JSON.stringify(threadDoc));
 
@@ -271,6 +277,31 @@ async function handleForumPost(request, kv, currentUser){
   }
 
   return json({ error:'Unbekannte Aktion.' }, 400);
+}
+
+// ---------------- Reaktionen ----------------
+
+async function handleReact(request, kv, currentUser){
+  let body;
+  try { body = await request.json(); } catch(e){ return json({ error:'Ungültige Anfrage.' }, 400); }
+  const threadId = sanitize(body.threadId, 100);
+  const postId = sanitize(body.postId, 100);
+  const emoji = REACTION_EMOJIS.includes(body.emoji) ? body.emoji : null;
+  if (!threadId || !postId || !emoji) return json({ error:'Ungültige Reaktion.' }, 400);
+
+  const threadDoc = await getJSON(kv, 'thread:' + threadId, null);
+  if (!threadDoc) return json({ error:'Thema nicht gefunden.' }, 404);
+  const post = threadDoc.posts.find(p => p.id === postId);
+  if (!post) return json({ error:'Beitrag nicht gefunden.' }, 404);
+  if (!post.reactions) post.reactions = {};
+  if (!post.reactions[emoji]) post.reactions[emoji] = [];
+
+  const idx = post.reactions[emoji].indexOf(currentUser.username);
+  if (idx === -1) post.reactions[emoji].push(currentUser.username);
+  else post.reactions[emoji].splice(idx, 1);
+
+  await kv.put('thread:' + threadId, JSON.stringify(threadDoc));
+  return json({ ok:true, reactions: post.reactions });
 }
 
 // ---------------- Eigene Beiträge bearbeiten ----------------
@@ -308,12 +339,30 @@ async function handleEditPost(request, kv, currentUser){
   return json(threadDoc);
 }
 
-// ---------------- Moderation / Löschen (eigene Beiträge oder Admin) ----------------
+// ---------------- Moderation / Löschen / Anheften ----------------
 
 async function handleModerate(request, kv, currentUser){
   let body;
   try { body = await request.json(); } catch(e){ return json({ error:'Ungültige Anfrage.' }, 400); }
   const reason = sanitize(body.reason, 300);
+
+  if (body.action === 'pinThread' || body.action === 'unpinThread') {
+    if (!currentUser.isAdmin) return json({ error:'Nur Admins können Themen anheften.' }, 403);
+    const threadId = sanitize(body.threadId, 100);
+    const threadDoc = await getJSON(kv, 'thread:' + threadId, null);
+    if (!threadDoc) return json({ error:'Thema nicht gefunden.' }, 404);
+    threadDoc.pinned = body.action === 'pinThread';
+    await kv.put('thread:' + threadId, JSON.stringify(threadDoc));
+    const threads = await getJSON(kv, THREADS_KEY, []);
+    const idx = threads.findIndex(t => t.id === threadId);
+    if (idx !== -1) { threads[idx].pinned = threadDoc.pinned; await kv.put(THREADS_KEY, JSON.stringify(threads)); }
+    await addLogEntry(kv, {
+      action: threadDoc.pinned ? 'pin_thread' : 'unpin_thread',
+      actorUsername: currentUser.username, actorDisplayName: currentUser.displayName, threadId,
+      summary: `${currentUser.displayName} hat das Thema „${threadDoc.title}" ${threadDoc.pinned ? 'angeheftet' : 'gelöst'}.`
+    });
+    return json({ ok:true, pinned: threadDoc.pinned });
+  }
 
   if (body.action === 'deletePost' || body.action === 'restorePost') {
     const threadId = sanitize(body.threadId, 100);
@@ -512,6 +561,10 @@ export default {
       if (path === '/api/forum/edit' && request.method === 'POST') {
         const r = await requireAuth(request, url, kv); if (r.error) return r.error;
         return await handleEditPost(request, kv, r.user);
+      }
+      if (path === '/api/forum/react' && request.method === 'POST') {
+        const r = await requireAuth(request, url, kv); if (r.error) return r.error;
+        return await handleReact(request, kv, r.user);
       }
       if (path === '/api/forum/moderate' && request.method === 'POST') {
         const r = await requireAuth(request, url, kv); if (r.error) return r.error;
