@@ -94,6 +94,42 @@ async function addLogEntry(kv, entry){
   await kv.put(AUDITLOG_KEY, JSON.stringify(log));
 }
 
+// ---------------- Zunft-Abzeichen ----------------
+// Automatische Ehrenabzeichen basierend auf echten Zunftdaten (kein generisches Forum-Feature):
+// - Narren-Neuling: erstes Jahr dabei
+// - Zunft-Urgestein: 10+ Jahre Mitglied
+// - Vielschreiber: 50+ Beiträge
+// - Stammgast: bei den letzten Terminen (mind. 3 vorhanden) immer zugesagt
+
+const YEAR_MS = 365 * 86400000;
+
+async function getBadgesMap(kv, usernames){
+  const threads = await getJSON(kv, THREADS_KEY, []);
+  const now = Date.now();
+  const pastEvents = threads
+    .filter(t => t.isEvent && !t.deleted && t.eventDate && t.eventDate <= now)
+    .sort((a,b) => b.eventDate - a.eventDate)
+    .slice(0, 5);
+
+  const map = {};
+  const uniqueNames = [...new Set(usernames)];
+  for (const uname of uniqueNames) {
+    const u = await getJSON(kv, 'user:' + uname, null);
+    const badges = [];
+    if (u) {
+      const ageMs = now - u.createdAt;
+      if (ageMs < YEAR_MS) badges.push({ id:'newbie', label:'Narren-Neuling', icon:'🌱' });
+      if (ageMs >= 10 * YEAR_MS) badges.push({ id:'veteran', label:'Zunft-Urgestein', icon:'🏛️' });
+      if ((u.postCount || 0) >= 50) badges.push({ id:'prolific', label:'Vielschreiber', icon:'✍️' });
+    }
+    if (pastEvents.length >= 3 && pastEvents.every(e => (e.rsvp && e.rsvp.yes || []).includes(uname))) {
+      badges.push({ id:'regular', label:'Stammgast', icon:'⭐' });
+    }
+    map[uname] = badges;
+  }
+  return map;
+}
+
 // ---------------- Auth ----------------
 
 function getToken(request, url){
@@ -226,6 +262,8 @@ async function handleMembersList(kv){
     if (u && u.status === 'active') users.push(publicUser(u));
   }
   users.sort((a,b) => a.displayName.localeCompare(b.displayName, 'de'));
+  const badgesMap = await getBadgesMap(kv, users.map(u => u.username));
+  users.forEach(u => { u.badges = badgesMap[u.username] || []; });
   return json({ users });
 }
 
@@ -245,7 +283,13 @@ async function handleForumGet(request, url, kv, currentUser){
     const thread = await getJSON(kv, 'thread:' + id, null);
     if (!thread) return json({ error:'Thema nicht gefunden.' }, 404);
     if (thread.deleted && !canModerate) return json({ error:'Thema nicht gefunden.' }, 404);
-    const out = { ...thread, posts: thread.posts.map(p => visiblePost(p, canModerate || p.author === currentUser.username)) };
+    const authorNames = thread.posts.filter(p => !p.deleted || canModerate || p.author === currentUser.username).map(p => p.author);
+    const badgesMap = await getBadgesMap(kv, authorNames);
+    const out = { ...thread, posts: thread.posts.map(p => {
+      const vp = visiblePost(p, canModerate || p.author === currentUser.username);
+      if (vp.message !== undefined) vp.authorBadges = badgesMap[p.author] || [];
+      return vp;
+    }) };
     return json(out);
   }
 
