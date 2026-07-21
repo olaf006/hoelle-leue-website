@@ -191,6 +191,7 @@
   .btn-primary:hover{background:var(--red-dark); box-shadow:0 10px 22px rgba(163,39,27,.4);}
   .btn-ghost{border-color:var(--gold); color:var(--gold-light);}
   .btn-ghost:hover{background:rgba(217,164,65,.14);}
+  .btn-sm{padding:9px 18px; font-size:.85rem;}
 
   /* countdown card - signature element */
   .countdown{
@@ -300,6 +301,37 @@
   }
 
   ::selection{background:var(--gold); color:var(--wood-dark);}
+
+  /* -------- Kontakt-Pop-up -------- */
+  .modal-backdrop{
+    position:fixed; inset:0; background:rgba(36,21,9,.55); backdrop-filter:blur(2px);
+    display:flex; align-items:center; justify-content:center; z-index:200; padding:20px;
+    opacity:0; pointer-events:none; transition:opacity .25s var(--ease);
+  }
+  .modal-backdrop.open{opacity:1; pointer-events:auto;}
+  .modal-card{
+    background:var(--cream); border-radius:12px; padding:36px 34px; max-width:420px; width:100%;
+    box-shadow:0 24px 60px rgba(36,21,9,.4); border:3px solid var(--wood-dark); position:relative;
+    transform:scale(.92) translateY(14px); opacity:0; transition:transform .3s var(--ease), opacity .3s var(--ease);
+  }
+  .modal-backdrop.open .modal-card{transform:scale(1) translateY(0); opacity:1;}
+  .modal-close{
+    position:absolute; top:14px; right:14px; width:32px; height:32px; border-radius:50%;
+    border:none; background:var(--cream-dark); color:var(--wood-dark); font-size:1.1rem; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; transition:background .2s var(--ease), transform .2s var(--ease);
+  }
+  .modal-close:hover{background:var(--gold); transform:rotate(90deg);}
+  .modal-card h2{font-size:1.35rem; margin-bottom:4px;}
+  .modal-card .modal-sub{color:#5a4a36; font-size:.92rem; margin-bottom:22px;}
+  .modal-row{display:flex; gap:14px; align-items:flex-start; margin-bottom:18px;}
+  .modal-row .ico{
+    width:38px; height:38px; border-radius:8px; background:var(--wood-dark); color:var(--gold-light);
+    display:flex; align-items:center; justify-content:center; flex:none; font-size:1.1rem;
+  }
+  .modal-row .txt strong{display:block; font-size:.72rem; text-transform:uppercase; letter-spacing:.08em; color:var(--red-dark); font-family:'JetBrains Mono',monospace; margin-bottom:2px;}
+  .modal-row .txt a, .modal-row .txt span{color:var(--ink); text-decoration:none; font-size:.98rem; line-height:1.4;}
+  .modal-row .txt a:hover{color:var(--red-dark); text-decoration:underline;}
+  .modal-actions{margin-top:8px; display:flex; gap:10px; flex-wrap:wrap;}
 </style>
 </head>
 <body>
@@ -452,7 +484,7 @@
         <h2>Lust auf nette Leute, viel Spaß und Fasnet?</h2>
         <p>Wenn du alle drei Fragen mit Ja beantworten kannst, bist du bei uns richtig. Egal ob als aktive:r Hästräger:in oder passives Mitglied — wir freuen uns, dich kennenzulernen.</p>
       </div>
-      <a href="#kontakt" class="btn btn-primary">Jetzt Kontakt aufnehmen</a>
+      <button type="button" class="btn btn-primary" id="btnContactPopup">Jetzt Kontakt aufnehmen</button>
     </div>
   </div>
 </section>
@@ -465,8 +497,8 @@
     </div>
     <div>
       <h3>Kontakt</h3>
-      <p><a href="mailto:info@hoelle-leue.de">info@hoelle-leue.de</a><br>
-      Rieselfeld, Freiburg im Breisgau</p>
+      <p><a href="mailto:hoelle-leue@web.de">hoelle-leue@web.de</a><br>
+      Selma-Stern-Weg 6, 79111 Freiburg im Breisgau</p>
     </div>
     <div>
       <h3>Folgt uns</h3>
@@ -478,6 +510,30 @@
     <span><a href="/impressum.html">Impressum</a> · <a href="/datenschutz.html">Datenschutz</a></span>
   </div>
 </footer>
+
+<div class="modal-backdrop" id="contactModalBackdrop">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="contactModalTitle">
+    <button type="button" class="modal-close" id="contactModalClose" aria-label="Schließen">✕</button>
+    <h2 id="contactModalTitle">Kontakt aufnehmen</h2>
+    <p class="modal-sub">Wir freuen uns, von dir zu hören!</p>
+    <div class="modal-row">
+      <span class="ico">✉</span>
+      <span class="txt"><strong>E-Mail</strong><a href="mailto:hoelle-leue@web.de">hoelle-leue@web.de</a></span>
+    </div>
+    <div class="modal-row">
+      <span class="ico">☎</span>
+      <span class="txt"><strong>Telefon</strong><a href="tel:+4976189829807">0761 89829807</a></span>
+    </div>
+    <div class="modal-row">
+      <span class="ico">📍</span>
+      <span class="txt"><strong>Adresse</strong><span>Selma-Stern-Weg 6<br>79111 Freiburg im Breisgau</span></span>
+    </div>
+    <div class="modal-actions">
+      <a href="mailto:hoelle-leue@web.de" class="btn btn-primary btn-sm">E-Mail schreiben</a>
+      <a href="https://www.instagram.com/friburger_hoelle_leue/" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">Instagram</a>
+    </div>
+  </div>
+</div>
 
 <script>
   document.getElementById('year').textContent = new Date().getFullYear();
@@ -591,6 +647,15 @@
   document.querySelectorAll('.navlinks a').forEach(a => {
     a.addEventListener('click', () => { document.getElementById('navToggle').checked = false; });
   });
+
+  /* ---------- Kontakt-Pop-up ---------- */
+  const contactBackdrop = document.getElementById('contactModalBackdrop');
+  function openContactModal(){ contactBackdrop.classList.add('open'); document.body.style.overflow = 'hidden'; }
+  function closeContactModal(){ contactBackdrop.classList.remove('open'); document.body.style.overflow = ''; }
+  document.getElementById('btnContactPopup').addEventListener('click', openContactModal);
+  document.getElementById('contactModalClose').addEventListener('click', closeContactModal);
+  contactBackdrop.addEventListener('click', (e) => { if (e.target === contactBackdrop) closeContactModal(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeContactModal(); });
 
   /* ---------- Scroll-Reveal-Animationen ---------- */
   if ('IntersectionObserver' in window) {
