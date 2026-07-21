@@ -14,6 +14,24 @@
     --cream:#ffffff; --cream-dark:#f0ede8; --ink:#1a1613;
     --shadow:0 10px 30px rgba(23,20,18,0.12); --ease:cubic-bezier(.22,.9,.32,1);
   }
+  html[data-theme="dark"]{
+    --cream:#1c1a17; --cream-dark:#2a2620; --ink:#eee8de;
+    --wood-light:#8a8072; --shadow:0 10px 30px rgba(0,0,0,0.4);
+  }
+  html[data-theme="dark"] body{background:#141210;}
+  html[data-theme="dark"] .panel, html[data-theme="dark"] .post, html[data-theme="dark"] .user-row,
+  html[data-theme="dark"] .pending-row, html[data-theme="dark"] .log-row, html[data-theme="dark"] .member-card{
+    background:#211e1a; border-color:#332e27;
+  }
+  html[data-theme="dark"] .field input, html[data-theme="dark"] .field select,
+  html[data-theme="dark"] .field textarea, html[data-theme="dark"] .light-field input,
+  html[data-theme="dark"] .light-field select, html[data-theme="dark"] .search-box input,
+  html[data-theme="dark"] .sort-select{ background:#2a2620; color:#eee8de; border-color:#3a352c; }
+  html[data-theme="dark"] .attach-file{ background:#2a2620; }
+  html[data-theme="dark"] .reaction-btn{ background:#211e1a; border-color:#3a352c; }
+  html[data-theme="dark"] .reaction-picker{ background:#211e1a; border-color:#3a352c; }
+  html[data-theme="dark"] .cat-pill{ border-color:#3a352c; color:#c9c4bb; }
+  html[data-theme="dark"] h1, html[data-theme="dark"] h2, html[data-theme="dark"] h3{ color:#f4efe6; }
   *{box-sizing:border-box;}
   html{scroll-behavior:smooth;}
   body{margin:0; background:var(--cream); color:var(--ink); font-family:'Work Sans', sans-serif; font-size:17px; line-height:1.6;}
@@ -171,6 +189,20 @@
   .reaction-picker button{background:none; border:none; font-size:1.2rem; cursor:pointer; padding:4px 6px; border-radius:6px; transition:background .15s var(--ease);}
   .reaction-picker button:hover{background:var(--cream-dark);}
 
+  /* ---- RSVP-Termine ---- */
+  .rsvp-block{background:var(--cream-dark); border-radius:10px; padding:20px 22px; margin:16px 0 22px;}
+  .rsvp-date{font-family:'JetBrains Mono',monospace; font-size:.85rem; color:var(--red-dark); font-weight:600; margin-bottom:12px;}
+  .rsvp-buttons{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;}
+  .rsvp-btn{padding:9px 16px; border-radius:20px; border:1.5px solid var(--cream-dark); background:#fff; cursor:pointer; font-family:inherit; font-size:.85rem; font-weight:600; transition:all .2s var(--ease);}
+  .rsvp-btn:hover{transform:translateY(-1px);}
+  .rsvp-btn[data-rsvp="yes"].active{background:#2f7d4a; border-color:#2f7d4a; color:#fff;}
+  .rsvp-btn[data-rsvp="maybe"].active{background:var(--gold); border-color:var(--gold); color:#fff;}
+  .rsvp-btn[data-rsvp="no"].active{background:var(--red); border-color:var(--red); color:#fff;}
+  .rsvp-lists{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; font-size:.85rem;}
+  @media(max-width:600px){ .rsvp-lists{grid-template-columns:1fr;} }
+  .rsvp-lists h4{font-size:.78rem; text-transform:uppercase; letter-spacing:.05em; margin:0 0 6px; color:#6f6350;}
+  .rsvp-lists ul{margin:0; padding-left:1.1em;}
+
   .status-msg.form{color:var(--red-dark);}
   .status-msg.form.ok{color:#2f6b34;}
 
@@ -209,6 +241,7 @@
       <li><a href="/index.html">Zur Website</a></li>
       <li><a href="/sage.html">Unsere Sage</a></li>
       <li><a href="/mitglieder.html" class="active">Forum</a></li>
+      <li><button id="themeToggle" title="Hell/Dunkel umschalten">🌙</button></li>
       <li id="navAdminLi" style="display:none;"><button id="navAdminBtn">Admin</button></li>
       <li id="navWhoLi" style="display:none;"><span class="who" id="navWho"></span></li>
       <li id="navLogoutLi" style="display:none;"><button id="navLogoutBtn">Abmelden</button></li>
@@ -244,6 +277,7 @@
             <select id="reOffice"></select>
           </div>
           <div class="field"><label>Passwort</label><input type="password" id="rePassword" required autocomplete="new-password"></div>
+          <div class="field"><label>Geburtstag (optional, für die Geburtstagsliste)</label><input type="text" id="reBirthday" placeholder="TT-MM, z. B. 24-12"></div>
           <button type="submit">Registrieren</button>
           <div class="status-msg" id="registerStatus"></div>
         </form>
@@ -255,6 +289,8 @@
 
       <div class="tabs" id="tabs">
         <button type="button" class="tab-btn active" data-tab="list">Forum</button>
+        <button type="button" class="tab-btn" data-tab="calendar">Kalender</button>
+        <button type="button" class="tab-btn" data-tab="members">Mitglieder</button>
         <button type="button" class="tab-btn" data-tab="profile">Mein Profil</button>
         <button type="button" class="tab-btn" data-tab="admin" id="tabAdminBtn" style="display:none;">Admin<span class="badge" id="pendingBadge" style="display:none;">0</span></button>
       </div>
@@ -297,6 +333,13 @@
             <div class="light-field"><label>Nachricht</label><textarea id="ntMessage" required maxlength="4000" placeholder="Schreib deinen Beitrag..."></textarea></div>
             <p class="fmt-hint">Formatierung: **fett**, *kursiv*, Links werden automatisch erkannt.</p>
             <div class="light-field"><label>Dateien anhängen (optional, max. 5, je max. 4 MB)</label><input type="file" id="ntFiles" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"></div>
+            <div class="light-field" style="background:var(--cream-dark); padding:14px 16px; border-radius:6px;">
+              <label style="display:flex; align-items:center; gap:8px; margin-bottom:0;"><input type="checkbox" id="ntIsEvent" style="width:auto;"> Als Termin markieren (mit Zu-/Absage-Funktion)</label>
+              <div id="ntEventDateWrap" style="display:none; margin-top:10px;">
+                <label>Datum des Termins</label>
+                <input type="date" id="ntEventDate">
+              </div>
+            </div>
             <div class="form-actions"><button type="submit" class="btn btn-primary">Thema veröffentlichen</button></div>
             <div class="status-msg form" id="ntStatus"></div>
           </form>
@@ -312,6 +355,7 @@
           </div>
           <button class="btn btn-sm btn-ghost" id="tvPinBtn" style="display:none;"></button>
         </div>
+        <div id="tvRsvpBlock"></div>
         <div id="tvPosts"></div>
         <div class="reply-panel panel">
           <h3 style="font-size:1.02rem;">Antworten</h3>
@@ -326,6 +370,31 @@
         </div>
       </div>
 
+      <div id="calendarView" class="view">
+        <div class="page-head">
+          <span class="eyebrow">Kalender</span>
+          <h1 style="margin-top:4px;">Anstehende Termine</h1>
+        </div>
+        <p style="color:#6f6350; margin-bottom:20px;">Als „Termin" markierte Themen erscheinen hier automatisch. Klick auf einen Termin, um zu- oder abzusagen.</p>
+        <div id="calendarList"></div>
+      </div>
+
+      <div id="membersView" class="view">
+        <div class="page-head">
+          <span class="eyebrow">Mitgliederbereich</span>
+          <h1 style="margin-top:4px;">Mitgliederverzeichnis</h1>
+        </div>
+
+        <div class="admin-section">
+          <h2 style="font-size:1.05rem;">🎂 Anstehende Geburtstage</h2>
+          <div id="birthdayList"></div>
+        </div>
+        <div class="admin-section">
+          <h2 style="font-size:1.05rem;">Alle Mitglieder</h2>
+          <div id="memberDirectory"></div>
+        </div>
+      </div>
+
       <div id="profileView" class="view">
         <div class="panel" style="max-width:480px;">
           <h2>Mein Profil</h2>
@@ -334,7 +403,18 @@
           <p><strong>Amt:</strong> <span id="pfOffice"></span></p>
           <p><strong>Beiträge:</strong> <span id="pfPostCount"></span></p>
           <p><strong>Rechte:</strong> <span id="pfRights"></span></p>
-          <div style="margin-top:24px; padding-top:20px; border-top:1px solid var(--cream-dark);">
+
+          <div style="margin-top:20px; padding-top:20px; border-top:1px solid var(--cream-dark);">
+            <div class="light-field"><label>Geburtstag (TT-MM, für die Geburtstagsliste)</label>
+              <div style="display:flex; gap:8px;">
+                <input type="text" id="pfBirthdayInput" placeholder="z. B. 24-12" style="flex:1;">
+                <button class="btn btn-sm btn-primary" id="btnSaveBirthday">Speichern</button>
+              </div>
+            </div>
+            <div class="status-msg form" id="birthdayStatus"></div>
+          </div>
+
+          <div style="margin-top:10px; padding-top:20px; border-top:1px solid var(--cream-dark);">
             <button class="btn btn-danger btn-sm" id="btnDeleteAccount">Mein Konto endgültig löschen</button>
             <p style="font-size:.8rem; color:#6f6350; margin-top:8px;">Deine bisherigen Beiträge bleiben im Forum sichtbar, dein Konto wird aber unwiderruflich gelöscht und du kannst dich nicht mehr anmelden.</p>
           </div>
@@ -390,6 +470,19 @@
   let activeCategory = 'Alle';
   let activeSort = 'activity';
   let quoteData = null;
+
+  // ---------- Dark Mode ----------
+  const THEME_KEY = 'hl_theme';
+  function applyTheme(t){
+    document.documentElement.setAttribute('data-theme', t);
+    document.getElementById('themeToggle').textContent = t === 'dark' ? '☀️' : '🌙';
+  }
+  applyTheme(localStorage.getItem(THEME_KEY) || 'light');
+  document.getElementById('themeToggle').addEventListener('click', () => {
+    const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    localStorage.setItem(THEME_KEY, next);
+    applyTheme(next);
+  });
 
   const authArea = document.getElementById('authArea');
   const app = document.getElementById('app');
@@ -474,7 +567,8 @@
         username: document.getElementById('reUsername').value,
         displayName: document.getElementById('reDisplayName').value,
         office: document.getElementById('reOffice').value,
-        password: document.getElementById('rePassword').value
+        password: document.getElementById('rePassword').value,
+        birthday: document.getElementById('reBirthday').value
       })});
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Registrierung fehlgeschlagen.');
@@ -525,7 +619,21 @@
     document.getElementById('pfOffice').textContent = me.officeLabel;
     document.getElementById('pfPostCount').textContent = me.postCount || 0;
     document.getElementById('pfRights').textContent = me.isAdmin ? 'Administrator:in (voller Zugriff)' : 'Mitglied';
+    document.getElementById('pfBirthdayInput').value = me.birthday ? me.birthday.slice(3,5) + '-' + me.birthday.slice(0,2) : '';
   }
+
+  document.getElementById('btnSaveBirthday').addEventListener('click', async () => {
+    const statusEl = document.getElementById('birthdayStatus');
+    const val = document.getElementById('pfBirthdayInput').value.trim();
+    statusEl.textContent = 'Wird gespeichert …'; statusEl.className = 'status-msg form';
+    try {
+      const res = await fetch('/api/account/update', { method:'POST', headers: authHeaders(true), body: JSON.stringify({ birthday: val || null }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Fehler.');
+      me = data.user;
+      statusEl.textContent = 'Gespeichert!'; statusEl.className = 'status-msg form ok';
+    } catch (err) { statusEl.textContent = err.message; statusEl.className = 'status-msg form'; }
+  });
 
   document.getElementById('btnDeleteAccount').addEventListener('click', async () => {
     if (!confirm('Möchtest du dein Konto wirklich unwiderruflich löschen? Das kann nicht rückgängig gemacht werden.')) return;
@@ -540,7 +648,11 @@
 
   // ---------- Tabs ----------
   const tabBtns = document.querySelectorAll('.tab-btn');
-  const tabViews = { list: document.getElementById('listView'), profile: document.getElementById('profileView'), admin: document.getElementById('adminView') };
+  const tabViews = {
+    list: document.getElementById('listView'), profile: document.getElementById('profileView'),
+    admin: document.getElementById('adminView'), calendar: document.getElementById('calendarView'),
+    members: document.getElementById('membersView')
+  };
   const subViews = { newThread: document.getElementById('newThreadForm'), thread: document.getElementById('threadView') };
 
   function showTab(name){
@@ -551,6 +663,8 @@
     replay(tabViews[name]);
     if (name === 'list') loadThreads();
     if (name === 'admin') loadAdmin();
+    if (name === 'calendar') loadCalendar();
+    if (name === 'members') loadMembers();
   }
   tabBtns.forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
 
@@ -565,6 +679,10 @@
   document.getElementById('btnShowNew').addEventListener('click', () => showSub('newThread'));
   document.getElementById('backFromNew').addEventListener('click', e => { e.preventDefault(); showTab('list'); });
   document.getElementById('backFromThread').addEventListener('click', e => { e.preventDefault(); showTab('list'); });
+
+  document.getElementById('ntIsEvent').addEventListener('change', (e) => {
+    document.getElementById('ntEventDateWrap').style.display = e.target.checked ? 'block' : 'none';
+  });
 
   // ---------- Toolbar: Suche / Sortierung / Kategorien ----------
   document.getElementById('searchInput').addEventListener('input', renderThreadList);
@@ -690,6 +808,8 @@
       quoteData = null;
       renderQuotePreview();
 
+      renderRsvpBlock(thread, id);
+
       postsEl.innerHTML = '';
       thread.posts.forEach((p, i) => {
         const el = document.createElement('div');
@@ -810,6 +930,108 @@
     document.getElementById('clearQuoteBtn').addEventListener('click', () => { quoteData = null; renderQuotePreview(); });
   }
 
+  function renderRsvpBlock(thread, threadId){
+    const el = document.getElementById('tvRsvpBlock');
+    if (!thread.isEvent) { el.innerHTML = ''; return; }
+    const rsvp = thread.rsvp || { yes:[], maybe:[], no:[] };
+    const myStatus = rsvp.yes.includes(me.username) ? 'yes' : rsvp.maybe.includes(me.username) ? 'maybe' : rsvp.no.includes(me.username) ? 'no' : null;
+    const dateStr = thread.eventDate ? new Date(thread.eventDate).toLocaleDateString('de-DE', { weekday:'long', day:'2-digit', month:'2-digit', year:'numeric' }) : '';
+    el.innerHTML = `
+      <div class="rsvp-block">
+        <div class="rsvp-date">📅 Termin: ${escapeHtml(dateStr)}</div>
+        <div class="rsvp-buttons">
+          <button class="rsvp-btn ${myStatus==='yes'?'active':''}" data-rsvp="yes">✅ Bin dabei (${rsvp.yes.length})</button>
+          <button class="rsvp-btn ${myStatus==='maybe'?'active':''}" data-rsvp="maybe">🤔 Vielleicht (${rsvp.maybe.length})</button>
+          <button class="rsvp-btn ${myStatus==='no'?'active':''}" data-rsvp="no">❌ Kann nicht (${rsvp.no.length})</button>
+        </div>
+        <div class="rsvp-lists">
+          <div><h4>Bin dabei</h4><ul>${rsvp.yes.map(u=>`<li>${escapeHtml(u)}</li>`).join('') || '<li style="color:#aaa; list-style:none;">—</li>'}</ul></div>
+          <div><h4>Vielleicht</h4><ul>${rsvp.maybe.map(u=>`<li>${escapeHtml(u)}</li>`).join('') || '<li style="color:#aaa; list-style:none;">—</li>'}</ul></div>
+          <div><h4>Kann nicht</h4><ul>${rsvp.no.map(u=>`<li>${escapeHtml(u)}</li>`).join('') || '<li style="color:#aaa; list-style:none;">—</li>'}</ul></div>
+        </div>
+      </div>`;
+    el.querySelectorAll('.rsvp-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const status = btn.classList.contains('active') ? null : btn.dataset.rsvp;
+        await fetch('/api/forum/rsvp', { method:'POST', headers: authHeaders(true), body: JSON.stringify({ threadId, status }) });
+        loadThread(threadId);
+      });
+    });
+  }
+
+  // ---------- Kalender ----------
+  async function loadCalendar(){
+    const el = document.getElementById('calendarList');
+    el.innerHTML = '<div class="spinner-row"><div class="spinner"></div> Lädt Termine …</div>';
+    try {
+      const res = await fetch(API_FORUM + '?action=list', { headers: authHeaders() });
+      const data = await res.json();
+      const events = (data.threads || []).filter(t => t.isEvent && !t.deleted);
+      events.sort((a,b) => (a.eventDate||0) - (b.eventDate||0));
+      if (!events.length) { el.innerHTML = '<div class="empty-state">Noch keine Termine angelegt. Erstelle im Forum ein neues Thema und markiere es als „Termin".</div>'; return; }
+      el.innerHTML = '';
+      events.forEach((t, i) => {
+        const rsvp = t.rsvp || { yes:[], maybe:[], no:[] };
+        const row = document.createElement('div');
+        row.className = 'thread-row';
+        row.style.animationDelay = (i*0.05)+'s';
+        const dateStr = t.eventDate ? new Date(t.eventDate).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' }) : '?';
+        row.innerHTML = `
+          ${avatarHtml(t.authorDisplayName)}
+          <div><h3>📅 ${escapeHtml(t.title)}</h3><div class="thread-meta">${dateStr} · von ${escapeHtml(t.authorDisplayName)}</div></div>
+          <span class="thread-cat">${escapeHtml(t.category)}</span>
+          <div class="thread-replies">✅ ${rsvp.yes.length} · 🤔 ${rsvp.maybe.length} · ❌ ${rsvp.no.length}</div>`;
+        row.addEventListener('click', () => { showTab('list'); openThread(t.id, t.lastActivity); });
+        el.appendChild(row);
+      });
+    } catch (err) { el.innerHTML = '<p style="color:var(--red-dark);">Termine konnten nicht geladen werden.</p>'; }
+  }
+
+  // ---------- Mitgliederverzeichnis & Geburtstage ----------
+  async function loadMembers(){
+    const dirEl = document.getElementById('memberDirectory');
+    const bdEl = document.getElementById('birthdayList');
+    dirEl.innerHTML = '<div class="spinner-row"><div class="spinner"></div> Lädt …</div>';
+    bdEl.innerHTML = '';
+    try {
+      const res = await fetch('/api/members', { headers: authHeaders() });
+      const data = await res.json();
+      const users = data.users || [];
+
+      dirEl.innerHTML = '';
+      users.forEach(u => {
+        const row = document.createElement('div');
+        row.className = 'user-row member-card';
+        row.innerHTML = `<div style="display:flex; align-items:center; gap:12px;">${avatarHtml(u.displayName)}<div class="who-info"><strong>${escapeHtml(u.displayName)}</strong><span style="font-size:.8rem; color:#6f6350;">${escapeHtml(u.officeLabel)} · ${u.postCount||0} Beiträge</span></div></div>
+          <span style="font-size:.78rem; color:#6f6350;">dabei seit ${new Date(u.createdAt).toLocaleDateString('de-DE',{month:'2-digit',year:'numeric'})}</span>`;
+        dirEl.appendChild(row);
+      });
+
+      const withBday = users.filter(u => u.birthday);
+      const today = new Date();
+      const daysUntil = (mmdd) => {
+        const [mm, dd] = mmdd.split('-').map(Number);
+        let next = new Date(today.getFullYear(), mm-1, dd);
+        if (next < new Date(today.getFullYear(), today.getMonth(), today.getDate())) next.setFullYear(next.getFullYear()+1);
+        return Math.round((next - today) / 86400000);
+      };
+      withBday.sort((a,b) => daysUntil(a.birthday) - daysUntil(b.birthday));
+      if (!withBday.length) {
+        bdEl.innerHTML = '<p style="color:#6f6350;">Noch keine Geburtstage hinterlegt (im Profil ergänzbar).</p>';
+      } else {
+        withBday.slice(0, 8).forEach(u => {
+          const d = daysUntil(u.birthday);
+          const [mm, dd] = u.birthday.split('-');
+          const row = document.createElement('div');
+          row.className = 'user-row';
+          row.innerHTML = `<div style="display:flex; align-items:center; gap:12px;">${avatarHtml(u.displayName)}<div class="who-info"><strong>${escapeHtml(u.displayName)}</strong><span style="font-size:.8rem; color:#6f6350;">${dd}.${mm}.</span></div></div>
+            <span style="font-size:.82rem; color:var(--red-dark); font-weight:600;">${d===0 ? '🎉 Heute!' : d===1 ? 'Morgen' : 'in ' + d + ' Tagen'}</span>`;
+          bdEl.appendChild(row);
+        });
+      }
+    } catch (err) { dirEl.innerHTML = '<p style="color:var(--red-dark);">Mitglieder konnten nicht geladen werden.</p>'; }
+  }
+
   async function moderate(body){
     const res = await fetch(API_MOD, { method:'POST', headers: authHeaders(true), body: JSON.stringify(body) });
     const data = await res.json();
@@ -838,13 +1060,17 @@
     try {
       const attachments = await uploadFiles(document.getElementById('ntFiles'), statusEl);
       statusEl.textContent = 'Wird veröffentlicht …';
+      const isEvent = document.getElementById('ntIsEvent').checked;
+      const eventDate = document.getElementById('ntEventDate').value;
       const res = await fetch(API_FORUM, { method:'POST', headers: authHeaders(true), body: JSON.stringify({
         action:'newThread', category: document.getElementById('ntCategory').value,
-        title: document.getElementById('ntTitle').value, message: document.getElementById('ntMessage').value, attachments
+        title: document.getElementById('ntTitle').value, message: document.getElementById('ntMessage').value, attachments,
+        isEvent, eventDate: isEvent ? eventDate : null
       })});
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Fehler beim Speichern.');
       document.getElementById('threadForm').reset();
+      document.getElementById('ntEventDateWrap').style.display = 'none';
       statusEl.textContent = 'Thema veröffentlicht!'; statusEl.className = 'status-msg form ok';
       openThread(data.id, data.lastActivity);
     } catch (err) { statusEl.textContent = err.message; statusEl.className = 'status-msg form'; }
