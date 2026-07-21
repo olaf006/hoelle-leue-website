@@ -138,6 +138,14 @@
   .avatar{width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:.85rem; font-family:'Fraunces',serif; flex:none;}
   .avatar.sm{width:30px; height:30px; font-size:.7rem;}
 
+  /* ---- Zunft-Abzeichen ---- */
+  .badge-pill{
+    display:inline-flex; align-items:center; gap:3px; font-size:.68rem; font-weight:600;
+    background:var(--cream-dark); color:var(--wood); padding:2px 8px 2px 6px; border-radius:12px;
+    border:1px solid #e2ddd2; cursor:default;
+  }
+  .badges-row{display:flex; gap:5px; flex-wrap:wrap; margin-bottom:8px;}
+
   .view{animation:fadeUp .4s var(--ease) both;}
   #newThreadForm, #threadView, #adminView, #profileView{display:none;}
   .panel{background:#fff; border-radius:10px; padding:30px; border:1px solid var(--cream-dark); box-shadow:var(--shadow); animation:popIn .4s var(--ease) both;}
@@ -830,6 +838,8 @@
         else if (!p.deleted && canDelete) actionsHtml += `<button class="btn btn-sm btn-danger" data-postid="${p.id}" data-action="deletePost">Löschen</button>`;
         const editedTag = p.editedAt ? ' <span style="font-size:.72rem; color:#6f6350;">(bearbeitet)</span>' : '';
         const quoteHtml = p.quote ? `<div class="post-quote"><strong>${escapeHtml(p.quote.author)}</strong> schrieb:<br>${escapeHtml(p.quote.message)}</div>` : '';
+        const badgesHtml = (p.authorBadges && p.authorBadges.length)
+          ? `<div class="badges-row">${p.authorBadges.map(b => `<span class="badge-pill" title="${escapeHtml(b.label)}">${b.icon} ${escapeHtml(b.label)}</span>`).join('')}</div>` : '';
         el.innerHTML = `
           ${avatarHtml(p.authorDisplayName)}
           <div class="post-main">
@@ -841,6 +851,7 @@
               </span>
               <span class="post-date">${fmtDate(p.createdAt)}${editedTag}</span>
             </div>
+            ${badgesHtml}
             ${quoteHtml}
             <div class="post-body" data-body-for="${p.id}">${p.deleted ? '<em style="color:#6f6350;">[Vom Moderator gelöscht — nur für Moderator:innen/Autor:in sichtbar]</em><br>'+renderMessage(p.message) : renderMessage(p.message)}</div>
             <div class="attachments">${renderAttachments(p.attachments)}</div>
@@ -1002,7 +1013,9 @@
       users.forEach(u => {
         const row = document.createElement('div');
         row.className = 'user-row member-card';
-        row.innerHTML = `<div style="display:flex; align-items:center; gap:12px;">${avatarHtml(u.displayName)}<div class="who-info"><strong>${escapeHtml(u.displayName)}</strong><span style="font-size:.8rem; color:#6f6350;">${escapeHtml(u.officeLabel)} · ${u.postCount||0} Beiträge</span></div></div>
+        const badgesHtml = (u.badges && u.badges.length)
+          ? `<div class="badges-row" style="margin-top:6px;">${u.badges.map(b => `<span class="badge-pill" title="${escapeHtml(b.label)}">${b.icon} ${escapeHtml(b.label)}</span>`).join('')}</div>` : '';
+        row.innerHTML = `<div style="display:flex; align-items:center; gap:12px;">${avatarHtml(u.displayName)}<div class="who-info"><strong>${escapeHtml(u.displayName)}</strong><span style="font-size:.8rem; color:#6f6350;">${escapeHtml(u.officeLabel)} · ${u.postCount||0} Beiträge</span>${badgesHtml}</div></div>
           <span style="font-size:.78rem; color:#6f6350;">dabei seit ${new Date(u.createdAt).toLocaleDateString('de-DE',{month:'2-digit',year:'numeric'})}</span>`;
         dirEl.appendChild(row);
       });
