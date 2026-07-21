@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unsere Sage — Friburger Hölle-Leue e.V.</title>
+<meta name="description" content="Die Sage von Ritter Kuno von Falkensteig — die Legende hinter dem Namen der Friburger Hölle-Leue.">
+<link rel="preconnect" href="https://fonts.bunny.net">
+<link href="https://fonts.bunny.net/css?family=fraunces:500,600,700,900|work-sans:400,500,600|jetbrains-mono:400,500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --wood-dark:   #171412; --wood:        #3a332c; --wood-light:  #6b6258;
+    --red:         #b4222c; --red-dark:    #8c1a22; --gold:        #c9a227; --gold-light:  #e6c65c;
+    --cream:       #ffffff; --cream-dark:  #f0ede8; --ink:         #1a1613; --ease:cubic-bezier(.22,.9,.32,1);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--cream); color:var(--ink); font-family:'Work Sans', sans-serif; font-size:17px; line-height:1.7;}
+  h1,h2{font-family:'Fraunces', serif; font-weight:700; color:var(--wood-dark); letter-spacing:-0.01em;}
+  a{color:var(--red-dark);}
+  .wrap{max-width:760px; margin:0 auto; padding:0 24px;}
+  header{background:var(--wood-dark); border-bottom:3px solid var(--red);}
+  nav.wrap{display:flex; align-items:center; justify-content:space-between; padding:14px 24px; max-width:1080px;}
+  .brand{display:flex; align-items:center; gap:12px; text-decoration:none;}
+  .brand-mark{width:38px; height:38px;}
+  .brand-name{font-family:'Fraunces', serif; color:var(--cream); font-weight:700; font-size:1.15rem; line-height:1.05;}
+  .brand-sub{display:block; font-family:'JetBrains Mono', monospace; font-size:.62rem; letter-spacing:.1em; color:var(--gold-light); text-transform:uppercase; margin-top:2px;}
+  .navlinks{display:flex; gap:22px; list-style:none; margin:0; padding:0;}
+  .navlinks a{text-decoration:none; color:#d8d3cc; font-size:.9rem; font-weight:500;}
+  .navlinks a:hover{color:var(--gold-light);}
+  @media(max-width:700px){ .navlinks{display:none;} }
+  .rope{height:3px; background:linear-gradient(90deg, transparent, var(--red) 15%, var(--red) 85%, transparent); box-shadow:0 1px 12px rgba(180,34,44,.3);}
+  main{padding:64px 0 90px;}
+  .eyebrow{font-family:'JetBrains Mono', monospace; text-transform:uppercase; letter-spacing:.14em; font-size:.72rem; color:var(--red-dark); font-weight:500; display:block; margin-bottom:10px;}
+  .lead{color:#3a332c; font-size:1.05rem; max-width:56ch; margin-bottom:34px;}
+  .card{background:#fff; border:1px solid var(--cream-dark); border-radius:10px; padding:40px 44px; box-shadow:0 10px 30px rgba(23,20,18,.08);}
+  @media(max-width:640px){ .card{padding:28px;} }
+  .card p{margin:0 0 18px;}
+  .card p:last-child{margin-bottom:0;}
+  .drop::first-letter{font-family:'Fraunces', serif; font-size:3.6rem; font-weight:700; float:left; line-height:.8; padding-right:10px; padding-top:6px; color:var(--red);}
+  .note{
+    margin-top:30px; padding:20px 24px; background:var(--cream-dark); border-left:4px solid var(--gold);
+    border-radius:6px; font-size:.92rem; color:var(--wood);
+  }
+  footer{background:var(--wood-dark); color:#d8d3cc; padding:30px 0; text-align:center; font-size:.85rem;}
+  footer a{color:var(--gold-light); text-decoration:none;}
+</style>
+</head>
+<body>
+
+<header>
+  <nav class="wrap">
+    <a href="/index.html" class="brand">
+      <svg class="brand-mark" viewBox="0 0 48 48" fill="none">
+        <circle cx="24" cy="24" r="22" fill="#b4222c" stroke="#c9a227" stroke-width="2"/>
+        <path d="M14 20 Q24 10 34 20" stroke="#c9a227" stroke-width="2" fill="none"/>
+        <circle cx="18" cy="22" r="2.4" fill="#ffffff"/>
+        <circle cx="30" cy="22" r="2.4" fill="#ffffff"/>
+        <path d="M15 30 Q24 38 33 30" stroke="#ffffff" stroke-width="2" fill="none"/>
+        <path d="M20 12 L18 6 M28 12 L30 6" stroke="#c9a227" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <span><span class="brand-name">Hölle-Leue</span><span class="brand-sub">Narrenzunft Freiburg</span></span>
+    </a>
+    <ul class="navlinks">
+      <li><a href="/index.html">Zur Website</a></li>
+      <li><a href="/sage.html">Unsere Sage</a></li>
+      <li><a href="/mitglieder.html">Mitgliederbereich</a></li>
+    </ul>
+  </nav>
+</header>
+<div class="rope"></div>
+
+<main>
+  <div class="wrap">
+    <span class="eyebrow">Unsere Geschichte</span>
+    <h1 style="margin-bottom:14px;">Die Sage von Ritter Kuno von Falkensteig</h1>
+    <p class="lead">Diese Sage aus dem oberen Höllental erzählt von Treue, Teufelslist und einem Löwen — und sie ist es, die unserer Zunft ihren Namen gegeben hat: den Friburger <strong>Hölle-Leue</strong>.</p>
+
+    <div class="card">
+      <p class="drop">Ritter Kuno von der Burg Falkenstein, oberhalb des unteren Höllentals, folgte Anfang des 14. Jahrhunderts dem Ruf des Heiligen Bernhard von Clairvaux ins Heilige Land, das Kreuz zu predigen. Unter Tränen bat er seine Frau Ida, ihm sieben Jahre die Treue zu halten. Sollte er bis dahin nicht zurückgekehrt sein, solle sie ihn als tot betrachten. Zum Zeichen der gegenseitigen Treue zerbrach er seinen Ehering und gab Ida eine Hälfte.</p>
+
+      <p>Kuno geriet in türkische Gefangenschaft, und unter der Knechtschaft eines Sultans vergingen viele Jahre. Schließlich konnte er fliehen, und eines Nachts während der Flucht sah er im Traum seine Frau Ida, die von einem anderen Mann zum Altar geführt wurde. Der Teufel hatte ihm diesen Traum geschickt und schlug Kuno vor, ihn in Gestalt eines Löwen noch rechtzeitig in die Heimat zu tragen, bevor seine Frau erneut vermählt würde. Allerdings müsse Kuno auf dieser Reise wach bleiben — schlafe er ein, sei er ihm, dem Teufel, zu eigen. Kuno willigte ein, doch unterwegs befiel den Ritter eine lähmende Müdigkeit. Da stürzte ein großer Falke aus den Wolken herab, setzte sich auf Kunos Kopf und verscheuchte mit seinen Flügeln und dem Schnabel den Schlaf.</p>
+
+      <p>Beim ersten Hahnenschrei setzte der Teufel Kuno beim Wirtshaus „Zum Rindsfuß", dem heutigen „Gasthaus Fortuna", in Kirchzarten ab. Als er sah, dass der Ritter wach war, ergriff er rasend einen Stein, um ihn zu töten. Doch der Stein schlug krachend in eine Ecke des Wirtshauses, und der Teufel war um seine Beute gebracht.</p>
+
+      <p>In der Morgenfrühe kam der Hochzeitszug mit Ida und ihrem künftigen Ehemann Johann von Snewlin auf dem Weg zur St. Gallus Kirche vorbei, wo ein Willkommenstrunk gereicht wurde. Kuno trat verhüllt heran und bat um einen kleinen Schluck. Ida reichte ihm den Kelch, Kuno trank daraus und ließ dann seine Ringhälfte hineingleiten. Ida bemerkte das, warf ihre Hälfte hinzu, und beide Teile schlossen sich zu einem Ring, als wären sie nie getrennt gewesen.</p>
+
+      <p>„Das ist mein geliebter Gatte Kuno", wandte sich Ida an Johann. „Ich hielt ihm sieben Jahre die Treue, und Gott hat ihn mir in seiner Güte zurückgegeben." Sie führte Kuno zur Kirche, zur neuen Besiegelung ihres Bundes.</p>
+    </div>
+
+    <div class="note">
+      <strong>Warum „Hölle-Leue"?</strong> Der Teufel trug Ritter Kuno in Gestalt eines Löwen durch das Höllental in die Heimat — aus dieser Begegnung von <em>Höllental</em> und <em>Löwe</em> (alemannisch „Leue") hat unsere Zunft ihren Namen und ihr Wesen geformt, das ihr in unserer Larve und unserem Häs wiederfindet.
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">Friburger Hölle-Leue e.V. · <a href="/index.html">zurück zur Hauptseite</a> · <a href="/impressum.html">Impressum</a> · <a href="/datenschutz.html">Datenschutz</a></div>
+</footer>
+</body>
+</html>
