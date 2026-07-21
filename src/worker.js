@@ -68,7 +68,9 @@ function publicUser(u){
   return {
     username: u.username, displayName: u.displayName, office: u.office, officeLabel: off.label,
     isAdmin: !!u.isAdmin, canModerate: !!u.isAdmin, status: u.status, createdAt: u.createdAt,
-    postCount: u.postCount || 0, birthday: u.birthday || null
+    postCount: u.postCount || 0, birthday: u.birthday || null,
+    memberSince: u.memberSince || new Date(u.createdAt).getFullYear(),
+    manualBadges: u.manualBadges || []
   };
 }
 
@@ -95,17 +97,24 @@ async function addLogEntry(kv, entry){
 }
 
 // ---------------- Zunft-Abzeichen ----------------
-// Automatische Ehrenabzeichen basierend auf echten Zunftdaten (kein generisches Forum-Feature):
-// - Narren-Neuling: erstes Jahr dabei
-// - Zunft-Urgestein: 10+ Jahre Mitglied
-// - Vielschreiber: 50+ Beiträge
-// - Stammgast: bei den letzten Terminen (mind. 3 vorhanden) immer zugesagt
+// Automatische Ehrenabzeichen basierend auf echten Zunftdaten, PLUS manuell vergebbare
+// Abzeichen für Dinge, die sich nicht automatisch berechnen lassen (z.B. Gründungsmitglied).
+// "memberSince" (Jahr) ist unabhängig vom Registrierungsdatum durch einen Admin setzbar,
+// da die Zunft schon lange vor der Website existiert.
 
-const YEAR_MS = 365 * 86400000;
+const MANUAL_BADGES = [
+  { id:'founder',   label:'Gründungsmitglied', icon:'🏆' },
+  { id:'honorary',  label:'Ehrenmitglied',      icon:'👑' },
+  { id:'helper',    label:'Vereinshelfer',      icon:'🛠️' },
+  { id:'performer', label:'Bühnenstar',         icon:'🎭' },
+  { id:'musician',  label:'Guggenmusiker',      icon:'🥁' }
+];
+function manualBadgeInfo(id){ return MANUAL_BADGES.find(b => b.id === id); }
 
 async function getBadgesMap(kv, usernames){
   const threads = await getJSON(kv, THREADS_KEY, []);
   const now = Date.now();
+  const currentYear = new Date().getFullYear();
   const pastEvents = threads
     .filter(t => t.isEvent && !t.deleted && t.eventDate && t.eventDate <= now)
     .sort((a,b) => b.eventDate - a.eventDate)
@@ -113,15 +122,26 @@ async function getBadgesMap(kv, usernames){
 
   const map = {};
   const uniqueNames = [...new Set(usernames)];
+
   for (const uname of uniqueNames) {
     const u = await getJSON(kv, 'user:' + uname, null);
     const badges = [];
+
     if (u) {
-      const ageMs = now - u.createdAt;
-      if (ageMs < YEAR_MS) badges.push({ id:'newbie', label:'Narren-Neuling', icon:'🌱' });
-      if (ageMs >= 10 * YEAR_MS) badges.push({ id:'veteran', label:'Zunft-Urgestein', icon:'🏛️' });
+      const memberSince = u.memberSince || new Date(u.createdAt).getFullYear();
+      const yearsSince = currentYear - memberSince;
+      if (yearsSince < 1) badges.push({ id:'newbie', label:'Narren-Neuling', icon:'🌱' });
+      if (yearsSince >= 10) badges.push({ id:'veteran', label:'Zunft-Urgestein', icon:'🏛️' });
       if ((u.postCount || 0) >= 50) badges.push({ id:'prolific', label:'Vielschreiber', icon:'✍️' });
+      if ((u.uploadCount || 0) >= 10) badges.push({ id:'photographer', label:'Fotograf', icon:'📷' });
+
+      const ownThreads = threads.filter(t => t.author === uname && !t.deleted);
+      if (ownThreads.length >= 10) badges.push({ id:'starter', label:'Diskussionsstarter', icon:'🗣️' });
+      if (ownThreads.filter(t => t.isEvent).length >= 3) badges.push({ id:'organizer', label:'Termin-Macher', icon:'🎪' });
+
+      (u.manualBadges || []).forEach(id => { const info = manualBadgeInfo(id); if (info) badges.push(info); });
     }
+
     if (pastEvents.length >= 3 && pastEvents.every(e => (e.rsvp && e.rsvp.yes || []).includes(uname))) {
       badges.push({ id:'regular', label:'Stammgast', icon:'⭐' });
     }
@@ -365,7 +385,7 @@ async function handleForumPost(request, kv, currentUser){
     const idx = threads.findIndex(t => t.id === threadId);
     if (idx !== -1) {
       threads[idx].lastActivity = now;
-      threads[idx].replyCount = threadDoc.posts.filter(p => !p.deleted).length - 1;
+      threads[idx].replyCount = threadDoc.posts.slice(1).filter(p => !p.deleted).length;
       await kv.put(THREADS_KEY, JSON.stringify(threads));
     }
     return json(threadDoc);
@@ -516,7 +536,7 @@ async function handleModerate(request, kv, currentUser){
 
     const threads = await getJSON(kv, THREADS_KEY, []);
     const idx = threads.findIndex(t => t.id === threadId);
-    if (idx !== -1) { threads[idx].replyCount = threadDoc.posts.filter(p => !p.deleted).length - 1; await kv.put(THREADS_KEY, JSON.stringify(threads)); }
+    if (idx !== -1) { threads[idx].replyCount = threadDoc.posts.slice(1).filter(p => !p.deleted).length; await kv.put(THREADS_KEY, JSON.stringify(threads)); }
 
     return json({ ok:true });
   }
@@ -552,6 +572,26 @@ async function handleModerate(request, kv, currentUser){
     return json({ ok:true });
   }
 
+  if (body.action === 'purgeThread') {
+    if (!currentUser.isAdmin) return json({ error:'Nur Admins können Themen endgültig löschen.' }, 403);
+    const threadId = sanitize(body.threadId, 100);
+    const threadDoc = await getJSON(kv, 'thread:' + threadId, null);
+    if (!threadDoc) return json({ error:'Thema nicht gefunden.' }, 404);
+
+    await kv.delete('thread:' + threadId);
+    const threads = await getJSON(kv, THREADS_KEY, []);
+    const filtered = threads.filter(t => t.id !== threadId);
+    await kv.put(THREADS_KEY, JSON.stringify(filtered));
+
+    await addLogEntry(kv, {
+      action:'purge_thread', actorUsername: currentUser.username, actorDisplayName: currentUser.displayName,
+      threadId, reason,
+      summary: `${currentUser.displayName} hat das Thema „${threadDoc.title}" endgültig und unwiderruflich gelöscht.`,
+      deletedContent: { title: threadDoc.title, category: threadDoc.category, postCount: threadDoc.posts.length }
+    });
+    return json({ ok:true, purged:true });
+  }
+
   return json({ error:'Unbekannte Aktion.' }, 400);
 }
 
@@ -569,6 +609,9 @@ async function handleUpload(request, kv, currentUser){
   const name = sanitize(file.name || 'datei', 150);
   const type = sanitize(file.type || 'application/octet-stream', 100);
   await kv.put('file:' + id, JSON.stringify({ name, type, size: file.size, dataBase64, uploadedBy: currentUser.username, uploadedAt: Date.now() }));
+
+  const userRecord = await getJSON(kv, 'user:' + currentUser.username, null);
+  if (userRecord) { userRecord.uploadCount = (userRecord.uploadCount || 0) + 1; await kv.put('user:' + currentUser.username, JSON.stringify(userRecord)); }
 
   return json({ id, name, type, size: file.size, url: '/api/file?id=' + encodeURIComponent(id) });
 }
@@ -594,7 +637,7 @@ async function handleAdminUsers(kv){
   const users = [];
   for (const k of list.keys) { const u = await getJSON(kv, k.name, null); if (u) users.push(publicUser(u)); }
   users.sort((a,b) => a.displayName.localeCompare(b.displayName, 'de'));
-  return json({ users, offices: OFFICES });
+  return json({ users, offices: OFFICES, manualBadgeCatalog: MANUAL_BADGES });
 }
 async function handleAdminApprove(request, kv, currentUser){
   let body; try { body = await request.json(); } catch(e){ return json({ error:'Ungültige Anfrage.' }, 400); }
@@ -630,6 +673,23 @@ async function handleAdminUpdateUser(request, kv, currentUser){
   if (typeof body.isAdmin === 'boolean' && body.isAdmin !== user.isAdmin) {
     changes.push(`Admin-Rechte: ${user.isAdmin?'ja':'nein'} → ${body.isAdmin?'ja':'nein'}`);
     user.isAdmin = body.isAdmin;
+  }
+  if (body.memberSince !== undefined) {
+    const year = parseInt(body.memberSince, 10);
+    const currentYear = new Date().getFullYear();
+    if (!isNaN(year) && year >= 1900 && year <= currentYear) {
+      const oldYear = user.memberSince || new Date(user.createdAt).getFullYear();
+      if (year !== oldYear) changes.push(`Mitglied seit: ${oldYear} → ${year}`);
+      user.memberSince = year;
+    }
+  }
+  if (Array.isArray(body.manualBadges)) {
+    const valid = body.manualBadges.filter(id => manualBadgeInfo(id));
+    const oldBadges = user.manualBadges || [];
+    if (JSON.stringify(valid.sort()) !== JSON.stringify([...oldBadges].sort())) {
+      changes.push(`Abzeichen: ${valid.map(id=>manualBadgeInfo(id).label).join(', ') || '(keine)'}`);
+    }
+    user.manualBadges = valid;
   }
   await kv.put('user:' + username, JSON.stringify(user));
   if (changes.length) {
