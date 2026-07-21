@@ -10,17 +10,17 @@
 <style>
 
   :root{
-    --wood-dark:   #241509;
-    --wood:        #5c3a21;
-    --wood-light:  #8a5a34;
-    --red:         #a3271b;
-    --red-dark:    #7a1d14;
-    --gold:        #d9a441;
-    --gold-light:  #efc873;
-    --cream:       #f3e8cf;
-    --cream-dark:  #e6d5ac;
-    --ink:         #2a1d10;
-    --shadow: 0 10px 30px rgba(36,21,9,0.25);
+    --wood-dark:   #171412;
+    --wood:        #3a332c;
+    --wood-light:  #6b6258;
+    --red:         #b4222c;
+    --red-dark:    #8c1a22;
+    --gold:        #c9a227;
+    --gold-light:  #e6c65c;
+    --cream:       #ffffff;
+    --cream-dark:  #f0ede8;
+    --ink:         #1a1613;
+    --shadow: 0 10px 30px rgba(23,20,18,0.25);
     --ease: cubic-bezier(.22,.9,.32,1);
   }
 
@@ -65,8 +65,8 @@
   @keyframes popIn{ 0%{opacity:0; transform:scale(.94) translateY(10px);} 100%{opacity:1; transform:scale(1) translateY(0);} }
   @keyframes ropeShimmer{ 0%{background-position:0 0;} 100%{background-position:120px 0;} }
   @keyframes flamePulse{
-    0%,100%{ text-shadow:0 0 6px rgba(217,164,65,.35); }
-    50%{ text-shadow:0 0 18px rgba(217,164,65,.8), 0 0 4px rgba(163,39,27,.5); }
+    0%,100%{ text-shadow:0 0 6px rgba(201,162,39,.35); }
+    50%{ text-shadow:0 0 18px rgba(201,162,39,.8), 0 0 4px rgba(180,34,44,.5); }
   }
   @keyframes floatSlow{ 0%,100%{transform:translateY(0);} 50%{transform:translateY(-8px);} }
 
@@ -157,7 +157,7 @@
     background-color:var(--wood-dark);
     background-image:
       repeating-linear-gradient(100deg, rgba(255,255,255,0.02) 0 2px, transparent 2px 26px),
-      linear-gradient(160deg, rgba(36,21,9,.88), rgba(92,58,33,.72) 55%, rgba(138,90,52,.5)),
+      linear-gradient(160deg, rgba(23,20,18,.88), rgba(58,51,44,.72) 55%, rgba(107,98,88,.5)),
       url('/images/image1.jpg');
     background-size:auto, cover, cover;
     background-position:center, center, center;
@@ -188,9 +188,9 @@
   .btn:hover{transform:translateY(-2px);}
   .btn:active{transform:translateY(0) scale(.98);}
   .btn-primary{background:var(--red); color:var(--cream); border-color:var(--red);}
-  .btn-primary:hover{background:var(--red-dark); box-shadow:0 10px 22px rgba(163,39,27,.4);}
+  .btn-primary:hover{background:var(--red-dark); box-shadow:0 10px 22px rgba(180,34,44,.4);}
   .btn-ghost{border-color:var(--gold); color:var(--gold-light);}
-  .btn-ghost:hover{background:rgba(217,164,65,.14);}
+  .btn-ghost:hover{background:rgba(201,162,39,.14);}
   .btn-sm{padding:9px 18px; font-size:.85rem;}
 
   /* countdown card - signature element */
@@ -224,7 +224,7 @@
     background:var(--wood-dark); color:var(--cream); border-radius:8px; padding:26px 28px;
     transition:transform .25s var(--ease), box-shadow .25s var(--ease);
   }
-  .fact-card:hover{transform:translateY(-4px); box-shadow:0 14px 28px rgba(36,21,9,.3);}
+  .fact-card:hover{transform:translateY(-4px); box-shadow:0 14px 28px rgba(23,20,18,.3);}
   .fact-card + .fact-card{margin-top:16px;}
   .fact-card .num{font-family:'Fraunces',serif; font-size:2.1rem; color:var(--gold-light); font-weight:700; display:block;}
   .fact-card .lbl{font-size:.85rem; color:var(--cream-dark);}
@@ -251,7 +251,7 @@
     content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
     background:var(--gold); transform:scaleY(0); transform-origin:bottom; transition:transform .25s var(--ease);
   }
-  .event:hover{background:rgba(217,164,65,.1); padding-left:14px;}
+  .event:hover{background:rgba(201,162,39,.1); padding-left:14px;}
   .event:hover::before{transform:scaleY(1);}
   @media(max-width:640px){ .event{grid-template-columns:1fr; gap:6px;} }
   .event .date{
@@ -268,7 +268,7 @@
   .gallery-grid .photo{--ar:4/3;}
   .gallery-cap{
     position:absolute; left:0; right:0; bottom:0; padding:8px 10px;
-    background:linear-gradient(to top, rgba(36,21,9,.75), transparent);
+    background:linear-gradient(to top, rgba(23,20,18,.75), transparent);
     color:var(--cream-dark); font-family:'JetBrains Mono',monospace; font-size:.68rem;
     opacity:0; transition:opacity .25s var(--ease);
   }
@@ -285,7 +285,7 @@
   .join h2{color:var(--cream);}
   .join p{color:#f4d9d4;}
   .join .btn-primary{background:var(--gold); border-color:var(--gold); color:var(--wood-dark);}
-  .join .btn-primary:hover{background:var(--gold-light); box-shadow:0 10px 22px rgba(217,164,65,.4);}
+  .join .btn-primary:hover{background:var(--gold-light); box-shadow:0 10px 22px rgba(201,162,39,.4);}
 
   /* -------- kontakt / footer -------- */
   footer{background:var(--wood-dark); color:var(--cream-dark); padding:56px 0 26px;}
@@ -304,14 +304,14 @@
 
   /* -------- Kontakt-Pop-up -------- */
   .modal-backdrop{
-    position:fixed; inset:0; background:rgba(36,21,9,.55); backdrop-filter:blur(2px);
+    position:fixed; inset:0; background:rgba(23,20,18,.55); backdrop-filter:blur(2px);
     display:flex; align-items:center; justify-content:center; z-index:200; padding:20px;
     opacity:0; pointer-events:none; transition:opacity .25s var(--ease);
   }
   .modal-backdrop.open{opacity:1; pointer-events:auto;}
   .modal-card{
     background:var(--cream); border-radius:12px; padding:36px 34px; max-width:420px; width:100%;
-    box-shadow:0 24px 60px rgba(36,21,9,.4); border:3px solid var(--wood-dark); position:relative;
+    box-shadow:0 24px 60px rgba(23,20,18,.4); border:3px solid var(--wood-dark); position:relative;
     transform:scale(.92) translateY(14px); opacity:0; transition:transform .3s var(--ease), opacity .3s var(--ease);
   }
   .modal-backdrop.open .modal-card{transform:scale(1) translateY(0); opacity:1;}
@@ -333,7 +333,7 @@
   .modal-row .txt a:hover{color:var(--red-dark); text-decoration:underline;}
   .modal-actions{margin-top:8px; display:flex; gap:10px; flex-wrap:wrap;}
   .modal-actions .btn-ghost{border-color:var(--wood-light); color:var(--wood-dark);}
-  .modal-actions .btn-ghost:hover{background:rgba(217,164,65,.18); border-color:var(--wood-dark);}
+  .modal-actions .btn-ghost:hover{background:rgba(201,162,39,.18); border-color:var(--wood-dark);}
 </style>
 </head>
 <body>
@@ -342,12 +342,12 @@
   <nav class="wrap">
     <a href="#top" class="brand">
       <svg class="brand-mark" viewBox="0 0 48 48" fill="none">
-        <circle cx="24" cy="24" r="22" fill="#a3271b" stroke="#d9a441" stroke-width="2"/>
-        <path d="M14 20 Q24 10 34 20" stroke="#d9a441" stroke-width="2" fill="none"/>
-        <circle cx="18" cy="22" r="2.4" fill="#f3e8cf"/>
-        <circle cx="30" cy="22" r="2.4" fill="#f3e8cf"/>
-        <path d="M15 30 Q24 38 33 30" stroke="#f3e8cf" stroke-width="2" fill="none"/>
-        <path d="M20 12 L18 6 M28 12 L30 6" stroke="#d9a441" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="24" cy="24" r="22" fill="#b4222c" stroke="#c9a227" stroke-width="2"/>
+        <path d="M14 20 Q24 10 34 20" stroke="#c9a227" stroke-width="2" fill="none"/>
+        <circle cx="18" cy="22" r="2.4" fill="#ffffff"/>
+        <circle cx="30" cy="22" r="2.4" fill="#ffffff"/>
+        <path d="M15 30 Q24 38 33 30" stroke="#ffffff" stroke-width="2" fill="none"/>
+        <path d="M20 12 L18 6 M28 12 L30 6" stroke="#c9a227" stroke-width="2" stroke-linecap="round"/>
       </svg>
       <span>
         <span class="brand-name">Hölle-Leue</span>
