@@ -1,6 +1,7 @@
 // Haupt-Worker: liefert die statische Website aus und stellt die komplette
 // Forum-API bereit — Mitgliederkonten, Ämter/Rollen, Moderation, Datei-Uploads,
-// Admin-Audit-Log, Reaktionen, angepinnte Themen und Beitragszähler.
+// Admin-Audit-Log, Reaktionen, angepinnte Themen, Beitragszähler, RSVP-Termine,
+// Mitgliederverzeichnis und Geburtstage.
 //
 // WICHTIG: Im Cloudflare-Dashboard unter "Bindings" muss eine KV-Namespace
 // mit dem Variablennamen FORUM_KV verbunden sein.
@@ -33,6 +34,15 @@ function json(data, status) {
 function makeId(){ return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8); }
 function sanitize(str, max){ if (typeof str !== 'string') return ''; return str.trim().slice(0, max || 4000); }
 function sanitizeUsername(str){ return sanitize(str, 30).toLowerCase().replace(/[^a-z0-9_.-]/g, ''); }
+function sanitizeBirthday(str){
+  if (typeof str !== 'string') return null;
+  const m = str.trim().match(/^(\d{1,2})-(\d{1,2})$/);
+  if (!m) return null;
+  // Eingabe im Format TT-MM (deutsche Schreibweise), intern als MM-DD gespeichert
+  const dd = Math.min(31, Math.max(1, parseInt(m[1],10)));
+  const mm = Math.min(12, Math.max(1, parseInt(m[2],10)));
+  return String(mm).padStart(2,'0') + '-' + String(dd).padStart(2,'0');
+}
 async function getJSON(kv, key, fallback){
   const val = await kv.get(key, { type: 'json' });
   return val === null ? fallback : val;
@@ -58,7 +68,7 @@ function publicUser(u){
   return {
     username: u.username, displayName: u.displayName, office: u.office, officeLabel: off.label,
     isAdmin: !!u.isAdmin, canModerate: !!u.isAdmin, status: u.status, createdAt: u.createdAt,
-    postCount: u.postCount || 0
+    postCount: u.postCount || 0, birthday: u.birthday || null
   };
 }
 
@@ -124,6 +134,7 @@ async function handleRegister(request, kv){
   const displayName = sanitize(body.displayName, 60);
   const password = typeof body.password === 'string' ? body.password : '';
   const office = officeInfo(sanitize(body.office, 40)).id;
+  const birthday = sanitizeBirthday(body.birthday);
 
   if (username.length < 3) return json({ error:'Benutzername muss mind. 3 Zeichen haben (nur Buchstaben, Zahlen, _ . -).' }, 400);
   if (!displayName) return json({ error:'Bitte gib deinen Namen an.' }, 400);
@@ -138,7 +149,7 @@ async function handleRegister(request, kv){
   const { hash, salt } = await hashPassword(password);
   const now = Date.now();
   const user = {
-    username, displayName, office,
+    username, displayName, office, birthday,
     passwordHash: hash, passwordSalt: salt,
     isAdmin: isFirstUser || officeInfo(office).adminByDefault,
     status: isFirstUser ? 'active' : 'pending',
@@ -188,6 +199,36 @@ async function handleDeleteAccount(kv, currentUser, currentToken){
   return json({ ok:true });
 }
 
+async function handleUpdateAccount(request, kv, currentUser){
+  let body;
+  try { body = await request.json(); } catch(e){ return json({ error:'Ungültige Anfrage.' }, 400); }
+  const user = await getJSON(kv, 'user:' + currentUser.username, null);
+  if (!user) return json({ error:'Konto nicht gefunden.' }, 404);
+
+  if (typeof body.displayName === 'string') {
+    const dn = sanitize(body.displayName, 60);
+    if (dn) user.displayName = dn;
+  }
+  if (body.birthday !== undefined) {
+    user.birthday = body.birthday === null || body.birthday === '' ? null : sanitizeBirthday(body.birthday);
+  }
+  await kv.put('user:' + currentUser.username, JSON.stringify(user));
+  return json({ ok:true, user: publicUser(user) });
+}
+
+// ---------------- Mitgliederverzeichnis ----------------
+
+async function handleMembersList(kv){
+  const list = await kv.list({ prefix: 'user:' });
+  const users = [];
+  for (const k of list.keys) {
+    const u = await getJSON(kv, k.name, null);
+    if (u && u.status === 'active') users.push(publicUser(u));
+  }
+  users.sort((a,b) => a.displayName.localeCompare(b.displayName, 'de'));
+  return json({ users });
+}
+
 // ---------------- Forum-Handler ----------------
 
 function visiblePost(p, canSeeDeleted){
@@ -229,7 +270,6 @@ async function handleForumPost(request, kv, currentUser){
     quote = { author: sanitize(body.quote.author, 60), message: sanitize(body.quote.message, 300) };
   }
 
-  // Beitragszähler des Users erhöhen
   const userRecord = await getJSON(kv, 'user:' + author, null);
   const newPostCount = ((userRecord && userRecord.postCount) || 0) + 1;
   if (userRecord) { userRecord.postCount = newPostCount; await kv.put('user:' + author, JSON.stringify(userRecord)); }
@@ -240,14 +280,25 @@ async function handleForumPost(request, kv, currentUser){
     const message = sanitize(body.message, 4000);
     if (!title || !message) return json({ error:'Titel und Nachricht dürfen nicht leer sein.' }, 400);
 
+    const isEvent = !!body.isEvent;
+    let eventDate = null;
+    if (isEvent && body.eventDate) {
+      const ts = Date.parse(body.eventDate);
+      if (!isNaN(ts)) eventDate = ts;
+    }
+
     const id = makeId();
     const now = Date.now();
     const firstPost = { id: makeId(), author, authorDisplayName, authorOffice, authorPostCount: newPostCount, message, createdAt: now, attachments, deleted:false, reactions:{} };
-    const threadDoc = { id, title, category, author, authorDisplayName, createdAt: now, lastActivity: now, deleted:false, pinned:false, posts:[firstPost] };
+    const threadDoc = {
+      id, title, category, author, authorDisplayName, createdAt: now, lastActivity: now, deleted:false, pinned:false,
+      isEvent, eventDate, rsvp: isEvent ? { yes:[], maybe:[], no:[] } : undefined,
+      posts:[firstPost]
+    };
     await kv.put('thread:' + id, JSON.stringify(threadDoc));
 
     const threads = await getJSON(kv, THREADS_KEY, []);
-    threads.push({ id, title, category, author, authorDisplayName, createdAt: now, lastActivity: now, replyCount:0, deleted:false, pinned:false });
+    threads.push({ id, title, category, author, authorDisplayName, createdAt: now, lastActivity: now, replyCount:0, deleted:false, pinned:false, isEvent, eventDate, rsvp: threadDoc.rsvp });
     await kv.put(THREADS_KEY, JSON.stringify(threads));
 
     return json(threadDoc);
@@ -277,6 +328,30 @@ async function handleForumPost(request, kv, currentUser){
   }
 
   return json({ error:'Unbekannte Aktion.' }, 400);
+}
+
+// ---------------- RSVP ----------------
+
+async function handleRsvp(request, kv, currentUser){
+  let body;
+  try { body = await request.json(); } catch(e){ return json({ error:'Ungültige Anfrage.' }, 400); }
+  const threadId = sanitize(body.threadId, 100);
+  const status = ['yes','maybe','no'].includes(body.status) ? body.status : null;
+
+  const threadDoc = await getJSON(kv, 'thread:' + threadId, null);
+  if (!threadDoc || !threadDoc.isEvent) return json({ error:'Kein Termin.' }, 404);
+  if (!threadDoc.rsvp) threadDoc.rsvp = { yes:[], maybe:[], no:[] };
+
+  ['yes','maybe','no'].forEach(k => { threadDoc.rsvp[k] = threadDoc.rsvp[k].filter(u => u !== currentUser.username); });
+  if (status) threadDoc.rsvp[status].push(currentUser.username);
+
+  await kv.put('thread:' + threadId, JSON.stringify(threadDoc));
+
+  const threads = await getJSON(kv, THREADS_KEY, []);
+  const idx = threads.findIndex(t => t.id === threadId);
+  if (idx !== -1) { threads[idx].rsvp = threadDoc.rsvp; await kv.put(THREADS_KEY, JSON.stringify(threads)); }
+
+  return json({ ok:true, rsvp: threadDoc.rsvp });
 }
 
 // ---------------- Reaktionen ----------------
@@ -552,6 +627,15 @@ export default {
         const r = await requireAuth(request, url, kv); if (r.error) return r.error;
         return await handleDeleteAccount(kv, r.user, r.token);
       }
+      if (path === '/api/account/update' && request.method === 'POST') {
+        const r = await requireAuth(request, url, kv); if (r.error) return r.error;
+        return await handleUpdateAccount(request, kv, r.user);
+      }
+
+      if (path === '/api/members' && request.method === 'GET') {
+        const r = await requireAuth(request, url, kv); if (r.error) return r.error;
+        return await handleMembersList(kv);
+      }
 
       if (path === '/api/forum') {
         const r = await requireAuth(request, url, kv); if (r.error) return r.error;
@@ -565,6 +649,10 @@ export default {
       if (path === '/api/forum/react' && request.method === 'POST') {
         const r = await requireAuth(request, url, kv); if (r.error) return r.error;
         return await handleReact(request, kv, r.user);
+      }
+      if (path === '/api/forum/rsvp' && request.method === 'POST') {
+        const r = await requireAuth(request, url, kv); if (r.error) return r.error;
+        return await handleRsvp(request, kv, r.user);
       }
       if (path === '/api/forum/moderate' && request.method === 'POST') {
         const r = await requireAuth(request, url, kv); if (r.error) return r.error;
