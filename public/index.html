@@ -226,6 +226,16 @@
   .fact-card .num{font-family:'Fraunces',serif; font-size:2.1rem; color:var(--gold-light); font-weight:700; display:block;}
   .fact-card .lbl{font-size:.85rem; color:var(--cream-dark);}
 
+  /* -------- Zeitleiste (Geschichte) -------- */
+  .timeline{position:relative; padding-left:44px; max-width:700px;}
+  .timeline::before{content:''; position:absolute; left:11px; top:6px; bottom:6px; width:2px; background:#ddd7cc;}
+  .timeline-item{position:relative; padding-bottom:38px;}
+  .timeline-item:last-child{padding-bottom:0;}
+  .timeline-dot{position:absolute; left:-44px; top:2px; width:24px; height:24px; border-radius:50%; background:var(--red); border:4px solid var(--cream-dark); box-shadow:0 0 0 2px var(--red);}
+  .timeline-year{font-family:'JetBrains Mono',monospace; font-weight:700; color:var(--red-dark); font-size:.9rem; margin-bottom:4px; letter-spacing:.03em;}
+  .timeline-content h3{font-size:1.08rem; margin-bottom:6px;}
+  .timeline-content p{margin:0; color:#3a332c; max-width:56ch;}
+
   /* -------- häs (costume) -------- */
   .haes{background:var(--wood-dark); color:var(--cream);}
   .haes .section-head h2{color:var(--cream);}
@@ -442,6 +452,49 @@
   </div>
 </section>
 
+<section id="geschichte" style="background:var(--cream-dark);">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow">Unsere Geschichte</span>
+      <h2>Von der Gründung bis heute</h2>
+    </div>
+    <div class="timeline reveal-stagger reveal">
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-year">1994</div>
+        <div class="timeline-content">
+          <h3>Gründung der Zunft</h3>
+          <p>Eine Handvoll Fasnetbegeisterte gibt dem Rieselfeld eine eigene Stadtteilfasnet. Am 11. November findet die Gründungsversammlung statt — bis heute unser jährlicher Ehrentag.</p>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-year">1998</div>
+        <div class="timeline-content">
+          <h3>Erster Hemdglunkerumzug</h3>
+          <p>Die Hölle-Leue zeigen sich erstmals beim Hemdglunkerumzug im Rieselfeld — seither ein fester Programmpunkt jeder Fasnetsaison.</p>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-year">2003</div>
+        <div class="timeline-content">
+          <h3>Kinderfasnet im Glashaus</h3>
+          <p>Mit der Kinderfasnet im Glashaus rückt der Nachwuchs ins Zentrum — ein wichtiger Baustein, um das Brauchtum an die nächste Generation weiterzugeben.</p>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background:var(--gold);"></div>
+        <div class="timeline-year">Heute</div>
+        <div class="timeline-content">
+          <h3>Eine lebendige Zunft</h3>
+          <p>Mit 31 Hästräger:innen und 37 passiven Mitgliedern feiern wir die alemannische Fasnet im Rieselfeld — und freuen uns über jede und jeden, der mitmachen möchte.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="haes" id="haes">
   <div class="wrap haes-grid">
     <div class="photo haes-photo reveal">
@@ -539,6 +592,8 @@
       <p class="event-modal-desc" id="eventModalDesc"></p>
       <div class="modal-actions">
         <button type="button" class="btn btn-primary btn-sm" id="eventModalGalleryBtn">Bilder vergangener Jahre ansehen</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="eventModalGCalBtn">📅 Google Kalender</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="eventModalIcsBtn">📥 ICS-Datei (Apple/Outlook)</button>
       </div>
     </div>
 
@@ -726,6 +781,7 @@
     document.getElementById('eventModalDesc').textContent = info.long;
     eventModalBackdrop.dataset.slug = info.slug;
     eventModalBackdrop.dataset.title = name;
+    eventModalBackdrop.dataset.date = date.toISOString();
     eventDetailView.style.display = 'block';
     eventGalleryView.style.display = 'none';
     eventModalBackdrop.classList.add('open');
@@ -752,6 +808,48 @@
     eventDetailView.style.display = 'none';
     eventGalleryView.style.display = 'block';
   }
+
+  // ---------- Zum Kalender hinzufügen ----------
+  function toIcsDate(d){
+    return d.getUTCFullYear() + String(d.getUTCMonth()+1).padStart(2,'0') + String(d.getUTCDate()).padStart(2,'0');
+  }
+  function currentEventInfo(){
+    const title = eventModalBackdrop.dataset.title;
+    const date = new Date(eventModalBackdrop.dataset.date);
+    const nextDay = new Date(date); nextDay.setDate(nextDay.getDate()+1);
+    const desc = document.getElementById('eventModalDesc').textContent;
+    return { title, date, nextDay, desc };
+  }
+  document.getElementById('eventModalGCalBtn').addEventListener('click', () => {
+    const { title, date, nextDay, desc } = currentEventInfo();
+    const url = 'https://www.google.com/calendar/render?action=TEMPLATE'
+      + '&text=' + encodeURIComponent(title + ' — Friburger Hölle-Leue')
+      + '&dates=' + toIcsDate(date) + '/' + toIcsDate(nextDay)
+      + '&details=' + encodeURIComponent(desc)
+      + '&location=' + encodeURIComponent('Rieselfeld, Freiburg im Breisgau');
+    window.open(url, '_blank', 'noopener');
+  });
+  document.getElementById('eventModalIcsBtn').addEventListener('click', () => {
+    const { title, date, nextDay, desc } = currentEventInfo();
+    const ics = [
+      'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Friburger Hoelle-Leue//Website//DE',
+      'BEGIN:VEVENT',
+      'UID:' + Date.now() + '@hoelle-leue',
+      'DTSTAMP:' + toIcsDate(new Date()) + 'T000000Z',
+      'DTSTART;VALUE=DATE:' + toIcsDate(date),
+      'DTEND;VALUE=DATE:' + toIcsDate(nextDay),
+      'SUMMARY:' + title + ' — Friburger Hölle-Leue',
+      'DESCRIPTION:' + desc.replace(/\n/g, '\\n'),
+      'LOCATION:Rieselfeld, Freiburg im Breisgau',
+      'END:VEVENT', 'END:VCALENDAR'
+    ].join('\r\n');
+    const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = title.replace(/[^a-z0-9]+/gi,'-').toLowerCase() + '.ics';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  });
+
   document.getElementById('eventModalGalleryBtn').addEventListener('click', showEventGallery);
   document.getElementById('eventBackToDetail').addEventListener('click', () => { eventDetailView.style.display = 'block'; eventGalleryView.style.display = 'none'; });
   document.getElementById('eventModalClose').addEventListener('click', closeEventModal);
