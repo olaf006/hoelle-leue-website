@@ -63,7 +63,6 @@
   @keyframes fadeUp{ from{opacity:0; transform:translateY(22px);} to{opacity:1; transform:translateY(0);} }
   @keyframes fadeIn{ from{opacity:0;} to{opacity:1;} }
   @keyframes popIn{ 0%{opacity:0; transform:scale(.94) translateY(10px);} 100%{opacity:1; transform:scale(1) translateY(0);} }
-  @keyframes ropeShimmer{ 0%{background-position:0 0;} 100%{background-position:120px 0;} }
   @keyframes flamePulse{
     0%,100%{ text-shadow:0 0 6px rgba(201,162,39,.35); }
     50%{ text-shadow:0 0 18px rgba(201,162,39,.8), 0 0 4px rgba(180,34,44,.5); }
@@ -104,11 +103,9 @@
 
   /* -------- carved rope divider -------- */
   .rope{
-    height:10px;
-    background-image: repeating-linear-gradient(115deg, var(--gold) 0 6px, var(--wood) 6px 12px);
-    background-size:120px 10px;
-    box-shadow: inset 0 2px 3px rgba(0,0,0,.35);
-    animation:ropeShimmer 6s linear infinite;
+    height:3px;
+    background:linear-gradient(90deg, transparent, var(--red) 15%, var(--red) 85%, transparent);
+    box-shadow:0 1px 12px rgba(180,34,44,.3);
   }
 
   /* -------- nav -------- */
