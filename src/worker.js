@@ -705,6 +705,33 @@ async function handleAdminLog(kv){
   return json({ log });
 }
 
+async function handleAdminExport(kv){
+  const userList = await kv.list({ prefix: 'user:' });
+  const users = [];
+  for (const k of userList.keys) {
+    const u = await getJSON(kv, k.name, null);
+    if (!u) continue;
+    // Passwort-Hashes aus Sicherheitsgründen NICHT im Export enthalten
+    const { passwordHash, passwordSalt, ...safeUser } = u;
+    users.push(safeUser);
+  }
+
+  const threadsIndex = await getJSON(kv, THREADS_KEY, []);
+  const threads = [];
+  for (const t of threadsIndex) {
+    const full = await getJSON(kv, 'thread:' + t.id, null);
+    if (full) threads.push(full);
+  }
+
+  const log = await getJSON(kv, AUDITLOG_KEY, []);
+
+  return json({
+    exportedAt: new Date().toISOString(),
+    note: 'Backup der Friburger Hölle-Leue Website. Passwörter sind aus Sicherheitsgründen nicht enthalten.',
+    users, threads, auditLog: log
+  });
+}
+
 // ---------------- Router ----------------
 
 export default {
@@ -777,6 +804,7 @@ export default {
       if (path === '/api/admin/approve' && request.method === 'POST') { const r = await requireAdmin(request, url, kv); if (r.error) return r.error; return await handleAdminApprove(request, kv, r.user); }
       if (path === '/api/admin/update-user' && request.method === 'POST') { const r = await requireAdmin(request, url, kv); if (r.error) return r.error; return await handleAdminUpdateUser(request, kv, r.user); }
       if (path === '/api/admin/log' && request.method === 'GET') { const r = await requireAdmin(request, url, kv); if (r.error) return r.error; return await handleAdminLog(kv); }
+      if (path === '/api/admin/export' && request.method === 'GET') { const r = await requireAdmin(request, url, kv); if (r.error) return r.error; return await handleAdminExport(kv); }
 
       if (path.startsWith('/api/')) return json({ error:'Nicht gefunden.' }, 404);
     } catch (err) {
