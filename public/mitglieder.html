@@ -156,15 +156,16 @@
   .thread-row{
     display:grid; grid-template-columns:auto 1fr auto auto; gap:16px; align-items:center;
     padding:18px 20px; border-radius:16px; background:#fff; cursor:pointer; position:relative;
-    animation:fadeUp .4s var(--ease) both; box-shadow:0 1px 3px rgba(23,20,18,.06), inset 0 0 0 1px #f0ede8;
-    transition:transform .2s var(--ease), box-shadow .25s var(--ease);
+    animation:fadeUp .4s var(--ease) both; box-shadow:0 1px 3px rgba(23,20,18,.06);
+    border:2px solid var(--cat-color, #ddd6c9);
+    transition:transform .2s var(--ease), box-shadow .25s var(--ease), border-color .2s var(--ease);
   }
-  .thread-row:hover{transform:translateY(-3px); box-shadow:0 12px 28px rgba(23,20,18,.12), inset 0 0 0 1px #f0ede8;}
-  .thread-row.is-pinned{box-shadow:0 1px 3px rgba(180,34,44,.1), inset 0 0 0 1.5px rgba(180,34,44,.25);}
+  .thread-row:hover{transform:translateY(-3px); box-shadow:0 12px 28px rgba(23,20,18,.14);}
+  .thread-row.is-pinned{box-shadow:0 1px 3px rgba(180,34,44,.1); border-width:2.5px;}
   .thread-row h3{font-size:1.02rem; margin:0 0 3px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
   .thread-row.is-deleted{opacity:.55;}
   .thread-meta{font-size:.8rem; color:#6f6350;}
-  .thread-cat{font-family:'JetBrains Mono', monospace; font-size:.64rem; text-transform:uppercase; background:var(--wood-dark); color:var(--gold-light); padding:5px 9px; border-radius:8px; white-space:nowrap;}
+  .thread-cat{font-family:'JetBrains Mono', monospace; font-size:.64rem; text-transform:uppercase; background:var(--cat-color, var(--wood-dark)); color:#fff; padding:5px 9px; border-radius:8px; white-space:nowrap;}
   .thread-replies{font-size:.8rem; color:var(--wood); text-align:right; white-space:nowrap;}
   .pin-tag{font-size:.68rem; background:var(--red); color:#fff; padding:2px 7px; border-radius:10px; font-family:'JetBrains Mono',monospace;}
   .new-tag{font-size:.62rem; background:#2f7d4a; color:#fff; padding:2px 7px; border-radius:10px; font-family:'JetBrains Mono',monospace; text-transform:uppercase;}
@@ -531,6 +532,14 @@
   ];
   const officeLabel = id => (OFFICES.find(o => o.id === id) || {label:id}).label;
   const AVATAR_PALETTE = ['#b4222c','#8c1a22','#c9a227','#3a332c','#6b6258','#2f7d4a','#1d5f8a','#7a3f8c'];
+  const CATEGORY_COLORS = {
+    'Allgemein': '#3f7cb0',
+    'Termine & Umzüge': '#b4222c',
+    'Häs & Ausrüstung': '#c9a227',
+    'Vereinsleben': '#2f7d4a',
+    'Sonstiges': '#7a5ca8'
+  };
+  function categoryColor(cat){ return CATEGORY_COLORS[cat] || '#8a7e6f'; }
 
   let token = localStorage.getItem(TOKEN_KEY) || null;
   let me = null;
@@ -795,6 +804,7 @@
       const row = document.createElement('div');
       row.className = 'thread-row' + (t.deleted ? ' is-deleted' : '') + (t.pinned ? ' is-pinned' : '');
       row.style.animationDelay = (i*0.04)+'s';
+      row.style.setProperty('--cat-color', categoryColor(t.category));
       const unread = isUnread(t);
       row.innerHTML = `
         ${avatarHtml(t.authorDisplayName)}
@@ -1061,6 +1071,7 @@
         const row = document.createElement('div');
         row.className = 'thread-row';
         row.style.animationDelay = (i*0.05)+'s';
+        row.style.setProperty('--cat-color', categoryColor(t.category));
         const dateStr = t.eventDate ? new Date(t.eventDate).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' }) : '?';
         row.innerHTML = `
           ${avatarHtml(t.authorDisplayName)}
