@@ -70,7 +70,8 @@ function publicUser(u){
     isAdmin: !!u.isAdmin, canModerate: !!u.isAdmin, status: u.status, createdAt: u.createdAt,
     postCount: u.postCount || 0, birthday: u.birthday || null,
     memberSince: u.memberSince || new Date(u.createdAt).getFullYear(),
-    manualBadges: u.manualBadges || []
+    manualBadges: u.manualBadges || [],
+    avatarId: u.avatarId || null
   };
 }
 
@@ -121,11 +122,13 @@ async function getBadgesMap(kv, usernames){
     .slice(0, 5);
 
   const map = {};
+  const avatarMap = {};
   const uniqueNames = [...new Set(usernames)];
 
   for (const uname of uniqueNames) {
     const u = await getJSON(kv, 'user:' + uname, null);
     const badges = [];
+    avatarMap[uname] = u ? (u.avatarId || null) : null;
 
     if (u) {
       const memberSince = u.memberSince || new Date(u.createdAt).getFullYear();
@@ -147,7 +150,7 @@ async function getBadgesMap(kv, usernames){
     }
     map[uname] = badges;
   }
-  return map;
+  return { badgesMap: map, avatarMap };
 }
 
 // ---------------- Auth ----------------
@@ -268,6 +271,9 @@ async function handleUpdateAccount(request, kv, currentUser){
   if (body.birthday !== undefined) {
     user.birthday = body.birthday === null || body.birthday === '' ? null : sanitizeBirthday(body.birthday);
   }
+  if (body.avatarId !== undefined) {
+    user.avatarId = body.avatarId === null ? null : sanitize(body.avatarId, 100);
+  }
   await kv.put('user:' + currentUser.username, JSON.stringify(user));
   return json({ ok:true, user: publicUser(user) });
 }
@@ -282,7 +288,7 @@ async function handleMembersList(kv){
     if (u && u.status === 'active') users.push(publicUser(u));
   }
   users.sort((a,b) => a.displayName.localeCompare(b.displayName, 'de'));
-  const badgesMap = await getBadgesMap(kv, users.map(u => u.username));
+  const { badgesMap } = await getBadgesMap(kv, users.map(u => u.username));
   users.forEach(u => { u.badges = badgesMap[u.username] || []; });
   return json({ users });
 }
@@ -304,10 +310,10 @@ async function handleForumGet(request, url, kv, currentUser){
     if (!thread) return json({ error:'Thema nicht gefunden.' }, 404);
     if (thread.deleted && !canModerate) return json({ error:'Thema nicht gefunden.' }, 404);
     const authorNames = thread.posts.filter(p => !p.deleted || canModerate || p.author === currentUser.username).map(p => p.author);
-    const badgesMap = await getBadgesMap(kv, authorNames);
+    const { badgesMap, avatarMap } = await getBadgesMap(kv, authorNames);
     const out = { ...thread, posts: thread.posts.map(p => {
       const vp = visiblePost(p, canModerate || p.author === currentUser.username);
-      if (vp.message !== undefined) vp.authorBadges = badgesMap[p.author] || [];
+      if (vp.message !== undefined) { vp.authorBadges = badgesMap[p.author] || []; vp.authorAvatarId = avatarMap[p.author] || null; }
       return vp;
     }) };
     return json(out);
@@ -316,6 +322,8 @@ async function handleForumGet(request, url, kv, currentUser){
   const threads = await getJSON(kv, THREADS_KEY, []);
   const visible = threads.filter(t => canModerate || !t.deleted || t.author === currentUser.username);
   visible.sort((a,b) => (b.pinned?1:0) - (a.pinned?1:0) || b.lastActivity - a.lastActivity);
+  const { avatarMap: listAvatarMap } = await getBadgesMap(kv, visible.map(t => t.author));
+  visible.forEach(t => { t.authorAvatarId = listAvatarMap[t.author] || null; });
   return json({ threads: visible, me: publicUser(currentUser), reactionEmojis: REACTION_EMOJIS });
 }
 
