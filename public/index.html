@@ -30,7 +30,6 @@
 <meta name="twitter:image" content="/og-image.png">
 <link rel="preconnect" href="https://fonts.bunny.net">
 <link href="https://fonts.bunny.net/css?family=fraunces:500,600,700,900|work-sans:400,500,600|jetbrains-mono:400,500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <style>
 
   :root{
@@ -325,19 +324,6 @@
   .join .btn-primary{background:var(--gold); border-color:var(--gold); color:var(--wood-dark);}
   .join .btn-primary:hover{background:var(--gold-light); box-shadow:0 10px 22px rgba(201,162,39,.4);}
 
-  .qr-widget{
-    background:rgba(255,255,255,.08); border-radius:16px; padding:18px;
-    display:flex; flex-direction:column; align-items:center; gap:10px; text-align:center;
-  }
-  .qr-widget canvas{border-radius:10px; background:#fff; padding:8px;}
-  .qr-caption{font-size:.78rem; color:#f4d9d4; max-width:20ch;}
-  .qr-download{
-    background:none; border:1.5px solid var(--gold); color:var(--gold-light); border-radius:10px;
-    padding:7px 14px; font-size:.78rem; font-weight:600; cursor:pointer; font-family:inherit;
-    transition:all .2s var(--ease);
-  }
-  .qr-download:hover{background:rgba(201,162,39,.2);}
-
   /* -------- kontakt / footer -------- */
   footer{background:var(--wood-dark); color:var(--cream-dark); padding:56px 0 26px;}
   .foot-grid{display:grid; grid-template-columns:1.3fr .7fr .7fr; gap:40px;}
@@ -628,13 +614,8 @@
       <div>
         <h2>Lust auf nette Leute, viel Spaß und Fasnet?</h2>
         <p>Wenn du alle drei Fragen mit Ja beantworten kannst, bist du bei uns richtig. Egal ob als aktive:r Hästräger:in oder passives Mitglied — wir freuen uns, dich kennenzulernen.</p>
-        <button type="button" class="btn btn-primary" id="btnContactPopup" style="margin-top:18px;">Jetzt Kontakt aufnehmen</button>
       </div>
-      <div class="qr-widget">
-        <canvas id="qrCanvas" width="150" height="150"></canvas>
-        <span class="qr-caption">Scannen &amp; direkt im Forum registrieren</span>
-        <button type="button" class="qr-download" id="qrDownloadBtn">📥 Für Flyer speichern</button>
-      </div>
+      <button type="button" class="btn btn-primary" id="btnContactPopup">Jetzt Kontakt aufnehmen</button>
     </div>
   </div>
 </section>
@@ -720,20 +701,6 @@
 
 <script>
   document.getElementById('year').textContent = new Date().getFullYear();
-
-  /* ---------- QR-Code fürs Forum ---------- */
-  (function(){
-    const canvas = document.getElementById('qrCanvas');
-    if (!canvas || typeof QRCode === 'undefined') return;
-    const targetUrl = window.location.origin + '/mitglieder.html';
-    QRCode.toCanvas(canvas, targetUrl, { width: 150, margin: 1, color: { dark: '#171412', light: '#ffffff' } });
-    document.getElementById('qrDownloadBtn').addEventListener('click', () => {
-      const link = document.createElement('a');
-      link.download = 'hoelle-leue-qr-code.png';
-      link.href = canvas.toDataURL('image/png');
-      document.body.appendChild(link); link.click(); document.body.removeChild(link);
-    });
-  })();
 
   function handleImgError(imgEl){
     const photo = imgEl.closest('.photo');
