@@ -152,6 +152,53 @@
   .cat-pill:hover{transform:translateY(-1px); box-shadow:0 4px 10px rgba(23,20,18,.12), inset 0 0 0 1.5px var(--gold);}
   .cat-pill.active{background:var(--wood-dark); color:#fff; box-shadow:0 3px 10px rgba(23,20,18,.25);}
 
+  /* ---- Begrüßung ---- */
+  .greeting-card{
+    background:linear-gradient(120deg, var(--wood-dark), #2a231b);
+    color:#fff; border-radius:18px; padding:20px 26px; margin-bottom:22px;
+    display:flex; align-items:center; gap:16px; flex-wrap:wrap; justify-content:space-between;
+    box-shadow:0 6px 20px rgba(23,20,18,.2); animation:fadeUp .5s var(--ease) both;
+  }
+  .greeting-card .g-text strong{color:var(--gold-light);}
+  .greeting-card .g-sub{font-size:.85rem; color:#d8d3cc; margin-top:4px;}
+
+  /* ---- Stats-Leiste ---- */
+  .stats-bar{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:24px;}
+  @media(max-width:760px){ .stats-bar{grid-template-columns:repeat(2,1fr);} }
+  .stat-tile{
+    background:#fff; border-radius:16px; padding:16px 18px; text-align:center;
+    box-shadow:0 1px 3px rgba(23,20,18,.06), inset 0 0 0 1px #f0ede8;
+    transition:transform .2s var(--ease), box-shadow .2s var(--ease);
+  }
+  .stat-tile:hover{transform:translateY(-3px); box-shadow:0 10px 22px rgba(23,20,18,.1);}
+  .stat-tile .s-num{font-family:'Fraunces',serif; font-weight:700; font-size:1.5rem; color:var(--wood-dark); display:block;}
+  .stat-tile .s-lbl{font-size:.72rem; color:#6f6350; text-transform:uppercase; letter-spacing:.04em;}
+
+  /* ---- Kategorie-Kacheln ---- */
+  .cat-tiles{display:grid; grid-template-columns:repeat(auto-fit, minmax(120px,1fr)); gap:10px; margin-bottom:22px;}
+  .cat-tile{
+    background:#fff; border-radius:14px; padding:14px 12px; text-align:center; cursor:pointer;
+    border:2px solid transparent; transition:all .2s var(--ease); box-shadow:0 1px 3px rgba(23,20,18,.06);
+  }
+  .cat-tile:hover{transform:translateY(-3px); box-shadow:0 10px 22px rgba(23,20,18,.12);}
+  .cat-tile.active{border-color:var(--tile-color, var(--wood-dark)); background:color-mix(in srgb, var(--tile-color, var(--wood-dark)) 8%, white);}
+  .cat-tile .c-ico{font-size:1.4rem; display:block; margin-bottom:4px;}
+  .cat-tile .c-name{font-size:.78rem; font-weight:600; color:var(--wood-dark); display:block;}
+  .cat-tile .c-count{font-size:.68rem; color:#8a7e6f;}
+
+  /* ---- Layout mit Seitenleiste ---- */
+  .list-layout{display:grid; grid-template-columns:1fr 280px; gap:26px; align-items:start;}
+  @media(max-width:900px){ .list-layout{grid-template-columns:1fr;} .list-sidebar{display:none;} }
+  .list-sidebar{display:flex; flex-direction:column; gap:16px; position:sticky; top:80px;}
+  .sidebar-card{background:#fff; border-radius:16px; padding:18px 20px; box-shadow:0 1px 3px rgba(23,20,18,.06), inset 0 0 0 1px #f0ede8;}
+  .sidebar-card h4{font-size:.82rem; text-transform:uppercase; letter-spacing:.04em; color:var(--red-dark); margin:0 0 12px;}
+  .sidebar-item{display:flex; align-items:center; gap:10px; padding:8px 0; border-top:1px solid var(--cream-dark);}
+  .sidebar-item:first-child{border-top:none; padding-top:0;}
+  .sidebar-item .si-main{flex:1; min-width:0;}
+  .sidebar-item .si-title{font-size:.85rem; font-weight:600; color:var(--wood-dark); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .sidebar-item .si-sub{font-size:.72rem; color:#6f6350;}
+  .sidebar-empty{font-size:.82rem; color:#8a7e6f;}
+
   .thread-list{display:flex; flex-direction:column; gap:12px;}
   .thread-row{
     display:grid; grid-template-columns:auto 1fr auto auto; gap:16px; align-items:center;
@@ -362,6 +409,8 @@
       </div>
 
       <div id="listView" class="view">
+        <div id="greetingBanner"></div>
+
         <div class="top-actions">
           <div>
             <span class="eyebrow">Mitgliederbereich</span>
@@ -370,21 +419,39 @@
           <button class="btn btn-primary" id="btnShowNew">+ Neues Thema</button>
         </div>
 
-        <div class="toolbar">
-          <div class="search-box">
-            <span class="sico">🔍</span>
-            <input type="text" id="searchInput" placeholder="Themen durchsuchen...">
-          </div>
-          <select class="sort-select" id="sortSelect">
-            <option value="activity">Neueste Aktivität</option>
-            <option value="new">Neueste Themen</option>
-            <option value="replies">Meiste Antworten</option>
-          </select>
-        </div>
-        <div class="cat-pills" id="catPills"></div>
+        <div class="stats-bar" id="statsBar"></div>
 
-        <div id="threadList" class="thread-list"></div>
-        <div id="emptyState" class="empty-state" style="display:none;">Noch keine Themen vorhanden. Sei die oder der Erste und eröffne eines!</div>
+        <div class="list-layout">
+          <div class="list-main">
+            <div class="toolbar">
+              <div class="search-box">
+                <span class="sico">🔍</span>
+                <input type="text" id="searchInput" placeholder="Themen durchsuchen...">
+              </div>
+              <select class="sort-select" id="sortSelect">
+                <option value="activity">Neueste Aktivität</option>
+                <option value="new">Neueste Themen</option>
+                <option value="replies">Meiste Antworten</option>
+              </select>
+            </div>
+
+            <div class="cat-tiles" id="catTiles"></div>
+
+            <div id="threadList" class="thread-list"></div>
+            <div id="emptyState" class="empty-state" style="display:none;">Noch keine Themen vorhanden. Sei die oder der Erste und eröffne eines!</div>
+          </div>
+
+          <aside class="list-sidebar">
+            <div class="sidebar-card">
+              <h4>📅 Anstehende Termine</h4>
+              <div id="sidebarEvents"></div>
+            </div>
+            <div class="sidebar-card">
+              <h4>🎂 Geburtstage</h4>
+              <div id="sidebarBirthdays"></div>
+            </div>
+          </aside>
+        </div>
       </div>
 
       <div id="newThreadForm" class="view">
@@ -765,16 +832,31 @@
   document.getElementById('searchInput').addEventListener('input', renderThreadList);
   document.getElementById('sortSelect').addEventListener('change', (e) => { activeSort = e.target.value; renderThreadList(); });
 
-  function renderCatPills(){
-    const cats = ['Alle', ...new Set(allThreads.map(t => t.category))];
-    const el = document.getElementById('catPills');
+  const CATEGORY_ICONS = {
+    'Allgemein': '💬', 'Termine & Umzüge': '📅', 'Häs & Ausrüstung': '🎭',
+    'Vereinsleben': '🏛️', 'Sonstiges': '🗂️'
+  };
+
+  function renderCatTiles(){
+    const cats = [...new Set(allThreads.map(t => t.category))];
+    const el = document.getElementById('catTiles');
     el.innerHTML = '';
+
+    const allTile = document.createElement('div');
+    allTile.className = 'cat-tile' + (activeCategory === 'Alle' ? ' active' : '');
+    allTile.style.setProperty('--tile-color', 'var(--wood-dark)');
+    allTile.innerHTML = `<span class="c-ico">📋</span><span class="c-name">Alle</span><span class="c-count">${allThreads.filter(t=>!t.deleted).length} Themen</span>`;
+    allTile.addEventListener('click', () => { activeCategory = 'Alle'; renderCatTiles(); renderThreadList(); });
+    el.appendChild(allTile);
+
     cats.forEach(cat => {
-      const btn = document.createElement('button');
-      btn.className = 'cat-pill' + (cat === activeCategory ? ' active' : '');
-      btn.textContent = cat;
-      btn.addEventListener('click', () => { activeCategory = cat; renderCatPills(); renderThreadList(); });
-      el.appendChild(btn);
+      const count = allThreads.filter(t => t.category === cat && !t.deleted).length;
+      const tile = document.createElement('div');
+      tile.className = 'cat-tile' + (cat === activeCategory ? ' active' : '');
+      tile.style.setProperty('--tile-color', categoryColor(cat));
+      tile.innerHTML = `<span class="c-ico">${CATEGORY_ICONS[cat] || '🏷️'}</span><span class="c-name">${escapeHtml(cat)}</span><span class="c-count">${count} Thema/Themen</span>`;
+      tile.addEventListener('click', () => { activeCategory = cat; renderCatTiles(); renderThreadList(); });
+      el.appendChild(tile);
     });
   }
 
@@ -817,6 +899,98 @@
     });
   }
 
+  // ---------- Begrüßung mit Aktivität seit letztem Besuch ----------
+  const LAST_VISIT_KEY = 'hl_last_global_visit';
+  function renderGreeting(){
+    const el = document.getElementById('greetingBanner');
+    const lastVisit = parseInt(localStorage.getItem(LAST_VISIT_KEY) || '0', 10);
+    const hour = new Date().getHours();
+    const greet = hour < 11 ? 'Guten Morgen' : hour < 18 ? 'Hallo' : 'Guten Abend';
+
+    let sub = 'Schön, dass du da bist!';
+    if (lastVisit) {
+      const newThreads = allThreads.filter(t => t.createdAt > lastVisit && !t.deleted).length;
+      const activeThreads = allThreads.filter(t => t.lastActivity > lastVisit && t.createdAt <= lastVisit && !t.deleted).length;
+      const parts = [];
+      if (newThreads) parts.push(newThreads + ' neue' + (newThreads===1?'s Thema':' Themen'));
+      if (activeThreads) parts.push(activeThreads + ' Thema/Themen mit neuen Antworten');
+      sub = parts.length ? 'Seit deinem letzten Besuch: ' + parts.join(' · ') : 'Seit deinem letzten Besuch hat sich nichts Neues getan.';
+    }
+
+    el.innerHTML = `<div class="greeting-card">
+      <div class="g-text"><strong>${greet}, ${escapeHtml(me.displayName)}!</strong><div class="g-sub">${sub}</div></div>
+    </div>`;
+    localStorage.setItem(LAST_VISIT_KEY, String(Date.now()));
+  }
+
+  // ---------- Stats-Leiste ----------
+  async function renderStatsBar(){
+    const el = document.getElementById('statsBar');
+    const threadCount = allThreads.filter(t => !t.deleted).length;
+    const postCount = allThreads.filter(t => !t.deleted).reduce((sum,t) => sum + 1 + (t.replyCount||0), 0);
+    let memberCount = '–';
+    try {
+      const res = await fetch('/api/members', { headers: authHeaders() });
+      const data = await res.json();
+      memberCount = (data.users || []).length;
+    } catch(e){}
+
+    const now = Date.now();
+    const upcoming = allThreads.filter(t => t.isEvent && !t.deleted && t.eventDate && t.eventDate >= now).sort((a,b) => a.eventDate - b.eventDate)[0];
+    const eventLbl = upcoming ? Math.max(0, Math.round((upcoming.eventDate - now)/86400000)) + ' Tage' : '–';
+
+    el.innerHTML = `
+      <div class="stat-tile"><span class="s-num">${threadCount}</span><span class="s-lbl">Themen</span></div>
+      <div class="stat-tile"><span class="s-num">${memberCount}</span><span class="s-lbl">Mitglieder</span></div>
+      <div class="stat-tile"><span class="s-num">${postCount}</span><span class="s-lbl">Beiträge</span></div>
+      <div class="stat-tile"><span class="s-num">${eventLbl}</span><span class="s-lbl">${upcoming ? 'bis ' + escapeHtml(upcoming.title) : 'Nächster Termin'}</span></div>`;
+  }
+
+  // ---------- Seitenleiste: Termine & Geburtstage ----------
+  function renderSidebarEvents(){
+    const el = document.getElementById('sidebarEvents');
+    const now = Date.now();
+    const upcoming = allThreads.filter(t => t.isEvent && !t.deleted && t.eventDate && t.eventDate >= now).sort((a,b) => a.eventDate - b.eventDate).slice(0,3);
+    if (!upcoming.length) { el.innerHTML = '<div class="sidebar-empty">Keine anstehenden Termine.</div>'; return; }
+    el.innerHTML = upcoming.map(t => `
+      <div class="sidebar-item" style="cursor:pointer;" data-thread-id="${t.id}">
+        <span style="font-size:1.2rem;">📅</span>
+        <div class="si-main">
+          <div class="si-title">${escapeHtml(t.title)}</div>
+          <div class="si-sub">${new Date(t.eventDate).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})}</div>
+        </div>
+      </div>`).join('');
+    el.querySelectorAll('[data-thread-id]').forEach(item => {
+      item.addEventListener('click', () => openThread(item.dataset.threadId));
+    });
+  }
+
+  async function renderSidebarBirthdays(){
+    const el = document.getElementById('sidebarBirthdays');
+    try {
+      const res = await fetch('/api/members', { headers: authHeaders() });
+      const data = await res.json();
+      const users = (data.users || []).filter(u => u.birthday);
+      const today = new Date();
+      const daysUntil = (mmdd) => {
+        const [mm, dd] = mmdd.split('-').map(Number);
+        let next = new Date(today.getFullYear(), mm-1, dd);
+        if (next < new Date(today.getFullYear(), today.getMonth(), today.getDate())) next.setFullYear(next.getFullYear()+1);
+        return Math.round((next - today) / 86400000);
+      };
+      users.sort((a,b) => daysUntil(a.birthday) - daysUntil(b.birthday));
+      const top = users.slice(0,3);
+      if (!top.length) { el.innerHTML = '<div class="sidebar-empty">Keine Geburtstage hinterlegt.</div>'; return; }
+      el.innerHTML = top.map(u => {
+        const d = daysUntil(u.birthday);
+        const [mm,dd] = u.birthday.split('-');
+        return `<div class="sidebar-item">${avatarHtml(u.displayName,'sm')}
+          <div class="si-main"><div class="si-title">${escapeHtml(u.displayName)}</div><div class="si-sub">${dd}.${mm}. · ${d===0?'🎉 Heute':d===1?'Morgen':'in '+d+' Tagen'}</div></div>
+        </div>`;
+      }).join('');
+    } catch(e){ el.innerHTML = '<div class="sidebar-empty">Konnte nicht geladen werden.</div>'; }
+  }
+
   async function loadThreads(){
     const listEl = document.getElementById('threadList');
     listEl.innerHTML = '<div class="spinner-row"><div class="spinner"></div> Lädt Themen …</div>';
@@ -825,8 +999,12 @@
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Fehler.');
       allThreads = data.threads || [];
-      renderCatPills();
+      renderCatTiles();
       renderThreadList();
+      renderGreeting();
+      renderStatsBar();
+      renderSidebarEvents();
+      renderSidebarBirthdays();
     } catch (err) { listEl.innerHTML = '<p style="color:var(--red-dark);">'+escapeHtml(err.message)+'</p>'; }
   }
 
