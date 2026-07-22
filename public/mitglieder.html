@@ -264,6 +264,7 @@
   /* ---- Avatare ---- */
   .avatar{width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:.85rem; font-family:'Fraunces',serif; flex:none;}
   .avatar.sm{width:30px; height:30px; font-size:.7rem;}
+  .avatar.lg{width:64px; height:64px; font-size:1.3rem;}
 
   /* ---- Zunft-Abzeichen ---- */
   .badge-pill{
@@ -582,6 +583,20 @@
       <div id="profileView" class="view">
         <div class="panel" style="max-width:480px;">
           <h2>Mein Profil</h2>
+
+          <div style="display:flex; align-items:center; gap:18px; margin-bottom:20px;">
+            <div id="pfAvatarPreview"></div>
+            <div>
+              <label class="btn btn-sm btn-ghost" for="pfAvatarInput" style="cursor:pointer;">📷 Profilbild wählen</label>
+              <input type="file" id="pfAvatarInput" accept="image/*" style="display:none;">
+              <div id="pfAvatarActions" style="margin-top:6px; display:none;">
+                <button class="btn btn-sm btn-primary" id="btnSaveAvatar">Speichern</button>
+                <button class="btn btn-sm btn-ghost" id="btnRemoveAvatar">Entfernen</button>
+              </div>
+              <div class="status-msg form" id="avatarStatus"></div>
+            </div>
+          </div>
+
           <p><strong>Name:</strong> <span id="pfName"></span></p>
           <p><strong>Benutzername:</strong> <span id="pfUsername"></span></p>
           <p><strong>Amt:</strong> <span id="pfOffice"></span></p>
@@ -721,7 +736,10 @@
   function initials(name){
     return (name || '?').trim().split(/\s+/).map(w => w[0]).slice(0,2).join('').toUpperCase();
   }
-  function avatarHtml(name, sizeClass){
+  function avatarHtml(name, sizeClass, avatarId){
+    if (avatarId) {
+      return `<img class="avatar ${sizeClass||''}" src="${fileUrl(avatarId)}" alt="${escapeHtml(name||'')}" style="object-fit:cover;">`;
+    }
     return `<span class="avatar ${sizeClass||''}" style="background:${avatarColor(name||'?')}">${escapeHtml(initials(name))}</span>`;
   }
 
@@ -825,7 +843,65 @@
     document.getElementById('pfPostCount').textContent = me.postCount || 0;
     document.getElementById('pfRights').textContent = me.isAdmin ? 'Administrator:in (voller Zugriff)' : 'Mitglied';
     document.getElementById('pfBirthdayInput').value = me.birthday ? me.birthday.slice(3,5) + '-' + me.birthday.slice(0,2) : '';
+    renderAvatarPreview();
   }
+
+  let pendingAvatarFile = null;
+
+  function renderAvatarPreview(){
+    const el = document.getElementById('pfAvatarPreview');
+    el.innerHTML = avatarHtml(me.displayName, 'lg', me.avatarId);
+  }
+
+  document.getElementById('pfAvatarInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    pendingAvatarFile = file;
+    const reader = new FileReader();
+    reader.onload = () => {
+      document.getElementById('pfAvatarPreview').innerHTML =
+        `<img src="${reader.result}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;" alt="Vorschau">`;
+    };
+    reader.readAsDataURL(file);
+    document.getElementById('pfAvatarActions').style.display = 'block';
+  });
+
+  document.getElementById('btnSaveAvatar').addEventListener('click', async () => {
+    const statusEl = document.getElementById('avatarStatus');
+    if (!pendingAvatarFile) return;
+    if (pendingAvatarFile.size > 4*1024*1024) { statusEl.textContent = 'Datei zu groß (max. 4 MB).'; statusEl.className = 'status-msg form'; return; }
+    statusEl.textContent = 'Wird hochgeladen …'; statusEl.className = 'status-msg form';
+    try {
+      const fd = new FormData(); fd.append('file', pendingAvatarFile);
+      const upRes = await fetch('/api/upload', { method:'POST', headers: authHeaders(), body: fd });
+      const upData = await upRes.json();
+      if (!upRes.ok) throw new Error(upData.error || 'Upload fehlgeschlagen.');
+      const res = await fetch('/api/account/update', { method:'POST', headers: authHeaders(true), body: JSON.stringify({ avatarId: upData.id }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Fehler beim Speichern.');
+      me = data.user;
+      pendingAvatarFile = null;
+      document.getElementById('pfAvatarActions').style.display = 'none';
+      renderAvatarPreview();
+      statusEl.textContent = 'Profilbild gespeichert!'; statusEl.className = 'status-msg form ok';
+    } catch (err) { statusEl.textContent = err.message; statusEl.className = 'status-msg form'; }
+  });
+
+  document.getElementById('btnRemoveAvatar').addEventListener('click', async () => {
+    const statusEl = document.getElementById('avatarStatus');
+    statusEl.textContent = 'Wird entfernt …'; statusEl.className = 'status-msg form';
+    try {
+      const res = await fetch('/api/account/update', { method:'POST', headers: authHeaders(true), body: JSON.stringify({ avatarId: null }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Fehler.');
+      me = data.user;
+      pendingAvatarFile = null;
+      document.getElementById('pfAvatarInput').value = '';
+      document.getElementById('pfAvatarActions').style.display = 'none';
+      renderAvatarPreview();
+      statusEl.textContent = 'Profilbild entfernt.'; statusEl.className = 'status-msg form ok';
+    } catch (err) { statusEl.textContent = err.message; statusEl.className = 'status-msg form'; }
+  });
 
   document.getElementById('btnSaveBirthday').addEventListener('click', async () => {
     const statusEl = document.getElementById('birthdayStatus');
@@ -950,7 +1026,7 @@
       row.style.setProperty('--cat-color', categoryColor(t.category));
       const unread = isUnread(t);
       row.innerHTML = `
-        ${avatarHtml(t.authorDisplayName)}
+        ${avatarHtml(t.authorDisplayName, null, t.authorAvatarId)}
         <div><h3>${t.pinned ? '<span class="pin-tag">📌 Angeheftet</span>' : ''}${unread ? '<span class="new-tag">Neu</span>' : ''}${escapeHtml(t.title)}${t.deleted ? ' <span class="badge">gelöscht</span>' : ''}</h3>
         <div class="thread-meta">von ${escapeHtml(t.authorDisplayName)} · ${fmtDate(t.createdAt)}</div></div>
         <span class="thread-cat">${escapeHtml(t.category)}</span>
@@ -1045,7 +1121,7 @@
       el.innerHTML = top.map(u => {
         const d = daysUntil(u.birthday);
         const [mm,dd] = u.birthday.split('-');
-        return `<div class="sidebar-item">${avatarHtml(u.displayName,'sm')}
+        return `<div class="sidebar-item">${avatarHtml(u.displayName,'sm', u.avatarId)}
           <div class="si-main"><div class="si-title">${escapeHtml(u.displayName)}</div><div class="si-sub">${dd}.${mm}. · ${d===0?'🎉 Heute':d===1?'Morgen':'in '+d+' Tagen'}</div></div>
         </div>`;
       }).join('');
@@ -1165,7 +1241,7 @@
         const badgesHtml = (p.authorBadges && p.authorBadges.length)
           ? `<div class="badges-row">${p.authorBadges.map(b => `<span class="badge-pill" title="${escapeHtml(b.label)}">${b.icon} ${escapeHtml(b.label)}</span>`).join('')}</div>` : '';
         el.innerHTML = `
-          ${avatarHtml(p.authorDisplayName)}
+          ${avatarHtml(p.authorDisplayName, null, p.authorAvatarId)}
           <div class="post-main">
             <div class="post-head">
               <span class="post-author-line">
@@ -1313,7 +1389,7 @@
         row.style.setProperty('--cat-color', categoryColor(t.category));
         const dateStr = t.eventDate ? new Date(t.eventDate).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' }) : '?';
         row.innerHTML = `
-          ${avatarHtml(t.authorDisplayName)}
+          ${avatarHtml(t.authorDisplayName, null, t.authorAvatarId)}
           <div><h3>📅 ${escapeHtml(t.title)}</h3><div class="thread-meta">${dateStr} · von ${escapeHtml(t.authorDisplayName)}</div></div>
           <span class="thread-cat">${escapeHtml(t.category)}</span>
           <div class="thread-replies">✅ ${rsvp.yes.length} · 🤔 ${rsvp.maybe.length} · ❌ ${rsvp.no.length}</div>`;
@@ -1340,7 +1416,7 @@
         row.className = 'user-row member-card';
         const badgesHtml = (u.badges && u.badges.length)
           ? `<div class="badges-row" style="margin-top:6px;">${u.badges.map(b => `<span class="badge-pill" title="${escapeHtml(b.label)}">${b.icon} ${escapeHtml(b.label)}</span>`).join('')}</div>` : '';
-        row.innerHTML = `<div style="display:flex; align-items:center; gap:12px;">${avatarHtml(u.displayName)}<div class="who-info"><strong>${escapeHtml(u.displayName)}</strong><span style="font-size:.8rem; color:#6f6350;">${escapeHtml(u.officeLabel)} · ${u.postCount||0} Beiträge</span>${badgesHtml}</div></div>
+        row.innerHTML = `<div style="display:flex; align-items:center; gap:12px;">${avatarHtml(u.displayName, null, u.avatarId)}<div class="who-info"><strong>${escapeHtml(u.displayName)}</strong><span style="font-size:.8rem; color:#6f6350;">${escapeHtml(u.officeLabel)} · ${u.postCount||0} Beiträge</span>${badgesHtml}</div></div>
           <span style="font-size:.78rem; color:#6f6350;">dabei seit ${new Date(u.createdAt).toLocaleDateString('de-DE',{month:'2-digit',year:'numeric'})}</span>`;
         dirEl.appendChild(row);
       });
@@ -1362,7 +1438,7 @@
           const [mm, dd] = u.birthday.split('-');
           const row = document.createElement('div');
           row.className = 'user-row';
-          row.innerHTML = `<div style="display:flex; align-items:center; gap:12px;">${avatarHtml(u.displayName)}<div class="who-info"><strong>${escapeHtml(u.displayName)}</strong><span style="font-size:.8rem; color:#6f6350;">${dd}.${mm}.</span></div></div>
+          row.innerHTML = `<div style="display:flex; align-items:center; gap:12px;">${avatarHtml(u.displayName, null, u.avatarId)}<div class="who-info"><strong>${escapeHtml(u.displayName)}</strong><span style="font-size:.8rem; color:#6f6350;">${dd}.${mm}.</span></div></div>
             <span style="font-size:.82rem; color:var(--red-dark); font-weight:600;">${d===0 ? '🎉 Heute!' : d===1 ? 'Morgen' : 'in ' + d + ' Tagen'}</span>`;
           bdEl.appendChild(row);
         });
