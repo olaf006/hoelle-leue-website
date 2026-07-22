@@ -191,16 +191,20 @@
   .stat-tile .s-lbl{font-size:.72rem; color:#6f6350; text-transform:uppercase; letter-spacing:.04em;}
 
   /* ---- Kategorie-Kacheln ---- */
-  .cat-tiles{display:grid; grid-template-columns:repeat(auto-fit, minmax(120px,1fr)); gap:10px; margin-bottom:22px;}
+  .cat-tiles{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px;}
   .cat-tile{
-    background:#fff; border-radius:14px; padding:14px 12px; text-align:center; cursor:pointer;
-    border:2px solid transparent; transition:all .2s var(--ease); box-shadow:0 1px 3px rgba(23,20,18,.06);
+    display:inline-flex; align-items:center; gap:7px; background:#fff; border-radius:12px;
+    padding:8px 14px; cursor:pointer; border:2px solid transparent; transition:all .2s var(--ease);
+    box-shadow:0 1px 3px rgba(23,20,18,.06);
   }
-  .cat-tile:hover{transform:translateY(-3px); box-shadow:0 10px 22px rgba(23,20,18,.12);}
+  .cat-tile:hover{transform:translateY(-2px); box-shadow:0 6px 14px rgba(23,20,18,.1);}
   .cat-tile.active{border-color:var(--tile-color, var(--wood-dark)); background:color-mix(in srgb, var(--tile-color, var(--wood-dark)) 8%, white);}
-  .cat-tile .c-ico{font-size:1.4rem; display:block; margin-bottom:4px;}
-  .cat-tile .c-name{font-size:.78rem; font-weight:600; color:var(--wood-dark); display:block;}
-  .cat-tile .c-count{font-size:.68rem; color:#8a7e6f;}
+  .cat-tile .c-ico{font-size:1rem; line-height:1;}
+  .cat-tile .c-name{font-size:.82rem; font-weight:600; color:var(--wood-dark);}
+  .cat-tile .c-count{
+    font-size:.7rem; font-weight:600; color:#fff; background:var(--tile-color, #8a7e6f);
+    min-width:18px; height:18px; padding:0 5px; border-radius:9px; display:inline-flex; align-items:center; justify-content:center;
+  }
 
   /* ---- Layout mit Seitenleiste ---- */
   .list-layout{display:grid; grid-template-columns:1fr 280px; gap:26px; align-items:start;}
@@ -888,7 +892,7 @@
     const allTile = document.createElement('div');
     allTile.className = 'cat-tile' + (activeCategory === 'Alle' ? ' active' : '');
     allTile.style.setProperty('--tile-color', 'var(--wood-dark)');
-    allTile.innerHTML = `<span class="c-ico">📋</span><span class="c-name">Alle</span><span class="c-count">${allThreads.filter(t=>!t.deleted).length} Themen</span>`;
+    allTile.innerHTML = `<span class="c-ico">📋</span><span class="c-name">Alle</span><span class="c-count">${allThreads.filter(t=>!t.deleted).length}</span>`;
     allTile.addEventListener('click', () => { activeCategory = 'Alle'; renderCatTiles(); renderThreadList(); });
     el.appendChild(allTile);
 
@@ -897,7 +901,7 @@
       const tile = document.createElement('div');
       tile.className = 'cat-tile' + (cat === activeCategory ? ' active' : '');
       tile.style.setProperty('--tile-color', categoryColor(cat));
-      tile.innerHTML = `<span class="c-ico">${CATEGORY_ICONS[cat] || '🏷️'}</span><span class="c-name">${escapeHtml(cat)}</span><span class="c-count">${count} Thema/Themen</span>`;
+      tile.innerHTML = `<span class="c-ico">${CATEGORY_ICONS[cat] || '🏷️'}</span><span class="c-name">${escapeHtml(cat)}</span><span class="c-count">${count}</span>`;
       tile.addEventListener('click', () => { activeCategory = cat; renderCatTiles(); renderThreadList(); });
       el.appendChild(tile);
     });
