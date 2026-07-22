@@ -587,11 +587,11 @@
           <div style="display:flex; align-items:center; gap:18px; margin-bottom:20px;">
             <div id="pfAvatarPreview"></div>
             <div>
-              <label class="btn btn-sm btn-ghost" for="pfAvatarInput" style="cursor:pointer;">📷 Profilbild wählen</label>
+              <label class="btn btn-sm btn-ghost" for="pfAvatarInput" style="cursor:pointer;">📷 Profilbild ändern</label>
               <input type="file" id="pfAvatarInput" accept="image/*" style="display:none;">
-              <div id="pfAvatarActions" style="margin-top:6px; display:none;">
-                <button class="btn btn-sm btn-primary" id="btnSaveAvatar">Speichern</button>
-                <button class="btn btn-sm btn-ghost" id="btnRemoveAvatar">Entfernen</button>
+              <div id="pfAvatarActions" style="margin-top:6px; display:flex; gap:8px;">
+                <button class="btn btn-sm btn-primary" id="btnSaveAvatar" style="display:none;">Speichern</button>
+                <button class="btn btn-sm btn-ghost" id="btnRemoveAvatar" style="display:none;">Entfernen</button>
               </div>
               <div class="status-msg form" id="avatarStatus"></div>
             </div>
@@ -843,7 +843,10 @@
     document.getElementById('pfPostCount').textContent = me.postCount || 0;
     document.getElementById('pfRights').textContent = me.isAdmin ? 'Administrator:in (voller Zugriff)' : 'Mitglied';
     document.getElementById('pfBirthdayInput').value = me.birthday ? me.birthday.slice(3,5) + '-' + me.birthday.slice(0,2) : '';
+    pendingAvatarFile = null;
+    document.getElementById('pfAvatarInput').value = '';
     renderAvatarPreview();
+    updateAvatarButtons();
   }
 
   let pendingAvatarFile = null;
@@ -851,6 +854,11 @@
   function renderAvatarPreview(){
     const el = document.getElementById('pfAvatarPreview');
     el.innerHTML = avatarHtml(me.displayName, 'lg', me.avatarId);
+  }
+
+  function updateAvatarButtons(){
+    document.getElementById('btnSaveAvatar').style.display = pendingAvatarFile ? 'inline-flex' : 'none';
+    document.getElementById('btnRemoveAvatar').style.display = (me.avatarId && !pendingAvatarFile) ? 'inline-flex' : 'none';
   }
 
   document.getElementById('pfAvatarInput').addEventListener('change', (e) => {
@@ -863,7 +871,7 @@
         `<img src="${reader.result}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;" alt="Vorschau">`;
     };
     reader.readAsDataURL(file);
-    document.getElementById('pfAvatarActions').style.display = 'block';
+    updateAvatarButtons();
   });
 
   document.getElementById('btnSaveAvatar').addEventListener('click', async () => {
@@ -881,8 +889,9 @@
       if (!res.ok) throw new Error(data.error || 'Fehler beim Speichern.');
       me = data.user;
       pendingAvatarFile = null;
-      document.getElementById('pfAvatarActions').style.display = 'none';
+      document.getElementById('pfAvatarInput').value = '';
       renderAvatarPreview();
+      updateAvatarButtons();
       statusEl.textContent = 'Profilbild gespeichert!'; statusEl.className = 'status-msg form ok';
     } catch (err) { statusEl.textContent = err.message; statusEl.className = 'status-msg form'; }
   });
@@ -897,8 +906,8 @@
       me = data.user;
       pendingAvatarFile = null;
       document.getElementById('pfAvatarInput').value = '';
-      document.getElementById('pfAvatarActions').style.display = 'none';
       renderAvatarPreview();
+      updateAvatarButtons();
       statusEl.textContent = 'Profilbild entfernt.'; statusEl.className = 'status-msg form ok';
     } catch (err) { statusEl.textContent = err.message; statusEl.className = 'status-msg form'; }
   });
