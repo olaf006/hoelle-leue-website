@@ -5,8 +5,32 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Friburger Hölle-Leue e.V. — Narrenzunft Freiburg-Rieselfeld</title>
 <meta name="description" content="Narrenzunft Friburger Hölle-Leue e.V. — alemannische Fasnet im Freiburger Stadtteil Rieselfeld, seit 1994.">
+
+<!-- PWA / Zum Home-Bildschirm hinzufügen -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#171412">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hölle-Leue">
+
+<!-- Social-Media-Vorschau (Open Graph / Twitter) -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Friburger Hölle-Leue e.V. — Narrenzunft Freiburg-Rieselfeld">
+<meta property="og:description" content="Alemannische Fasnet im Freiburger Stadtteil Rieselfeld, seit 1994. Hemdglunkerumzug, Häs, Brauchtum & Mitgliederforum.">
+<meta property="og:image" content="/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="/index.html">
+<meta property="og:locale" content="de_DE">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Friburger Hölle-Leue e.V.">
+<meta name="twitter:description" content="Narrenzunft Freiburg-Rieselfeld — alemannische Fasnet seit 1994.">
+<meta name="twitter:image" content="/og-image.png">
 <link rel="preconnect" href="https://fonts.bunny.net">
 <link href="https://fonts.bunny.net/css?family=fraunces:500,600,700,900|work-sans:400,500,600|jetbrains-mono:400,500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <style>
 
   :root{
@@ -301,6 +325,19 @@
   .join .btn-primary{background:var(--gold); border-color:var(--gold); color:var(--wood-dark);}
   .join .btn-primary:hover{background:var(--gold-light); box-shadow:0 10px 22px rgba(201,162,39,.4);}
 
+  .qr-widget{
+    background:rgba(255,255,255,.08); border-radius:16px; padding:18px;
+    display:flex; flex-direction:column; align-items:center; gap:10px; text-align:center;
+  }
+  .qr-widget canvas{border-radius:10px; background:#fff; padding:8px;}
+  .qr-caption{font-size:.78rem; color:#f4d9d4; max-width:20ch;}
+  .qr-download{
+    background:none; border:1.5px solid var(--gold); color:var(--gold-light); border-radius:10px;
+    padding:7px 14px; font-size:.78rem; font-weight:600; cursor:pointer; font-family:inherit;
+    transition:all .2s var(--ease);
+  }
+  .qr-download:hover{background:rgba(201,162,39,.2);}
+
   /* -------- kontakt / footer -------- */
   footer{background:var(--wood-dark); color:var(--cream-dark); padding:56px 0 26px;}
   .foot-grid{display:grid; grid-template-columns:1.3fr .7fr .7fr; gap:40px;}
@@ -376,6 +413,26 @@
   .weather-box .w-temp{font-family:'JetBrains Mono',monospace; font-weight:700; font-size:1.1rem; color:var(--wood-dark);}
   .weather-box .w-desc{font-size:.85rem; color:#3a332c;}
   .weather-box.w-loading, .weather-box.w-unavailable{color:#6f6350; font-size:.85rem; padding:12px 18px;}
+
+  /* -------- Bild-Lightbox (Galerie) -------- */
+  .lightbox{
+    position:fixed; inset:0; background:rgba(10,8,6,.94); z-index:300;
+    display:none; align-items:center; justify-content:center;
+    opacity:0; transition:opacity .25s var(--ease);
+  }
+  .lightbox.open{display:flex; opacity:1;}
+  .lb-img{max-width:88vw; max-height:82vh; border-radius:8px; box-shadow:0 20px 60px rgba(0,0,0,.5); animation:popIn .3s var(--ease) both;}
+  .lb-close{position:absolute; top:20px; right:24px; background:none; border:none; color:#fff; font-size:1.8rem; cursor:pointer; opacity:.8; transition:opacity .2s var(--ease);}
+  .lb-close:hover{opacity:1;}
+  .lb-nav{
+    position:absolute; top:50%; transform:translateY(-50%); background:rgba(255,255,255,.1); border:none;
+    color:#fff; font-size:2.2rem; width:52px; height:52px; border-radius:50%; cursor:pointer;
+    transition:background .2s var(--ease); line-height:1;
+  }
+  .lb-nav:hover{background:rgba(255,255,255,.22);}
+  .lb-prev{left:20px;} .lb-next{right:20px;}
+  .lb-caption{position:absolute; bottom:24px; left:0; right:0; text-align:center; color:#d8d3cc; font-family:'JetBrains Mono',monospace; font-size:.8rem;}
+  @media(max-width:640px){ .lb-nav{width:42px; height:42px; font-size:1.7rem;} .lb-prev{left:8px;} .lb-next{right:8px;} }
 </style>
 </head>
 <body>
@@ -553,13 +610,13 @@
       <span class="eyebrow">Galerie</span>
       <h2>Impressionen aus dem Zunftleben</h2>
     </div>
-    <div class="gallery-grid reveal-stagger reveal">
-      <div class="photo"><img src="/images/image4.jpg" alt="Impression aus dem Zunftleben 1" loading="lazy" onerror="handleImgError(this)"><div class="ph-fallback"><span class="ico">📷</span>images/image4.jpg</div><div class="gallery-cap">image4.jpg</div></div>
-      <div class="photo"><img src="/images/image5.jpg" alt="Impression aus dem Zunftleben 2" loading="lazy" onerror="handleImgError(this)"><div class="ph-fallback"><span class="ico">📷</span>images/image5.jpg</div><div class="gallery-cap">image5.jpg</div></div>
-      <div class="photo"><img src="/images/image6.jpg" alt="Impression aus dem Zunftleben 3" loading="lazy" onerror="handleImgError(this)"><div class="ph-fallback"><span class="ico">📷</span>images/image6.jpg</div><div class="gallery-cap">image6.jpg</div></div>
-      <div class="photo"><img src="/images/image7.jpg" alt="Impression aus dem Zunftleben 4" loading="lazy" onerror="handleImgError(this)"><div class="ph-fallback"><span class="ico">📷</span>images/image7.jpg</div><div class="gallery-cap">image7.jpg</div></div>
-      <div class="photo"><img src="/images/image8.jpg" alt="Impression aus dem Zunftleben 5" loading="lazy" onerror="handleImgError(this)"><div class="ph-fallback"><span class="ico">📷</span>images/image8.jpg</div><div class="gallery-cap">image8.jpg</div></div>
-      <div class="photo"><img src="/images/image9.jpg" alt="Impression aus dem Zunftleben 6" loading="lazy" onerror="handleImgError(this)"><div class="ph-fallback"><span class="ico">📷</span>images/image9.jpg</div><div class="gallery-cap">image9.jpg</div></div>
+    <div class="gallery-grid reveal-stagger reveal" id="galleryGrid">
+      <div class="photo" data-lightbox-src="/images/image4.jpg" data-lightbox-cap="image4.jpg"><img src="/images/image4.jpg" alt="Impression aus dem Zunftleben 1" loading="lazy" onerror="handleImgError(this)"><div class="ph-fallback"><span class="ico">📷</span>images/image4.jpg</div><div class="gallery-cap">image4.jpg</div></div>
+      <div class="photo" data-lightbox-src="/images/image5.jpg" data-lightbox-cap="image5.jpg"><img src="/images/image5.jpg" alt="Impression aus dem Zunftleben 2" loading="lazy" onerror="handleImgError(this)"><div class="ph-fallback"><span class="ico">📷</span>images/image5.jpg</div><div class="gallery-cap">image5.jpg</div></div>
+      <div class="photo" data-lightbox-src="/images/image6.jpg" data-lightbox-cap="image6.jpg"><img src="/images/image6.jpg" alt="Impression aus dem Zunftleben 3" loading="lazy" onerror="handleImgError(this)"><div class="ph-fallback"><span class="ico">📷</span>images/image6.jpg</div><div class="gallery-cap">image6.jpg</div></div>
+      <div class="photo" data-lightbox-src="/images/image7.jpg" data-lightbox-cap="image7.jpg"><img src="/images/image7.jpg" alt="Impression aus dem Zunftleben 4" loading="lazy" onerror="handleImgError(this)"><div class="ph-fallback"><span class="ico">📷</span>images/image7.jpg</div><div class="gallery-cap">image7.jpg</div></div>
+      <div class="photo" data-lightbox-src="/images/image8.jpg" data-lightbox-cap="image8.jpg"><img src="/images/image8.jpg" alt="Impression aus dem Zunftleben 5" loading="lazy" onerror="handleImgError(this)"><div class="ph-fallback"><span class="ico">📷</span>images/image8.jpg</div><div class="gallery-cap">image8.jpg</div></div>
+      <div class="photo" data-lightbox-src="/images/image9.jpg" data-lightbox-cap="image9.jpg"><img src="/images/image9.jpg" alt="Impression aus dem Zunftleben 6" loading="lazy" onerror="handleImgError(this)"><div class="ph-fallback"><span class="ico">📷</span>images/image9.jpg</div><div class="gallery-cap">image9.jpg</div></div>
     </div>
     <p style="margin-top:18px; color:#5a4a36; font-size:.9rem;">Einfach echte Fotos als <code>image1.jpg</code> bis <code>image9.jpg</code> in den Ordner <code>/public/images/</code> im Repo legen (image1 = Hintergrundfoto oben, image2 = Über-uns-Foto, image3 = Häs-Foto, image4–9 = Galerie) — sie erscheinen dann automatisch anstelle der Platzhalter.</p>
   </div>
@@ -571,8 +628,13 @@
       <div>
         <h2>Lust auf nette Leute, viel Spaß und Fasnet?</h2>
         <p>Wenn du alle drei Fragen mit Ja beantworten kannst, bist du bei uns richtig. Egal ob als aktive:r Hästräger:in oder passives Mitglied — wir freuen uns, dich kennenzulernen.</p>
+        <button type="button" class="btn btn-primary" id="btnContactPopup" style="margin-top:18px;">Jetzt Kontakt aufnehmen</button>
       </div>
-      <button type="button" class="btn btn-primary" id="btnContactPopup">Jetzt Kontakt aufnehmen</button>
+      <div class="qr-widget">
+        <canvas id="qrCanvas" width="150" height="150"></canvas>
+        <span class="qr-caption">Scannen &amp; direkt im Forum registrieren</span>
+        <button type="button" class="qr-download" id="qrDownloadBtn">📥 Für Flyer speichern</button>
+      </div>
     </div>
   </div>
 </section>
@@ -624,6 +686,14 @@
   </div>
 </div>
 
+<div class="lightbox" id="lightbox">
+  <button type="button" class="lb-close" id="lbClose" aria-label="Schließen">✕</button>
+  <button type="button" class="lb-nav lb-prev" id="lbPrev" aria-label="Vorheriges Bild">‹</button>
+  <img class="lb-img" id="lbImg" src="" alt="">
+  <button type="button" class="lb-nav lb-next" id="lbNext" aria-label="Nächstes Bild">›</button>
+  <div class="lb-caption" id="lbCaption"></div>
+</div>
+
 <div class="modal-backdrop" id="contactModalBackdrop">
   <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="contactModalTitle">
     <button type="button" class="modal-close" id="contactModalClose" aria-label="Schließen">✕</button>
@@ -650,6 +720,20 @@
 
 <script>
   document.getElementById('year').textContent = new Date().getFullYear();
+
+  /* ---------- QR-Code fürs Forum ---------- */
+  (function(){
+    const canvas = document.getElementById('qrCanvas');
+    if (!canvas || typeof QRCode === 'undefined') return;
+    const targetUrl = window.location.origin + '/mitglieder.html';
+    QRCode.toCanvas(canvas, targetUrl, { width: 150, margin: 1, color: { dark: '#171412', light: '#ffffff' } });
+    document.getElementById('qrDownloadBtn').addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = 'hoelle-leue-qr-code.png';
+      link.href = canvas.toDataURL('image/png');
+      document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    });
+  })();
 
   function handleImgError(imgEl){
     const photo = imgEl.closest('.photo');
@@ -918,6 +1002,41 @@
   document.getElementById('eventBackToDetail').addEventListener('click', () => { eventDetailView.style.display = 'block'; eventGalleryView.style.display = 'none'; });
   document.getElementById('eventModalClose').addEventListener('click', closeEventModal);
   eventModalBackdrop.addEventListener('click', (e) => { if (e.target === eventModalBackdrop) closeEventModal(); });
+
+  /* ---------- Bild-Lightbox (Galerie) ---------- */
+  (function(){
+    const lightbox = document.getElementById('lightbox');
+    const lbImg = document.getElementById('lbImg');
+    const lbCaption = document.getElementById('lbCaption');
+    const photos = Array.from(document.querySelectorAll('#galleryGrid .photo'));
+    let currentIndex = 0;
+
+    function openLightbox(idx){
+      currentIndex = idx;
+      const el = photos[idx];
+      lbImg.src = el.dataset.lightboxSrc;
+      lbCaption.textContent = el.dataset.lightboxCap || '';
+      lightbox.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeLightbox(){ lightbox.classList.remove('open'); document.body.style.overflow = ''; }
+    function showRelative(delta){ openLightbox((currentIndex + delta + photos.length) % photos.length); }
+
+    photos.forEach((el, idx) => {
+      if (el.classList.contains('missing')) return;
+      el.addEventListener('click', () => { if (!el.classList.contains('missing')) openLightbox(idx); });
+    });
+    document.getElementById('lbClose').addEventListener('click', closeLightbox);
+    document.getElementById('lbPrev').addEventListener('click', () => showRelative(-1));
+    document.getElementById('lbNext').addEventListener('click', () => showRelative(1));
+    lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
+    document.addEventListener('keydown', (e) => {
+      if (!lightbox.classList.contains('open')) return;
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowLeft') showRelative(-1);
+      if (e.key === 'ArrowRight') showRelative(1);
+    });
+  })();
 
   /* ---------- Kontakt-Pop-up ---------- */
   const contactBackdrop = document.getElementById('contactModalBackdrop');
