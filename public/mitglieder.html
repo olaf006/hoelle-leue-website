@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mitgliederbereich — Friburger Hölle-Leue e.V.</title>
 <meta name="robots" content="noindex, nofollow">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#171412">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Hölle-Leue">
 <link rel="preconnect" href="https://fonts.bunny.net">
 <link href="https://fonts.bunny.net/css?family=fraunces:500,600,700,900|work-sans:400,500,600|jetbrains-mono:400,500&display=swap" rel="stylesheet">
 <style>
@@ -611,6 +617,14 @@
         <div class="admin-section">
           <h2>Moderations-Log</h2>
           <div id="logList"></div>
+        </div>
+        <div class="admin-section">
+          <h2>💾 Backup</h2>
+          <div class="panel" style="max-width:520px;">
+            <p style="margin-bottom:14px; color:#6f6350; font-size:.9rem;">Lädt alle Themen, Beiträge, Mitgliederdaten und das Moderations-Log als JSON-Datei herunter. Passwörter sind aus Sicherheitsgründen nicht enthalten.</p>
+            <button class="btn btn-primary btn-sm" id="btnExportBackup">📥 Backup jetzt herunterladen</button>
+            <div class="status-msg form" id="exportStatus"></div>
+          </div>
         </div>
       </div>
 
@@ -1528,6 +1542,22 @@
       el.appendChild(row);
     });
   }
+
+  document.getElementById('btnExportBackup').addEventListener('click', async () => {
+    const statusEl = document.getElementById('exportStatus');
+    statusEl.textContent = 'Backup wird erstellt …'; statusEl.className = 'status-msg form';
+    try {
+      const res = await fetch('/api/admin/export', { headers: authHeaders() });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Export fehlgeschlagen.');
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'hoelle-leue-backup-' + new Date().toISOString().slice(0,10) + '.json';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      statusEl.textContent = 'Backup heruntergeladen!'; statusEl.className = 'status-msg form ok';
+    } catch (err) { statusEl.textContent = err.message; statusEl.className = 'status-msg form'; }
+  });
 
   tryAutoLogin();
 })();
