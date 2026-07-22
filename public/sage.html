@@ -3,45 +3,375 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Unsere Sage — Friburger Hölle-Leue e.V.</title>
-<meta name="description" content="Die Sage von Ritter Kuno von Falkensteig — die Legende hinter dem Namen der Friburger Hölle-Leue.">
+<title>Mitgliederbereich — Friburger Hölle-Leue e.V.</title>
+<meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.bunny.net">
 <link href="https://fonts.bunny.net/css?family=fraunces:500,600,700,900|work-sans:400,500,600|jetbrains-mono:400,500&display=swap" rel="stylesheet">
 <style>
   :root{
-    --wood-dark:   #171412; --wood:        #3a332c; --wood-light:  #6b6258;
-    --red:         #b4222c; --red-dark:    #8c1a22; --gold:        #c9a227; --gold-light:  #e6c65c;
-    --cream:       #ffffff; --cream-dark:  #f0ede8; --ink:         #1a1613; --ease:cubic-bezier(.22,.9,.32,1);
+    --wood-dark:#171412; --wood:#3a332c; --wood-light:#6b6258;
+    --red:#b4222c; --red-dark:#8c1a22; --gold:#c9a227; --gold-light:#e6c65c;
+    --cream:#faf6ee; --cream-dark:#f0e6d0; --ink:#1a1613;
+    --shadow:0 10px 30px rgba(23,20,18,0.12); --ease:cubic-bezier(.22,.9,.32,1);
   }
+  html[data-theme="dark"]{
+    --cream:#1c1a17; --cream-dark:#2a2620; --ink:#eee8de;
+    --wood-light:#8a8072; --shadow:0 10px 30px rgba(0,0,0,0.4);
+  }
+  html[data-theme="dark"] body{background:#141210;}
+  html[data-theme="dark"] .panel, html[data-theme="dark"] .post, html[data-theme="dark"] .user-row,
+  html[data-theme="dark"] .pending-row, html[data-theme="dark"] .log-row, html[data-theme="dark"] .member-card{
+    background:#211e1a; border-color:#332e27;
+  }
+  html[data-theme="dark"] .field input, html[data-theme="dark"] .field select,
+  html[data-theme="dark"] .field textarea, html[data-theme="dark"] .light-field input,
+  html[data-theme="dark"] .light-field select, html[data-theme="dark"] .search-box input,
+  html[data-theme="dark"] .sort-select{ background:#2a2620; color:#eee8de; border-color:#3a352c; }
+  html[data-theme="dark"] .attach-file{ background:#2a2620; }
+  html[data-theme="dark"] .reaction-btn{ background:#211e1a; border-color:#3a352c; }
+  html[data-theme="dark"] .reaction-picker{ background:#211e1a; border-color:#3a352c; }
+  html[data-theme="dark"] .cat-pill{ border-color:#3a352c; color:#c9c4bb; }
+  html[data-theme="dark"] h1, html[data-theme="dark"] h2, html[data-theme="dark"] h3{ color:#f4efe6; }
   *{box-sizing:border-box;}
-  body{margin:0; background:var(--cream); color:var(--ink); font-family:'Work Sans', sans-serif; font-size:17px; line-height:1.7;}
-  h1,h2{font-family:'Fraunces', serif; font-weight:700; color:var(--wood-dark); letter-spacing:-0.01em;}
-  a{color:var(--red-dark);}
-  .wrap{max-width:760px; margin:0 auto; padding:0 24px;}
-  header{background:var(--wood-dark); border-bottom:3px solid var(--red);}
+  html{scroll-behavior:smooth;}
+  body{margin:0; background:var(--cream); color:var(--ink); font-family:'Work Sans', sans-serif; font-size:17px; line-height:1.6;}
+  h1,h2,h3{font-family:'Fraunces', serif; font-weight:700; margin:0 0 .4em 0; color:var(--wood-dark); letter-spacing:-0.01em;}
+  a{color:inherit;}
+  .eyebrow{font-family:'JetBrains Mono', monospace; text-transform:uppercase; letter-spacing:.14em; font-size:.72rem; color:var(--red-dark); font-weight:500;}
+  .wrap{max-width:980px; margin:0 auto; padding:0 24px;}
+  @media (prefers-reduced-motion: reduce){ *{animation-duration:.001ms !important; transition-duration:.001ms !important;} }
+
+  @keyframes fadeUp{from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);}}
+  @keyframes fadeIn{from{opacity:0;} to{opacity:1;}}
+  @keyframes popIn{0%{opacity:0; transform:scale(.94) translateY(10px);} 100%{opacity:1; transform:scale(1) translateY(0);}}
+  @keyframes shake{10%,90%{transform:translateX(-1px);} 20%,80%{transform:translateX(2px);} 30%,50%,70%{transform:translateX(-4px);} 40%,60%{transform:translateX(4px);}}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  @keyframes pop{0%{transform:scale(1);} 40%{transform:scale(1.35);} 100%{transform:scale(1);}}
+
+  header{position:sticky; top:0; z-index:50; background:var(--wood-dark); border-bottom:3px solid var(--red); animation:fadeIn .5s var(--ease) both;}
   nav.wrap{display:flex; align-items:center; justify-content:space-between; padding:14px 24px; max-width:1080px;}
   .brand{display:flex; align-items:center; gap:12px; text-decoration:none;}
-  .brand-mark{width:38px; height:38px;}
-  .brand-name{font-family:'Fraunces', serif; color:var(--cream); font-weight:700; font-size:1.15rem; line-height:1.05;}
+  .brand-mark{width:38px; height:38px; flex:none;}
+  .brand-name{font-family:'Fraunces', serif; color:#fff; font-weight:700; font-size:1.15rem; line-height:1.05;}
   .brand-sub{display:block; font-family:'JetBrains Mono', monospace; font-size:.62rem; letter-spacing:.1em; color:var(--gold-light); text-transform:uppercase; margin-top:2px;}
-  .navlinks{display:flex; gap:22px; list-style:none; margin:0; padding:0;}
-  .navlinks a{text-decoration:none; color:#d8d3cc; font-size:.9rem; font-weight:500;}
-  .navlinks a:hover{color:var(--gold-light);}
-  @media(max-width:700px){ .navlinks{display:none;} }
-  .rope{height:3px; background:linear-gradient(90deg, transparent, var(--red) 15%, var(--red) 85%, transparent); box-shadow:0 1px 12px rgba(180,34,44,.3);}
-  main{padding:64px 0 90px;}
-  .eyebrow{font-family:'JetBrains Mono', monospace; text-transform:uppercase; letter-spacing:.14em; font-size:.72rem; color:var(--red-dark); font-weight:500; display:block; margin-bottom:10px;}
-  .lead{color:#3a332c; font-size:1.05rem; max-width:56ch; margin-bottom:34px;}
-  .card{background:#fff; border:1px solid var(--cream-dark); border-radius:10px; padding:40px 44px; box-shadow:0 10px 30px rgba(23,20,18,.08);}
-  @media(max-width:640px){ .card{padding:28px;} }
-  .card p{margin:0 0 18px;}
-  .card p:last-child{margin-bottom:0;}
-  .drop::first-letter{font-family:'Fraunces', serif; font-size:3.6rem; font-weight:700; float:left; line-height:.8; padding-right:10px; padding-top:6px; color:var(--red);}
-  .note{
-    margin-top:30px; padding:20px 24px; background:var(--cream-dark); border-left:4px solid var(--gold);
-    border-radius:6px; font-size:.92rem; color:var(--wood);
+  .navlinks{display:flex; gap:20px; list-style:none; margin:0; padding:0; align-items:center;}
+  .navlinks a, .navlinks button{text-decoration:none; color:#d8d3cc; font-size:.9rem; font-weight:500; position:relative; background:none; border:none; cursor:pointer; font-family:inherit; padding:0;}
+  .navlinks a:hover, .navlinks button:hover{color:var(--gold-light);}
+  .who{font-family:'JetBrains Mono',monospace; font-size:.76rem; color:var(--gold-light); background:rgba(201,162,39,.14); padding:6px 12px; border-radius:20px; border:1px solid rgba(201,162,39,.3);}
+  #navToggle{display:none;}
+  .navBtn{display:none;}
+  @media(max-width:900px){
+    .navlinks{
+      position:absolute; top:100%; left:0; right:0;
+      flex-direction:column; align-items:stretch; gap:0;
+      background:var(--wood-dark);
+      max-height:0; overflow:hidden;
+      transition:max-height .3s var(--ease);
+      border-bottom:3px solid var(--red);
+    }
+    .navlinks li{width:100%;}
+    .navlinks a, .navlinks button{padding:14px 24px; display:block; width:100%; text-align:left; border-top:1px solid rgba(255,255,255,.08); box-sizing:border-box;}
+    .navlinks .who{display:inline-block; margin:10px 24px;}
+    #navToggle:checked ~ .navlinks{max-height:500px;}
+    .navBtn{display:block; background:none; border:none; color:#fff; font-size:1.6rem; cursor:pointer; line-height:1;}
   }
-  footer{background:var(--wood-dark); color:#d8d3cc; padding:30px 0; text-align:center; font-size:.85rem;}
+
+  .rope{height:3px; background:linear-gradient(90deg, transparent, var(--red) 15%, var(--red) 85%, transparent); box-shadow:0 1px 12px rgba(180,34,44,.3);}
+
+  main{padding:48px 0 100px;}
+  @media(max-width:640px){ main{padding:30px 0 70px;} }
+  .page-head{margin-bottom:22px; animation:fadeUp .6s var(--ease) both;}
+
+  /* ---- Auth-Karten ---- */
+  #authArea{max-width:440px; margin:30px auto 0;}
+  .auth-card{background:linear-gradient(160deg, var(--wood-dark), #0d0b0a); color:#fff; border-radius:10px; padding:34px 32px; box-shadow:var(--shadow); border:3px solid var(--red); animation:popIn .5s var(--ease) both;}
+  .auth-card.shake{animation:shake .5s ease;}
+  .auth-card h1{color:#fff; font-size:1.4rem; margin-bottom:4px;}
+  .auth-card p.sub{color:#c9c4bb; font-size:.9rem; margin-bottom:20px;}
+  .auth-tabs{display:flex; gap:6px; margin-bottom:22px; background:rgba(0,0,0,.3); padding:5px; border-radius:12px; box-shadow:inset 0 1px 3px rgba(0,0,0,.3);}
+  .auth-tabs button{flex:1; padding:10px; border:none; background:none; color:#c9c4bb; border-radius:9px; cursor:pointer; font-family:inherit; font-weight:600; font-size:.85rem; transition:all .2s var(--ease);}
+  .auth-tabs button.active{background:var(--red); color:#fff; box-shadow:0 3px 10px rgba(180,34,44,.4);}
+  .field{margin-bottom:16px; text-align:left;}
+  .field label{display:block; font-size:.78rem; font-weight:600; color:var(--gold-light); margin-bottom:5px;}
+  .field input, .field select{
+    width:100%; padding:13px 16px; border-radius:12px; border:none; background:rgba(255,255,255,.9); color:var(--ink);
+    font-size:.95rem; font-family:inherit; box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.15), 0 1px 2px rgba(0,0,0,.15);
+    transition:box-shadow .2s var(--ease), background .2s var(--ease);
+  }
+  .field input:focus, .field select:focus{outline:none; background:var(--cream); box-shadow:0 0 0 3px rgba(201,162,39,.4), 0 2px 6px rgba(0,0,0,.15);}
+  .auth-card button[type="submit"]{
+    width:100%; margin-top:6px; padding:13px 14px;
+    background:linear-gradient(155deg, #cc2b36, var(--red) 55%, var(--red-dark));
+    color:#fff; border:none; border-radius:12px; font-weight:600; font-size:.95rem; cursor:pointer;
+    box-shadow:0 3px 10px rgba(180,34,44,.35), inset 0 1px 0 rgba(255,255,255,.18);
+    transition:transform .18s var(--ease), box-shadow .25s var(--ease);
+  }
+  .auth-card button[type="submit"]:hover{transform:translateY(-2px); box-shadow:0 10px 24px rgba(180,34,44,.45), inset 0 1px 0 rgba(255,255,255,.2);}
+  .auth-card button[type="submit"]:active{transform:translateY(1px) scale(.98);}
+  .status-msg{font-size:.85rem; margin-top:12px; min-height:1.2em;}
+  .status-msg.error{color:#ff9d94;}
+  .status-msg.ok{color:#8ee39c;}
+
+  /* ---- App ---- */
+  #app{display:none;}
+  #app.visible{display:block; animation:fadeUp .5s var(--ease) both;}
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    padding:12px 24px; border-radius:12px; font-weight:600; text-decoration:none; font-size:.9rem;
+    border:none; cursor:pointer; font-family:inherit; position:relative;
+    transition:transform .18s var(--ease), box-shadow .25s var(--ease), filter .18s var(--ease);
+  }
+  .btn:active{transform:translateY(1px) scale(.98);}
+  .btn-primary{
+    background:linear-gradient(155deg, #cc2b36, var(--red) 55%, var(--red-dark));
+    color:#fff; box-shadow:0 3px 10px rgba(180,34,44,.35), inset 0 1px 0 rgba(255,255,255,.18);
+  }
+  .btn-primary:hover{transform:translateY(-2px); box-shadow:0 10px 24px rgba(180,34,44,.4), inset 0 1px 0 rgba(255,255,255,.2); filter:brightness(1.03);}
+  .btn-ghost{
+    background:var(--cream); color:var(--wood-dark); box-shadow:0 1px 2px rgba(23,20,18,.06), inset 0 0 0 1.5px #e5e0d6;
+  }
+  .btn-ghost:hover{transform:translateY(-2px); box-shadow:0 8px 18px rgba(23,20,18,.1), inset 0 0 0 1.5px var(--gold);}
+  .btn-sm{padding:8px 16px; font-size:.8rem; border-radius:9px;}
+  .btn-danger{
+    background:var(--cream); color:var(--red-dark); box-shadow:0 1px 2px rgba(23,20,18,.06), inset 0 0 0 1.5px #f0cfcc;
+  }
+  .btn-danger:hover{transform:translateY(-2px); background:#fff5f4; box-shadow:0 8px 18px rgba(180,34,44,.15), inset 0 0 0 1.5px var(--red);}
+
+  .top-actions{display:flex; justify-content:space-between; align-items:flex-end; gap:20px; flex-wrap:wrap; margin-bottom:18px;}
+
+  .tabs{display:flex; gap:6px; margin-bottom:24px; background:var(--cream-dark); padding:6px; border-radius:14px; flex-wrap:wrap; box-shadow:inset 0 1px 3px rgba(23,20,18,.06);}
+  .tabs button{padding:10px 18px; background:none; border:none; border-radius:10px; font-family:inherit; font-weight:600; font-size:.86rem; color:#6f6350; cursor:pointer; transition:all .2s var(--ease);}
+  .tabs button.active{color:var(--wood-dark); background:var(--cream); box-shadow:0 2px 8px rgba(23,20,18,.1);}
+  .tabs button:hover:not(.active){color:var(--red-dark);}
+  .badge{font-family:'JetBrains Mono',monospace; font-size:.62rem; background:var(--red); color:#fff; padding:3px 8px; border-radius:10px; margin-left:6px; vertical-align:middle;}
+
+  /* ---- Toolbar: Suche, Filter, Sortierung ---- */
+  .toolbar{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:16px;}
+  .search-box{position:relative; flex:1; min-width:180px;}
+  .search-box input{
+    width:100%; padding:12px 16px 12px 40px; border-radius:14px; border:none; background:var(--cream);
+    font-family:inherit; font-size:.88rem; box-shadow:0 1px 3px rgba(23,20,18,.08), inset 0 0 0 1.5px var(--cream-dark);
+    transition:box-shadow .2s var(--ease);
+  }
+  .search-box input:focus{outline:none; box-shadow:0 2px 8px rgba(23,20,18,.1), inset 0 0 0 2px var(--gold);}
+  .search-box .sico{position:absolute; left:14px; top:50%; transform:translateY(-50%); font-size:.85rem; opacity:.55;}
+  .sort-select{
+    padding:11px 16px; border-radius:14px; border:none; background:var(--cream); font-family:inherit; font-size:.85rem; cursor:pointer;
+    box-shadow:0 1px 3px rgba(23,20,18,.08), inset 0 0 0 1.5px var(--cream-dark);
+  }
+  .cat-pills{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;}
+  .cat-pill{
+    padding:8px 16px; border-radius:20px; border:none; background:var(--cream); font-family:inherit; font-size:.8rem;
+    cursor:pointer; color:var(--wood); transition:all .2s var(--ease); font-weight:600;
+    box-shadow:0 1px 3px rgba(23,20,18,.08), inset 0 0 0 1.5px var(--cream-dark);
+  }
+  .cat-pill:hover{transform:translateY(-1px); box-shadow:0 4px 10px rgba(23,20,18,.12), inset 0 0 0 1.5px var(--gold);}
+  .cat-pill.active{background:var(--wood-dark); color:#fff; box-shadow:0 3px 10px rgba(23,20,18,.25);}
+
+  /* ---- Begrüßung ---- */
+  .greeting-card{
+    background:linear-gradient(120deg, var(--wood-dark), #2a231b);
+    color:#fff; border-radius:18px; padding:20px 26px; margin-bottom:22px;
+    display:flex; align-items:center; gap:16px; flex-wrap:wrap; justify-content:space-between;
+    box-shadow:0 6px 20px rgba(23,20,18,.2); animation:fadeUp .5s var(--ease) both;
+  }
+  .greeting-card .g-text strong{color:var(--gold-light);}
+  .greeting-card .g-sub{font-size:.85rem; color:#d8d3cc; margin-top:4px;}
+
+  /* ---- Stats-Leiste ---- */
+  .stats-bar{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:24px;}
+  @media(max-width:760px){ .stats-bar{grid-template-columns:repeat(2,1fr);} }
+  .stat-tile{
+    background:var(--cream); border-radius:16px; padding:16px 18px; text-align:center;
+    box-shadow:0 1px 3px rgba(23,20,18,.06), inset 0 0 0 1px #f0ede8;
+    transition:transform .2s var(--ease), box-shadow .2s var(--ease);
+  }
+  .stat-tile:hover{transform:translateY(-3px); box-shadow:0 10px 22px rgba(23,20,18,.1);}
+  .stat-tile .s-num{font-family:'Fraunces',serif; font-weight:700; font-size:1.5rem; color:var(--wood-dark); display:block;}
+  .stat-tile .s-lbl{font-size:.72rem; color:#6f6350; text-transform:uppercase; letter-spacing:.04em;}
+
+  /* ---- Kategorie-Kacheln ---- */
+  .cat-tiles{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px;}
+  .cat-tile{
+    display:inline-flex; align-items:center; gap:7px; background:var(--cream); border-radius:12px;
+    padding:8px 14px; cursor:pointer; border:2px solid transparent; transition:all .2s var(--ease);
+    box-shadow:0 1px 3px rgba(23,20,18,.06);
+  }
+  .cat-tile:hover{transform:translateY(-2px); box-shadow:0 6px 14px rgba(23,20,18,.1);}
+  .cat-tile.active{border-color:var(--tile-color, var(--wood-dark)); background:color-mix(in srgb, var(--tile-color, var(--wood-dark)) 8%, white);}
+  .cat-tile .c-ico{font-size:1rem; line-height:1;}
+  .cat-tile .c-name{font-size:.82rem; font-weight:600; color:var(--wood-dark);}
+  .cat-tile .c-count{
+    font-size:.7rem; font-weight:600; color:#fff; background:var(--tile-color, #8a7e6f);
+    min-width:18px; height:18px; padding:0 5px; border-radius:9px; display:inline-flex; align-items:center; justify-content:center;
+  }
+
+  /* ---- Layout mit Seitenleiste ---- */
+  .list-layout{display:grid; grid-template-columns:1fr 280px; gap:26px; align-items:start;}
+  @media(max-width:900px){
+    .list-layout{grid-template-columns:1fr;}
+    .list-sidebar{position:static; flex-direction:row; overflow-x:auto; gap:12px; padding-bottom:4px;}
+    .list-sidebar .sidebar-card{min-width:240px; flex:none;}
+  }
+  .list-sidebar{display:flex; flex-direction:column; gap:16px; position:sticky; top:80px;}
+  .sidebar-card{background:var(--cream); border-radius:16px; padding:18px 20px; box-shadow:0 1px 3px rgba(23,20,18,.06), inset 0 0 0 1px #f0ede8;}
+  .sidebar-card h4{font-size:.82rem; text-transform:uppercase; letter-spacing:.04em; color:var(--red-dark); margin:0 0 12px;}
+  .sidebar-item{display:flex; align-items:center; gap:10px; padding:8px 0; border-top:1px solid var(--cream-dark);}
+  .sidebar-item:first-child{border-top:none; padding-top:0;}
+  .sidebar-item .si-main{flex:1; min-width:0;}
+  .sidebar-item .si-title{font-size:.85rem; font-weight:600; color:var(--wood-dark); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .sidebar-item .si-sub{font-size:.72rem; color:#6f6350;}
+  .sidebar-empty{font-size:.82rem; color:#8a7e6f;}
+
+  .thread-list{display:flex; flex-direction:column; gap:12px;}
+  .thread-row{
+    display:grid; grid-template-columns:auto 1fr auto auto; gap:16px; align-items:center;
+    padding:18px 20px; border-radius:16px; background:var(--cream); cursor:pointer; position:relative;
+    animation:fadeUp .4s var(--ease) both; box-shadow:0 1px 3px rgba(23,20,18,.06);
+    border:2px solid var(--cat-color, #ddd6c9);
+    transition:transform .2s var(--ease), box-shadow .25s var(--ease), border-color .2s var(--ease);
+  }
+  .thread-row:hover{transform:translateY(-3px); box-shadow:0 12px 28px rgba(23,20,18,.14);}
+  .thread-row.is-pinned{box-shadow:0 1px 3px rgba(180,34,44,.1); border-width:2.5px;}
+  .thread-row h3{font-size:1.02rem; margin:0 0 3px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+  .thread-row.is-deleted{opacity:.55;}
+  .thread-meta{font-size:.8rem; color:#6f6350;}
+  .thread-cat{font-family:'JetBrains Mono', monospace; font-size:.64rem; text-transform:uppercase; background:var(--cat-color, var(--wood-dark)); color:#fff; padding:5px 9px; border-radius:8px; white-space:nowrap;}
+  .thread-replies{font-size:.8rem; color:var(--wood); text-align:right; white-space:nowrap;}
+  .pin-tag{font-size:.68rem; background:var(--red); color:#fff; padding:2px 7px; border-radius:10px; font-family:'JetBrains Mono',monospace;}
+  .new-tag{font-size:.62rem; background:#2f7d4a; color:#fff; padding:2px 7px; border-radius:10px; font-family:'JetBrains Mono',monospace; text-transform:uppercase;}
+  @media(max-width:640px){
+    .thread-row{
+      grid-template-columns:auto 1fr; grid-template-areas:"avatar title" "cat replies";
+      padding:14px 16px; gap:8px 12px;
+    }
+    .thread-row > .avatar{grid-area:avatar;}
+    .thread-row > div:nth-child(2){grid-area:title;}
+    .thread-cat{grid-area:cat; justify-self:start;}
+    .thread-replies{grid-area:replies; justify-self:end; text-align:right;}
+    .thread-row h3{font-size:.95rem;}
+  }
+  .empty-state{padding:44px 20px; text-align:center; color:#6f6350; background:var(--cream); border-radius:16px; box-shadow:0 1px 3px rgba(23,20,18,.06), inset 0 0 0 1px #f0ede8;}
+  .spinner-row{display:flex; align-items:center; gap:10px; color:#6f6350; padding:20px 4px;}
+  .spinner{width:18px; height:18px; border-radius:50%; border:2.5px solid rgba(180,34,44,.2); border-top-color:var(--red); animation:spin .8s linear infinite;}
+
+  /* ---- Avatare ---- */
+  .avatar{width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:.85rem; font-family:'Fraunces',serif; flex:none;}
+  .avatar.sm{width:30px; height:30px; font-size:.7rem;}
+
+  /* ---- Zunft-Abzeichen ---- */
+  .badge-pill{
+    display:inline-flex; align-items:center; gap:3px; font-size:.68rem; font-weight:600;
+    background:var(--cream-dark); color:var(--wood); padding:2px 8px 2px 6px; border-radius:12px;
+    border:1px solid #e2ddd2; cursor:default;
+  }
+  .badges-row{display:flex; gap:5px; flex-wrap:wrap; margin-bottom:8px;}
+
+  .view{animation:fadeUp .4s var(--ease) both;}
+  #newThreadForm, #threadView, #adminView, #profileView{display:none;}
+  .panel{background:var(--cream); border-radius:18px; padding:32px; box-shadow:0 4px 16px rgba(23,20,18,.08), inset 0 0 0 1px #f0ede8; animation:popIn .4s var(--ease) both;}
+  .field textarea{
+    width:100%; padding:14px 16px; border-radius:14px; border:none; font-family:inherit; font-size:.95rem;
+    background:var(--cream-dark); color:var(--ink); min-height:110px; resize:vertical;
+    box-shadow:inset 0 1px 3px rgba(23,20,18,.06); transition:box-shadow .2s var(--ease), background .2s var(--ease);
+  }
+  .field textarea:focus{outline:none; background:var(--cream); box-shadow:0 0 0 3px rgba(201,162,39,.22);}
+  .light-field label{display:block; font-size:.82rem; font-weight:600; color:var(--wood-dark); margin-bottom:7px;}
+  .light-field input, .light-field select{
+    width:100%; padding:13px 16px; border-radius:14px; border:none; font-family:inherit; font-size:.95rem;
+    background:var(--cream-dark); color:var(--ink); box-shadow:inset 0 1px 3px rgba(23,20,18,.06);
+    transition:box-shadow .2s var(--ease), background .2s var(--ease);
+  }
+  .light-field input:focus, .light-field select:focus{outline:none; background:var(--cream); box-shadow:0 0 0 3px rgba(201,162,39,.22);}
+  .light-field{margin-bottom:18px;}
+  .form-actions{display:flex; gap:12px; margin-top:8px;}
+  .fmt-hint{font-size:.74rem; color:#6f6350; margin-top:-12px; margin-bottom:16px;}
+
+  .back-link{display:inline-flex; align-items:center; gap:6px; font-size:.86rem; color:var(--red-dark); text-decoration:none; margin-bottom:16px; font-weight:600; transition:gap .2s var(--ease);}
+  .back-link:hover{gap:10px; color:var(--red);}
+  .post{background:var(--cream); border-radius:16px; padding:20px 22px; margin-bottom:14px; animation:fadeUp .4s var(--ease) both; transition:box-shadow .25s var(--ease), transform .2s var(--ease); display:flex; gap:14px; box-shadow:0 1px 3px rgba(23,20,18,.06), inset 0 0 0 1px #f0ede8;}
+  @media(max-width:640px){
+    .post{padding:14px 16px; gap:10px; border-radius:14px;}
+    .attach-img{width:96px; height:96px;}
+    .top-actions h1{font-size:1.5rem;}
+  }
+  .post:hover{box-shadow:0 10px 24px rgba(23,20,18,.1), inset 0 0 0 1px #f0ede8; transform:translateY(-2px);}
+  .post.is-deleted{background:#fbeceb; box-shadow:0 1px 3px rgba(180,34,44,.08), inset 0 0 0 1px #e6c3bf;}
+  .post-main{flex:1; min-width:0;}
+  .post-head{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; flex-wrap:wrap; gap:6px;}
+  .post-author{font-weight:700; color:var(--wood-dark); font-family:'Fraunces',serif;}
+  .post-author-line{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .post-office{font-size:.66rem; font-family:'JetBrains Mono',monospace; color:var(--red-dark); text-transform:uppercase;}
+  .post-count{font-size:.68rem; color:#8a7e6f;}
+  .post-date{font-size:.76rem; color:#6f6350; font-family:'JetBrains Mono', monospace;}
+  .post-body{white-space:pre-wrap; color:var(--ink); word-break:break-word;}
+  .post-body strong{color:var(--wood-dark);}
+  .post-body a{color:var(--red-dark); text-decoration:underline;}
+  .post-quote{background:var(--cream-dark); border-left:3px solid var(--gold); padding:8px 14px; border-radius:6px; font-size:.88rem; color:#4a4238; margin-bottom:10px;}
+  .post-quote strong{color:var(--wood-dark);}
+  .post-actions{margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+  .attachments{display:flex; flex-wrap:wrap; gap:10px; margin-top:14px;}
+  .attach-img{width:130px; height:130px; object-fit:cover; border-radius:6px; border:1px solid var(--cream-dark); cursor:pointer;}
+  .attach-file{display:flex; align-items:center; gap:8px; padding:9px 13px; background:var(--cream-dark); border:1px solid var(--cream-dark); border-radius:6px; text-decoration:none; color:var(--wood-dark); font-size:.83rem; font-weight:500;}
+  .reply-panel{margin-top:24px;}
+
+  /* ---- Reaktionen ---- */
+  .reactions-row{display:flex; gap:6px; flex-wrap:wrap; margin-top:12px;}
+  .reaction-btn{
+    display:flex; align-items:center; gap:5px; padding:5px 12px; border-radius:16px;
+    border:none; background:var(--cream-dark); cursor:pointer; font-size:.82rem;
+    transition:all .15s var(--ease); font-family:inherit; box-shadow:inset 0 0 0 1px transparent;
+  }
+  .reaction-btn:hover{transform:translateY(-2px); box-shadow:0 4px 10px rgba(23,20,18,.1);}
+  .reaction-btn.mine{background:rgba(201,162,39,.22); box-shadow:inset 0 0 0 1.5px var(--gold);}
+  .reaction-btn.just-added{animation:pop .3s var(--ease);}
+  .reaction-btn .count{font-weight:600; color:var(--wood);}
+  .reaction-add{padding:5px 10px; border-radius:16px; border:1.5px dashed var(--wood-light); background:none; cursor:pointer; font-size:.8rem; color:#6f6350; position:relative; transition:all .2s var(--ease);}
+  .reaction-add:hover{border-color:var(--gold); color:var(--red-dark);}
+  .reaction-picker{position:absolute; bottom:110%; left:0; background:var(--cream); border-radius:14px; box-shadow:0 10px 28px rgba(23,20,18,.2); padding:8px; display:none; gap:2px; z-index:10;}
+  .reaction-picker.open{display:flex;}
+  .reaction-picker button{background:none; border:none; font-size:1.2rem; cursor:pointer; padding:4px 6px; border-radius:8px; transition:all .15s var(--ease);}
+  .reaction-picker button:hover{background:var(--cream-dark); transform:scale(1.15);}
+
+  /* ---- RSVP-Termine ---- */
+  .rsvp-block{background:var(--cream-dark); border-radius:16px; padding:22px 24px; margin:16px 0 22px; box-shadow:inset 0 1px 3px rgba(23,20,18,.05);}
+  .rsvp-date{font-family:'JetBrains Mono',monospace; font-size:.85rem; color:var(--red-dark); font-weight:600; margin-bottom:12px;}
+  .rsvp-buttons{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;}
+  .rsvp-btn{
+    padding:10px 18px; border-radius:20px; border:none; background:var(--cream); cursor:pointer; font-family:inherit;
+    font-size:.85rem; font-weight:600; transition:all .2s var(--ease); box-shadow:0 1px 3px rgba(23,20,18,.08);
+  }
+  .rsvp-btn:hover{transform:translateY(-2px); box-shadow:0 6px 14px rgba(23,20,18,.15);}
+  .rsvp-btn[data-rsvp="yes"].active{background:#2f7d4a; color:#fff; box-shadow:0 4px 12px rgba(47,125,74,.35);}
+  .rsvp-btn[data-rsvp="maybe"].active{background:var(--gold); color:#fff; box-shadow:0 4px 12px rgba(201,162,39,.35);}
+  .rsvp-btn[data-rsvp="no"].active{background:var(--red); color:#fff; box-shadow:0 4px 12px rgba(180,34,44,.35);}
+  .rsvp-lists{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; font-size:.85rem;}
+  @media(max-width:600px){ .rsvp-lists{grid-template-columns:1fr;} }
+  .rsvp-lists h4{font-size:.78rem; text-transform:uppercase; letter-spacing:.05em; margin:0 0 6px; color:#6f6350;}
+  .rsvp-lists ul{margin:0; padding-left:1.1em;}
+
+  .status-msg.form{color:var(--red-dark);}
+  .status-msg.form.ok{color:#2f6b34;}
+
+  /* ---- Admin ---- */
+  .admin-section{margin-bottom:36px;}
+  .admin-section h2{font-size:1.15rem;}
+  .user-row, .pending-row, .log-row{
+    background:var(--cream); border-radius:16px; padding:16px 20px; margin-bottom:12px;
+    display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;
+    box-shadow:0 1px 3px rgba(23,20,18,.06), inset 0 0 0 1px #f0ede8;
+    transition:box-shadow .2s var(--ease), transform .2s var(--ease);
+  }
+  .user-row:hover, .pending-row:hover, .log-row:hover{box-shadow:0 8px 20px rgba(23,20,18,.1), inset 0 0 0 1px #f0ede8; transform:translateY(-2px);}
+  .user-row .who-info, .pending-row .who-info{display:flex; flex-direction:column;}
+  .user-row select{padding:8px 12px; border-radius:10px; border:none; font-family:inherit; background:var(--cream-dark); box-shadow:inset 0 1px 2px rgba(23,20,18,.06);}
+  .user-row label.admin-toggle{display:flex; align-items:center; gap:6px; font-size:.82rem;}
+  .log-row{flex-direction:column; align-items:flex-start;}
+  .log-row .log-summary{font-size:.9rem;}
+  .log-row .log-time{font-size:.72rem; font-family:'JetBrains Mono',monospace; color:#6f6350;}
+  .log-row .log-snapshot{margin-top:8px; padding:12px 14px; background:var(--cream-dark); border-radius:10px; font-size:.85rem; color:#4a4238; white-space:pre-wrap;}
+
+  footer{background:var(--wood-dark); color:#c9c4bb; padding:30px 0; text-align:center; font-size:.85rem;}
   footer a{color:var(--gold-light); text-decoration:none;}
 </style>
 </head>
@@ -60,10 +390,16 @@
       </svg>
       <span><span class="brand-name">Hölle-Leue</span><span class="brand-sub">Narrenzunft Freiburg</span></span>
     </a>
+    <input type="checkbox" id="navToggle">
+    <label class="navBtn" for="navToggle">☰</label>
     <ul class="navlinks">
       <li><a href="/index.html">Zur Website</a></li>
       <li><a href="/sage.html">Unsere Sage</a></li>
-      <li><a href="/mitglieder.html">Mitgliederbereich</a></li>
+      <li><a href="/mitglieder.html" class="active">Forum</a></li>
+      <li><button id="themeToggle" title="Hell/Dunkel umschalten">🌙</button></li>
+      <li id="navAdminLi" style="display:none;"><button id="navAdminBtn">Admin</button></li>
+      <li id="navWhoLi" style="display:none;"><span class="who" id="navWho"></span></li>
+      <li id="navLogoutLi" style="display:none;"><button id="navLogoutBtn">Abmelden</button></li>
     </ul>
   </nav>
 </header>
@@ -71,30 +407,1131 @@
 
 <main>
   <div class="wrap">
-    <span class="eyebrow">Unsere Geschichte</span>
-    <h1 style="margin-bottom:14px;">Die Sage von Ritter Kuno von Falkensteig</h1>
-    <p class="lead">Diese Sage aus dem oberen Höllental erzählt von Treue, Teufelslist und einem Löwen — und sie ist es, die unserer Zunft ihren Namen gegeben hat: den Friburger <strong>Hölle-Leue</strong>.</p>
 
-    <div class="card">
-      <p class="drop">Ritter Kuno von der Burg Falkenstein, oberhalb des unteren Höllentals, folgte Anfang des 14. Jahrhunderts dem Ruf des Heiligen Bernhard von Clairvaux ins Heilige Land, das Kreuz zu predigen. Unter Tränen bat er seine Frau Ida, ihm sieben Jahre die Treue zu halten. Sollte er bis dahin nicht zurückgekehrt sein, solle sie ihn als tot betrachten. Zum Zeichen der gegenseitigen Treue zerbrach er seinen Ehering und gab Ida eine Hälfte.</p>
+    <!-- ===== Login / Registrierung ===== -->
+    <div id="authArea">
+      <div class="auth-card" id="authCard">
+        <h1>Mitgliederbereich</h1>
+        <p class="sub">Melde dich an oder registriere dich als neues Mitglied.</p>
+        <div class="auth-tabs">
+          <button type="button" id="tabLogin" class="active">Anmelden</button>
+          <button type="button" id="tabRegister">Registrieren</button>
+        </div>
 
-      <p>Kuno geriet in türkische Gefangenschaft, und unter der Knechtschaft eines Sultans vergingen viele Jahre. Schließlich konnte er fliehen, und eines Nachts während der Flucht sah er im Traum seine Frau Ida, die von einem anderen Mann zum Altar geführt wurde. Der Teufel hatte ihm diesen Traum geschickt und schlug Kuno vor, ihn in Gestalt eines Löwen noch rechtzeitig in die Heimat zu tragen, bevor seine Frau erneut vermählt würde. Allerdings müsse Kuno auf dieser Reise wach bleiben — schlafe er ein, sei er ihm, dem Teufel, zu eigen. Kuno willigte ein, doch unterwegs befiel den Ritter eine lähmende Müdigkeit. Da stürzte ein großer Falke aus den Wolken herab, setzte sich auf Kunos Kopf und verscheuchte mit seinen Flügeln und dem Schnabel den Schlaf.</p>
+        <form id="loginForm">
+          <div class="field"><label>Benutzername</label><input type="text" id="liUsername" required autocomplete="username"></div>
+          <div class="field"><label>Passwort</label><input type="password" id="liPassword" required autocomplete="current-password"></div>
+          <button type="submit">Anmelden</button>
+          <div class="status-msg" id="loginStatus"></div>
+        </form>
 
-      <p>Beim ersten Hahnenschrei setzte der Teufel Kuno beim Wirtshaus „Zum Rindsfuß", dem heutigen „Gasthaus Fortuna", in Kirchzarten ab. Als er sah, dass der Ritter wach war, ergriff er rasend einen Stein, um ihn zu töten. Doch der Stein schlug krachend in eine Ecke des Wirtshauses, und der Teufel war um seine Beute gebracht.</p>
-
-      <p>In der Morgenfrühe kam der Hochzeitszug mit Ida und ihrem künftigen Ehemann Johann von Snewlin auf dem Weg zur St. Gallus Kirche vorbei, wo ein Willkommenstrunk gereicht wurde. Kuno trat verhüllt heran und bat um einen kleinen Schluck. Ida reichte ihm den Kelch, Kuno trank daraus und ließ dann seine Ringhälfte hineingleiten. Ida bemerkte das, warf ihre Hälfte hinzu, und beide Teile schlossen sich zu einem Ring, als wären sie nie getrennt gewesen.</p>
-
-      <p>„Das ist mein geliebter Gatte Kuno", wandte sich Ida an Johann. „Ich hielt ihm sieben Jahre die Treue, und Gott hat ihn mir in seiner Güte zurückgegeben." Sie führte Kuno zur Kirche, zur neuen Besiegelung ihres Bundes.</p>
+        <form id="registerForm" style="display:none;">
+          <div class="field"><label>Benutzername</label><input type="text" id="reUsername" required placeholder="z. B. amuster"></div>
+          <div class="field"><label>Dein Name</label><input type="text" id="reDisplayName" required placeholder="z. B. Anna Muster"></div>
+          <div class="field"><label>Amt / Rolle</label>
+            <select id="reOffice"></select>
+          </div>
+          <div class="field"><label>Passwort</label><input type="password" id="rePassword" required autocomplete="new-password"></div>
+          <div class="field"><label>Geburtstag (optional, für die Geburtstagsliste)</label><input type="text" id="reBirthday" placeholder="TT-MM, z. B. 24-12"></div>
+          <button type="submit">Registrieren</button>
+          <div class="status-msg" id="registerStatus"></div>
+        </form>
+      </div>
     </div>
 
-    <div class="note">
-      <strong>Warum „Hölle-Leue"?</strong> Der Teufel trug Ritter Kuno in Gestalt eines Löwen durch das Höllental in die Heimat — aus dieser Begegnung von <em>Höllental</em> und <em>Löwe</em> (alemannisch „Leue") hat unsere Zunft ihren Namen und ihr Wesen geformt, das ihr in unserer Larve und unserem Häs wiederfindet.
+    <!-- ===== App (eingeloggt) ===== -->
+    <div id="app">
+
+      <div class="tabs" id="tabs">
+        <button type="button" class="tab-btn active" data-tab="list">Forum</button>
+        <button type="button" class="tab-btn" data-tab="calendar">Kalender</button>
+        <button type="button" class="tab-btn" data-tab="members">Mitglieder</button>
+        <button type="button" class="tab-btn" data-tab="profile">Mein Profil</button>
+        <button type="button" class="tab-btn" data-tab="admin" id="tabAdminBtn" style="display:none;">Admin<span class="badge" id="pendingBadge" style="display:none;">0</span></button>
+      </div>
+
+      <div id="listView" class="view">
+        <div id="greetingBanner"></div>
+
+        <div class="top-actions">
+          <div>
+            <span class="eyebrow">Mitgliederbereich</span>
+            <h1 style="margin-top:4px;">Unser Forum</h1>
+          </div>
+          <button class="btn btn-primary" id="btnShowNew">+ Neues Thema</button>
+        </div>
+
+        <div class="stats-bar" id="statsBar"></div>
+
+        <div class="list-layout">
+          <div class="list-main">
+            <div class="toolbar">
+              <div class="search-box">
+                <span class="sico">🔍</span>
+                <input type="text" id="searchInput" placeholder="Themen durchsuchen...">
+              </div>
+              <select class="sort-select" id="sortSelect">
+                <option value="activity">Neueste Aktivität</option>
+                <option value="new">Neueste Themen</option>
+                <option value="replies">Meiste Antworten</option>
+              </select>
+            </div>
+
+            <div class="cat-tiles" id="catTiles"></div>
+
+            <div id="threadList" class="thread-list"></div>
+            <div id="emptyState" class="empty-state" style="display:none;">Noch keine Themen vorhanden. Sei die oder der Erste und eröffne eines!</div>
+          </div>
+
+          <aside class="list-sidebar">
+            <div class="sidebar-card">
+              <h4>📅 Anstehende Termine</h4>
+              <div id="sidebarEvents"></div>
+            </div>
+            <div class="sidebar-card">
+              <h4>🎂 Geburtstage</h4>
+              <div id="sidebarBirthdays"></div>
+            </div>
+          </aside>
+        </div>
+      </div>
+
+      <div id="newThreadForm" class="view">
+        <a href="#" class="back-link" id="backFromNew">← Zurück zur Übersicht</a>
+        <div class="panel">
+          <h2>Neues Thema erstellen</h2>
+          <form id="threadForm">
+            <div class="light-field"><label>Kategorie</label>
+              <select id="ntCategory"><option>Allgemein</option><option>Termine & Umzüge</option><option>Häs & Ausrüstung</option><option>Vereinsleben</option><option>Sonstiges</option></select>
+            </div>
+            <div class="light-field"><label>Titel</label><input type="text" id="ntTitle" required maxlength="150" placeholder="Worum geht's?"></div>
+            <div class="light-field"><label>Nachricht</label><textarea id="ntMessage" required maxlength="4000" placeholder="Schreib deinen Beitrag..."></textarea></div>
+            <p class="fmt-hint">Formatierung: **fett**, *kursiv*, Links werden automatisch erkannt.</p>
+            <div class="light-field"><label>Dateien anhängen (optional, max. 5, je max. 4 MB)</label><input type="file" id="ntFiles" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"></div>
+            <div class="light-field" style="background:var(--cream-dark); padding:14px 16px; border-radius:6px;">
+              <label style="display:flex; align-items:center; gap:8px; margin-bottom:0;"><input type="checkbox" id="ntIsEvent" style="width:auto;"> Als Termin markieren (mit Zu-/Absage-Funktion)</label>
+              <div id="ntEventDateWrap" style="display:none; margin-top:10px;">
+                <label>Datum des Termins</label>
+                <input type="date" id="ntEventDate">
+              </div>
+            </div>
+            <div class="form-actions"><button type="submit" class="btn btn-primary">Thema veröffentlichen</button></div>
+            <div class="status-msg form" id="ntStatus"></div>
+          </form>
+        </div>
+      </div>
+
+      <div id="threadView" class="view">
+        <a href="#" class="back-link" id="backFromThread">← Zurück zur Übersicht</a>
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:14px; flex-wrap:wrap;">
+          <div>
+            <span class="eyebrow" id="tvCategory"></span>
+            <h2 id="tvTitle"></h2>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-sm btn-ghost" id="tvPinBtn" style="display:none;"></button>
+            <button class="btn btn-sm btn-danger" id="tvPurgeBtn" style="display:none;">🗑️ Endgültig löschen</button>
+          </div>
+        </div>
+        <div id="tvRsvpBlock"></div>
+        <div id="tvPosts"></div>
+        <div class="reply-panel panel">
+          <h3 style="font-size:1.02rem;">Antworten</h3>
+          <div id="quotePreview"></div>
+          <form id="replyForm">
+            <div class="light-field"><label>Antwort</label><textarea id="rMessage" required maxlength="4000" placeholder="Deine Antwort..."></textarea></div>
+            <p class="fmt-hint">Formatierung: **fett**, *kursiv*, Links werden automatisch erkannt.</p>
+            <div class="light-field"><label>Dateien anhängen (optional)</label><input type="file" id="rFiles" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"></div>
+            <div class="form-actions"><button type="submit" class="btn btn-primary">Antwort senden</button></div>
+            <div class="status-msg form" id="rStatus"></div>
+          </form>
+        </div>
+      </div>
+
+      <div id="calendarView" class="view">
+        <div class="page-head">
+          <span class="eyebrow">Kalender</span>
+          <h1 style="margin-top:4px;">Anstehende Termine</h1>
+        </div>
+        <p style="color:#6f6350; margin-bottom:20px;">Als „Termin" markierte Themen erscheinen hier automatisch. Klick auf einen Termin, um zu- oder abzusagen.</p>
+        <div id="calendarList"></div>
+      </div>
+
+      <div id="membersView" class="view">
+        <div class="page-head">
+          <span class="eyebrow">Mitgliederbereich</span>
+          <h1 style="margin-top:4px;">Mitgliederverzeichnis</h1>
+        </div>
+
+        <div class="admin-section">
+          <h2 style="font-size:1.05rem;">🎂 Anstehende Geburtstage</h2>
+          <div id="birthdayList"></div>
+        </div>
+        <div class="admin-section">
+          <h2 style="font-size:1.05rem;">Alle Mitglieder</h2>
+          <div id="memberDirectory"></div>
+        </div>
+      </div>
+
+      <div id="profileView" class="view">
+        <div class="panel" style="max-width:480px;">
+          <h2>Mein Profil</h2>
+          <p><strong>Name:</strong> <span id="pfName"></span></p>
+          <p><strong>Benutzername:</strong> <span id="pfUsername"></span></p>
+          <p><strong>Amt:</strong> <span id="pfOffice"></span></p>
+          <p><strong>Beiträge:</strong> <span id="pfPostCount"></span></p>
+          <p><strong>Rechte:</strong> <span id="pfRights"></span></p>
+
+          <div style="margin-top:20px; padding-top:20px; border-top:1px solid var(--cream-dark);">
+            <div class="light-field"><label>Geburtstag (TT-MM, für die Geburtstagsliste)</label>
+              <div style="display:flex; gap:8px;">
+                <input type="text" id="pfBirthdayInput" placeholder="z. B. 24-12" style="flex:1;">
+                <button class="btn btn-sm btn-primary" id="btnSaveBirthday">Speichern</button>
+              </div>
+            </div>
+            <div class="status-msg form" id="birthdayStatus"></div>
+          </div>
+
+          <div style="margin-top:10px; padding-top:20px; border-top:1px solid var(--cream-dark);">
+            <button class="btn btn-danger btn-sm" id="btnDeleteAccount">Mein Konto endgültig löschen</button>
+            <p style="font-size:.8rem; color:#6f6350; margin-top:8px;">Deine bisherigen Beiträge bleiben im Forum sichtbar, dein Konto wird aber unwiderruflich gelöscht und du kannst dich nicht mehr anmelden.</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="adminView" class="view">
+        <div class="admin-section">
+          <h2>Wartende Registrierungen</h2>
+          <div id="pendingList"></div>
+        </div>
+        <div class="admin-section">
+          <h2>Alle Mitglieder</h2>
+          <div id="usersList"></div>
+        </div>
+        <div class="admin-section">
+          <h2>Moderations-Log</h2>
+          <div id="logList"></div>
+        </div>
+      </div>
+
     </div>
   </div>
 </main>
 
 <footer>
-  <div class="wrap">Friburger Hölle-Leue e.V. · <a href="/index.html">zurück zur Hauptseite</a> · <a href="/impressum.html">Impressum</a> · <a href="/datenschutz.html">Datenschutz</a></div>
+  <div class="wrap">Friburger Hölle-Leue e.V. · <a href="/index.html">zurück zur Hauptseite</a></div>
 </footer>
+
+<script>
+(function(){
+  const API_FORUM = '/api/forum';
+  const API_MOD = '/api/forum/moderate';
+  const TOKEN_KEY = 'hl_token';
+  const SEEN_KEY = 'hl_seen_threads';
+  const REACTION_EMOJIS = ['👍','❤️','😂','😮'];
+  const OFFICES = [
+    { id:'mitglied', label:'Mitglied' },
+    { id:'admin', label:'Admin' },
+    { id:'zunftvogt', label:'Zunftvogt' },
+    { id:'stellv_zunftvogt', label:'Stellv. Zunftvogt' },
+    { id:'schriftfuehrer', label:'Schriftführer' },
+    { id:'kassenwart', label:'Kassenwart' },
+    { id:'jugendwart', label:'Jugendwart' },
+    { id:'beisitzer', label:'Beisitzer' }
+  ];
+  const officeLabel = id => (OFFICES.find(o => o.id === id) || {label:id}).label;
+  const AVATAR_PALETTE = ['#b4222c','#8c1a22','#c9a227','#3a332c','#6b6258','#2f7d4a','#1d5f8a','#7a3f8c'];
+  const CATEGORY_COLORS = {
+    'Allgemein': '#3f7cb0',
+    'Termine & Umzüge': '#b4222c',
+    'Häs & Ausrüstung': '#c9a227',
+    'Vereinsleben': '#2f7d4a',
+    'Sonstiges': '#7a5ca8'
+  };
+  function categoryColor(cat){ return CATEGORY_COLORS[cat] || '#8a7e6f'; }
+
+  let token = localStorage.getItem(TOKEN_KEY) || null;
+  let me = null;
+  let allThreads = [];
+  let activeCategory = 'Alle';
+  let activeSort = 'activity';
+  let quoteData = null;
+
+  // ---------- Dark Mode ----------
+  const THEME_KEY = 'hl_theme';
+  function applyTheme(t){
+    document.documentElement.setAttribute('data-theme', t);
+    document.getElementById('themeToggle').textContent = t === 'dark' ? '☀️' : '🌙';
+  }
+  applyTheme(localStorage.getItem(THEME_KEY) || 'light');
+  document.getElementById('themeToggle').addEventListener('click', () => {
+    const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    localStorage.setItem(THEME_KEY, next);
+    applyTheme(next);
+  });
+
+  // Mobiles Menü nach Klick auf einen Menüpunkt automatisch schließen
+  document.querySelectorAll('.navlinks a, .navlinks button').forEach(el => {
+    el.addEventListener('click', () => { document.getElementById('navToggle').checked = false; });
+  });
+
+  const authArea = document.getElementById('authArea');
+  const app = document.getElementById('app');
+
+  function authHeaders(json){
+    const h = {};
+    if (token) h['Authorization'] = 'Bearer ' + token;
+    if (json) h['Content-Type'] = 'application/json';
+    return h;
+  }
+  function fileUrl(id){ return '/api/file?id=' + encodeURIComponent(id) + '&token=' + encodeURIComponent(token); }
+
+  function escapeHtml(str){ const d = document.createElement('div'); d.textContent = str == null ? '' : String(str); return d.innerHTML; }
+  function fmtDate(ts){ return new Date(ts).toLocaleString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }); }
+  function formatSize(b){ if(!b) return ''; if(b<1024) return b+' B'; if(b<1024*1024) return Math.round(b/1024)+' KB'; return (b/1024/1024).toFixed(1)+' MB'; }
+
+  // Leichte Text-Formatierung: **fett**, *kursiv*, automatische Links
+  function renderMessage(text){
+    let html = escapeHtml(text);
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    html = html.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+    return html;
+  }
+
+  function avatarColor(name){
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    return AVATAR_PALETTE[Math.abs(hash) % AVATAR_PALETTE.length];
+  }
+  function initials(name){
+    return (name || '?').trim().split(/\s+/).map(w => w[0]).slice(0,2).join('').toUpperCase();
+  }
+  function avatarHtml(name, sizeClass){
+    return `<span class="avatar ${sizeClass||''}" style="background:${avatarColor(name||'?')}">${escapeHtml(initials(name))}</span>`;
+  }
+
+  function getSeenMap(){ try { return JSON.parse(localStorage.getItem(SEEN_KEY) || '{}'); } catch(e){ return {}; } }
+  function markSeen(threadId, ts){ const m = getSeenMap(); m[threadId] = ts; localStorage.setItem(SEEN_KEY, JSON.stringify(m)); }
+  function isUnread(thread){ const m = getSeenMap(); return (m[thread.id] || 0) < thread.lastActivity; }
+
+  // ---------- Registrieren-Select füllen ----------
+  const reOffice = document.getElementById('reOffice');
+  OFFICES.forEach(o => { const opt = document.createElement('option'); opt.value = o.id; opt.textContent = o.label; reOffice.appendChild(opt); });
+
+  // ---------- Auth-Tabs ----------
+  const tabLogin = document.getElementById('tabLogin');
+  const tabRegister = document.getElementById('tabRegister');
+  const loginForm = document.getElementById('loginForm');
+  const registerForm = document.getElementById('registerForm');
+  tabLogin.addEventListener('click', () => { tabLogin.classList.add('active'); tabRegister.classList.remove('active'); loginForm.style.display='block'; registerForm.style.display='none'; });
+  tabRegister.addEventListener('click', () => { tabRegister.classList.add('active'); tabLogin.classList.remove('active'); registerForm.style.display='block'; loginForm.style.display='none'; });
+
+  function shakeAuth(){
+    const card = document.getElementById('authCard');
+    card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
+  }
+
+  loginForm.addEventListener('submit', async function(e){
+    e.preventDefault();
+    const statusEl = document.getElementById('loginStatus');
+    statusEl.textContent = 'Wird geprüft …'; statusEl.className = 'status-msg';
+    try {
+      const res = await fetch('/api/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
+        username: document.getElementById('liUsername').value, password: document.getElementById('liPassword').value
+      })});
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Anmeldung fehlgeschlagen.');
+      token = data.token; localStorage.setItem(TOKEN_KEY, token); me = data.user;
+      enterApp();
+    } catch (err) {
+      statusEl.textContent = err.message; statusEl.className = 'status-msg error'; shakeAuth();
+    }
+  });
+
+  registerForm.addEventListener('submit', async function(e){
+    e.preventDefault();
+    const statusEl = document.getElementById('registerStatus');
+    statusEl.textContent = 'Wird gesendet …'; statusEl.className = 'status-msg';
+    try {
+      const res = await fetch('/api/auth/register', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
+        username: document.getElementById('reUsername').value,
+        displayName: document.getElementById('reDisplayName').value,
+        office: document.getElementById('reOffice').value,
+        password: document.getElementById('rePassword').value,
+        birthday: document.getElementById('reBirthday').value
+      })});
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Registrierung fehlgeschlagen.');
+      if (data.autoLogin) {
+        token = data.token; localStorage.setItem(TOKEN_KEY, token); me = data.user;
+        enterApp();
+      } else {
+        statusEl.textContent = 'Registrierung erfolgreich! Ein Admin muss dein Konto noch freischalten, bevor du dich anmelden kannst.';
+        statusEl.className = 'status-msg ok';
+        registerForm.reset();
+      }
+    } catch (err) {
+      statusEl.textContent = err.message; statusEl.className = 'status-msg error'; shakeAuth();
+    }
+  });
+
+  // ---------- App betreten ----------
+  async function tryAutoLogin(){
+    if (!token) return;
+    try {
+      const res = await fetch('/api/me', { headers: authHeaders() });
+      if (!res.ok) { token = null; localStorage.removeItem(TOKEN_KEY); return; }
+      const data = await res.json();
+      me = data.user;
+      enterApp();
+    } catch(e){ /* offline etc. */ }
+  }
+
+  function enterApp(){
+    authArea.style.display = 'none';
+    app.classList.add('visible');
+    document.getElementById('navWho').textContent = me.displayName + ' · ' + me.officeLabel;
+    document.getElementById('navWhoLi').style.display = 'block';
+    document.getElementById('navLogoutLi').style.display = 'block';
+    if (me.isAdmin) { document.getElementById('navAdminLi').style.display = 'block'; document.getElementById('tabAdminBtn').style.display = 'inline-block'; refreshPendingBadge(); }
+    fillProfile();
+    showTab('list');
+  }
+
+  document.getElementById('navLogoutBtn').addEventListener('click', () => {
+    localStorage.removeItem(TOKEN_KEY); token = null; me = null; location.reload();
+  });
+  document.getElementById('navAdminBtn').addEventListener('click', () => showTab('admin'));
+
+  function fillProfile(){
+    document.getElementById('pfName').textContent = me.displayName;
+    document.getElementById('pfUsername').textContent = me.username;
+    document.getElementById('pfOffice').textContent = me.officeLabel;
+    document.getElementById('pfPostCount').textContent = me.postCount || 0;
+    document.getElementById('pfRights').textContent = me.isAdmin ? 'Administrator:in (voller Zugriff)' : 'Mitglied';
+    document.getElementById('pfBirthdayInput').value = me.birthday ? me.birthday.slice(3,5) + '-' + me.birthday.slice(0,2) : '';
+  }
+
+  document.getElementById('btnSaveBirthday').addEventListener('click', async () => {
+    const statusEl = document.getElementById('birthdayStatus');
+    const val = document.getElementById('pfBirthdayInput').value.trim();
+    statusEl.textContent = 'Wird gespeichert …'; statusEl.className = 'status-msg form';
+    try {
+      const res = await fetch('/api/account/update', { method:'POST', headers: authHeaders(true), body: JSON.stringify({ birthday: val || null }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Fehler.');
+      me = data.user;
+      statusEl.textContent = 'Gespeichert!'; statusEl.className = 'status-msg form ok';
+    } catch (err) { statusEl.textContent = err.message; statusEl.className = 'status-msg form'; }
+  });
+
+  document.getElementById('btnDeleteAccount').addEventListener('click', async () => {
+    if (!confirm('Möchtest du dein Konto wirklich unwiderruflich löschen? Das kann nicht rückgängig gemacht werden.')) return;
+    if (!confirm('Ganz sicher? Du kannst dich danach nicht mehr anmelden.')) return;
+    const res = await fetch('/api/account/delete', { method:'POST', headers: authHeaders() });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error || 'Löschen fehlgeschlagen.'); return; }
+    localStorage.removeItem(TOKEN_KEY);
+    alert('Dein Konto wurde gelöscht.');
+    location.reload();
+  });
+
+  // ---------- Tabs ----------
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const tabViews = {
+    list: document.getElementById('listView'), profile: document.getElementById('profileView'),
+    admin: document.getElementById('adminView'), calendar: document.getElementById('calendarView'),
+    members: document.getElementById('membersView')
+  };
+  const subViews = { newThread: document.getElementById('newThreadForm'), thread: document.getElementById('threadView') };
+
+  function showTab(name){
+    tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+    Object.values(tabViews).forEach(v => v.style.display = 'none');
+    Object.values(subViews).forEach(v => v.style.display = 'none');
+    tabViews[name].style.display = 'block';
+    replay(tabViews[name]);
+    if (name === 'list') loadThreads();
+    if (name === 'admin') loadAdmin();
+    if (name === 'calendar') loadCalendar();
+    if (name === 'members') loadMembers();
+  }
+  tabBtns.forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+
+  function replay(el){ el.style.animation = 'none'; void el.offsetWidth; el.style.animation = ''; }
+  function showSub(name){
+    Object.values(tabViews).forEach(v => v.style.display = 'none');
+    Object.values(subViews).forEach(v => v.style.display = 'none');
+    subViews[name].style.display = 'block';
+    replay(subViews[name]);
+  }
+
+  document.getElementById('btnShowNew').addEventListener('click', () => showSub('newThread'));
+  document.getElementById('backFromNew').addEventListener('click', e => { e.preventDefault(); showTab('list'); });
+  document.getElementById('backFromThread').addEventListener('click', e => { e.preventDefault(); showTab('list'); });
+
+  document.getElementById('ntIsEvent').addEventListener('change', (e) => {
+    document.getElementById('ntEventDateWrap').style.display = e.target.checked ? 'block' : 'none';
+  });
+
+  // ---------- Toolbar: Suche / Sortierung / Kategorien ----------
+  document.getElementById('searchInput').addEventListener('input', renderThreadList);
+  document.getElementById('sortSelect').addEventListener('change', (e) => { activeSort = e.target.value; renderThreadList(); });
+
+  const CATEGORY_ICONS = {
+    'Allgemein': '💬', 'Termine & Umzüge': '📅', 'Häs & Ausrüstung': '🎭',
+    'Vereinsleben': '🏛️', 'Sonstiges': '🗂️'
+  };
+
+  function renderCatTiles(){
+    const cats = [...new Set(allThreads.map(t => t.category))];
+    const el = document.getElementById('catTiles');
+    el.innerHTML = '';
+
+    const allTile = document.createElement('div');
+    allTile.className = 'cat-tile' + (activeCategory === 'Alle' ? ' active' : '');
+    allTile.style.setProperty('--tile-color', 'var(--wood-dark)');
+    allTile.innerHTML = `<span class="c-ico">📋</span><span class="c-name">Alle</span><span class="c-count">${allThreads.filter(t=>!t.deleted).length}</span>`;
+    allTile.addEventListener('click', () => { activeCategory = 'Alle'; renderCatTiles(); renderThreadList(); });
+    el.appendChild(allTile);
+
+    cats.forEach(cat => {
+      const count = allThreads.filter(t => t.category === cat && !t.deleted).length;
+      const tile = document.createElement('div');
+      tile.className = 'cat-tile' + (cat === activeCategory ? ' active' : '');
+      tile.style.setProperty('--tile-color', categoryColor(cat));
+      tile.innerHTML = `<span class="c-ico">${CATEGORY_ICONS[cat] || '🏷️'}</span><span class="c-name">${escapeHtml(cat)}</span><span class="c-count">${count}</span>`;
+      tile.addEventListener('click', () => { activeCategory = cat; renderCatTiles(); renderThreadList(); });
+      el.appendChild(tile);
+    });
+  }
+
+  function renderThreadList(){
+    const listEl = document.getElementById('threadList');
+    const emptyEl = document.getElementById('emptyState');
+    const query = document.getElementById('searchInput').value.trim().toLowerCase();
+
+    let items = allThreads.filter(t => activeCategory === 'Alle' || t.category === activeCategory);
+    if (query) items = items.filter(t => t.title.toLowerCase().includes(query) || t.authorDisplayName.toLowerCase().includes(query));
+
+    const pinned = items.filter(t => t.pinned);
+    const rest = items.filter(t => !t.pinned);
+    const sortFn = {
+      activity: (a,b) => b.lastActivity - a.lastActivity,
+      new: (a,b) => b.createdAt - a.createdAt,
+      replies: (a,b) => (b.replyCount||0) - (a.replyCount||0)
+    }[activeSort];
+    pinned.sort(sortFn); rest.sort(sortFn);
+    const finalList = [...pinned, ...rest];
+
+    listEl.innerHTML = '';
+    if (finalList.length === 0) { emptyEl.style.display = 'block'; return; }
+    emptyEl.style.display = 'none';
+
+    finalList.forEach((t, i) => {
+      const row = document.createElement('div');
+      row.className = 'thread-row' + (t.deleted ? ' is-deleted' : '') + (t.pinned ? ' is-pinned' : '');
+      row.style.animationDelay = (i*0.04)+'s';
+      row.style.setProperty('--cat-color', categoryColor(t.category));
+      const unread = isUnread(t);
+      row.innerHTML = `
+        ${avatarHtml(t.authorDisplayName)}
+        <div><h3>${t.pinned ? '<span class="pin-tag">📌 Angeheftet</span>' : ''}${unread ? '<span class="new-tag">Neu</span>' : ''}${escapeHtml(t.title)}${t.deleted ? ' <span class="badge">gelöscht</span>' : ''}</h3>
+        <div class="thread-meta">von ${escapeHtml(t.authorDisplayName)} · ${fmtDate(t.createdAt)}</div></div>
+        <span class="thread-cat">${escapeHtml(t.category)}</span>
+        <div class="thread-replies">${t.replyCount||0} Antwort(en)<br>${fmtDate(t.lastActivity)}</div>`;
+      row.addEventListener('click', () => openThread(t.id, t.lastActivity));
+      listEl.appendChild(row);
+    });
+  }
+
+  // ---------- Begrüßung mit Aktivität seit letztem Besuch ----------
+  const LAST_VISIT_KEY = 'hl_last_global_visit';
+  function renderGreeting(){
+    const el = document.getElementById('greetingBanner');
+    const lastVisit = parseInt(localStorage.getItem(LAST_VISIT_KEY) || '0', 10);
+    const hour = new Date().getHours();
+    const greet = hour < 11 ? 'Guten Morgen' : hour < 18 ? 'Hallo' : 'Guten Abend';
+
+    let sub = 'Schön, dass du da bist!';
+    if (lastVisit) {
+      const newThreads = allThreads.filter(t => t.createdAt > lastVisit && !t.deleted).length;
+      const activeThreads = allThreads.filter(t => t.lastActivity > lastVisit && t.createdAt <= lastVisit && !t.deleted).length;
+      const parts = [];
+      if (newThreads) parts.push(newThreads + ' neue' + (newThreads===1?'s Thema':' Themen'));
+      if (activeThreads) parts.push(activeThreads + ' Thema/Themen mit neuen Antworten');
+      sub = parts.length ? 'Seit deinem letzten Besuch: ' + parts.join(' · ') : 'Seit deinem letzten Besuch hat sich nichts Neues getan.';
+    }
+
+    el.innerHTML = `<div class="greeting-card">
+      <div class="g-text"><strong>${greet}, ${escapeHtml(me.displayName)}!</strong><div class="g-sub">${sub}</div></div>
+    </div>`;
+    localStorage.setItem(LAST_VISIT_KEY, String(Date.now()));
+  }
+
+  // ---------- Stats-Leiste ----------
+  async function renderStatsBar(){
+    const el = document.getElementById('statsBar');
+    const threadCount = allThreads.filter(t => !t.deleted).length;
+    const postCount = allThreads.filter(t => !t.deleted).reduce((sum,t) => sum + 1 + (t.replyCount||0), 0);
+    let memberCount = '–';
+    try {
+      const res = await fetch('/api/members', { headers: authHeaders() });
+      const data = await res.json();
+      memberCount = (data.users || []).length;
+    } catch(e){}
+
+    const now = Date.now();
+    const upcoming = allThreads.filter(t => t.isEvent && !t.deleted && t.eventDate && t.eventDate >= now).sort((a,b) => a.eventDate - b.eventDate)[0];
+    const eventLbl = upcoming ? Math.max(0, Math.round((upcoming.eventDate - now)/86400000)) + ' Tage' : '–';
+
+    el.innerHTML = `
+      <div class="stat-tile"><span class="s-num">${threadCount}</span><span class="s-lbl">Themen</span></div>
+      <div class="stat-tile"><span class="s-num">${memberCount}</span><span class="s-lbl">Mitglieder</span></div>
+      <div class="stat-tile"><span class="s-num">${postCount}</span><span class="s-lbl">Beiträge</span></div>
+      <div class="stat-tile"><span class="s-num">${eventLbl}</span><span class="s-lbl">${upcoming ? 'bis ' + escapeHtml(upcoming.title) : 'Nächster Termin'}</span></div>`;
+  }
+
+  // ---------- Seitenleiste: Termine & Geburtstage ----------
+  function renderSidebarEvents(){
+    const el = document.getElementById('sidebarEvents');
+    const now = Date.now();
+    const upcoming = allThreads.filter(t => t.isEvent && !t.deleted && t.eventDate && t.eventDate >= now).sort((a,b) => a.eventDate - b.eventDate).slice(0,3);
+    if (!upcoming.length) { el.innerHTML = '<div class="sidebar-empty">Keine anstehenden Termine.</div>'; return; }
+    el.innerHTML = upcoming.map(t => `
+      <div class="sidebar-item" style="cursor:pointer;" data-thread-id="${t.id}">
+        <span style="font-size:1.2rem;">📅</span>
+        <div class="si-main">
+          <div class="si-title">${escapeHtml(t.title)}</div>
+          <div class="si-sub">${new Date(t.eventDate).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})}</div>
+        </div>
+      </div>`).join('');
+    el.querySelectorAll('[data-thread-id]').forEach(item => {
+      item.addEventListener('click', () => openThread(item.dataset.threadId));
+    });
+  }
+
+  async function renderSidebarBirthdays(){
+    const el = document.getElementById('sidebarBirthdays');
+    try {
+      const res = await fetch('/api/members', { headers: authHeaders() });
+      const data = await res.json();
+      const users = (data.users || []).filter(u => u.birthday);
+      const today = new Date();
+      const daysUntil = (mmdd) => {
+        const [mm, dd] = mmdd.split('-').map(Number);
+        let next = new Date(today.getFullYear(), mm-1, dd);
+        if (next < new Date(today.getFullYear(), today.getMonth(), today.getDate())) next.setFullYear(next.getFullYear()+1);
+        return Math.round((next - today) / 86400000);
+      };
+      users.sort((a,b) => daysUntil(a.birthday) - daysUntil(b.birthday));
+      const top = users.slice(0,3);
+      if (!top.length) { el.innerHTML = '<div class="sidebar-empty">Keine Geburtstage hinterlegt.</div>'; return; }
+      el.innerHTML = top.map(u => {
+        const d = daysUntil(u.birthday);
+        const [mm,dd] = u.birthday.split('-');
+        return `<div class="sidebar-item">${avatarHtml(u.displayName,'sm')}
+          <div class="si-main"><div class="si-title">${escapeHtml(u.displayName)}</div><div class="si-sub">${dd}.${mm}. · ${d===0?'🎉 Heute':d===1?'Morgen':'in '+d+' Tagen'}</div></div>
+        </div>`;
+      }).join('');
+    } catch(e){ el.innerHTML = '<div class="sidebar-empty">Konnte nicht geladen werden.</div>'; }
+  }
+
+  async function loadThreads(){
+    const listEl = document.getElementById('threadList');
+    listEl.innerHTML = '<div class="spinner-row"><div class="spinner"></div> Lädt Themen …</div>';
+    try {
+      const res = await fetch(API_FORUM + '?action=list', { headers: authHeaders() });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Fehler.');
+      allThreads = data.threads || [];
+      renderCatTiles();
+      renderThreadList();
+      renderGreeting();
+      renderStatsBar();
+      renderSidebarEvents();
+      renderSidebarBirthdays();
+    } catch (err) { listEl.innerHTML = '<p style="color:var(--red-dark);">'+escapeHtml(err.message)+'</p>'; }
+  }
+
+  function openThread(id, lastActivity){ markSeen(id, lastActivity || Date.now()); showSub('thread'); loadThread(id); }
+
+  function renderAttachments(atts){
+    if (!atts || !atts.length) return '';
+    return atts.map(a => {
+      const isImg = (a.type||'').startsWith('image/');
+      const url = fileUrl(a.id);
+      if (isImg) return `<a href="${url}" target="_blank" rel="noopener"><img class="attach-img" src="${url}" alt="${escapeHtml(a.name)}"></a>`;
+      return `<a class="attach-file" href="${url}" target="_blank" rel="noopener">📎 ${escapeHtml(a.name)} <span style="color:#8a7e6f;">(${formatSize(a.size)})</span></a>`;
+    }).join('');
+  }
+
+  function renderReactions(post, threadId){
+    const reactions = post.reactions || {};
+    let html = '<div class="reactions-row">';
+    REACTION_EMOJIS.forEach(emoji => {
+      const users = reactions[emoji] || [];
+      if (users.length === 0) return;
+      const mine = users.includes(me.username);
+      html += `<button class="reaction-btn ${mine?'mine':''}" data-react-emoji="${emoji}" data-react-post="${post.id}" data-react-thread="${threadId}">${emoji} <span class="count">${users.length}</span></button>`;
+    });
+    html += `<div style="position:relative; display:inline-block;">
+      <button type="button" class="reaction-add" data-picker-toggle="${post.id}">+ Reaktion</button>
+      <div class="reaction-picker" id="picker-${post.id}">
+        ${REACTION_EMOJIS.map(e => `<button type="button" data-react-emoji="${e}" data-react-post="${post.id}" data-react-thread="${threadId}">${e}</button>`).join('')}
+      </div>
+    </div></div>`;
+    return html;
+  }
+
+  async function loadThread(id){
+    const postsEl = document.getElementById('tvPosts');
+    postsEl.innerHTML = '<div class="spinner-row"><div class="spinner"></div> Lädt Beiträge …</div>';
+    try {
+      const res = await fetch(API_FORUM + '?action=thread&id=' + encodeURIComponent(id), { headers: authHeaders() });
+      const thread = await res.json();
+      if (!res.ok) throw new Error(thread.error || 'Fehler.');
+      document.getElementById('tvCategory').textContent = thread.category;
+      document.getElementById('tvTitle').textContent = thread.title + (thread.deleted ? ' (gelöscht)' : '');
+      document.getElementById('replyForm').dataset.threadId = id;
+
+      const pinBtn = document.getElementById('tvPinBtn');
+      if (me.isAdmin) {
+        pinBtn.style.display = 'inline-block';
+        pinBtn.textContent = thread.pinned ? '📌 Lösen' : '📌 Anheften';
+        pinBtn.onclick = async () => {
+          await moderate({ action: thread.pinned ? 'unpinThread' : 'pinThread', threadId: id });
+          loadThread(id);
+        };
+      } else {
+        pinBtn.style.display = 'none';
+      }
+
+      const purgeBtn = document.getElementById('tvPurgeBtn');
+      if (me.isAdmin) {
+        purgeBtn.style.display = 'inline-block';
+        purgeBtn.onclick = async () => {
+          if (!confirm(`Thema „${thread.title}" WIRKLICH endgültig löschen? Das entfernt es komplett samt aller Beiträge und Antworten — das kann NICHT rückgängig gemacht werden (anders als die normale Löschfunktion).`)) return;
+          if (!confirm('Ganz sicher? Es gibt kein Zurück mehr.')) return;
+          const res = await fetch(API_MOD, { method:'POST', headers: authHeaders(true), body: JSON.stringify({ action:'purgeThread', threadId: id }) });
+          const data = await res.json();
+          if (!res.ok) { alert(data.error || 'Löschen fehlgeschlagen.'); return; }
+          showTab('list');
+        };
+      } else {
+        purgeBtn.style.display = 'none';
+      }
+
+      quoteData = null;
+      renderQuotePreview();
+
+      renderRsvpBlock(thread, id);
+
+      postsEl.innerHTML = '';
+      thread.posts.forEach((p, i) => {
+        const el = document.createElement('div');
+        el.className = 'post' + (p.deleted ? ' is-deleted' : '');
+        el.style.animationDelay = (i*0.05)+'s';
+        if (p.deleted && !me.isAdmin && p.author !== me.username) {
+          el.innerHTML = `<div class="post-body" style="color:#6f6350; font-style:italic;">Dieser Beitrag wurde entfernt.</div>`;
+          postsEl.appendChild(el); return;
+        }
+        const isOwner = p.author === me.username;
+        const canDelete = me.isAdmin || isOwner;
+        const canRestore = me.isAdmin || (isOwner && p.deletedBy === me.username);
+        const canEdit = (me.isAdmin || isOwner) && !p.deleted;
+        let actionsHtml = '';
+        if (canEdit) actionsHtml += `<button class="btn btn-sm btn-ghost" data-editid="${p.id}">Bearbeiten</button>`;
+        if (!p.deleted) actionsHtml += `<button class="btn btn-sm btn-ghost" data-quoteid="${p.id}">Zitieren</button>`;
+        if (p.deleted && canRestore) actionsHtml += `<button class="btn btn-sm btn-ghost" data-postid="${p.id}" data-action="restorePost">Wiederherstellen</button>`;
+        else if (!p.deleted && canDelete) actionsHtml += `<button class="btn btn-sm btn-danger" data-postid="${p.id}" data-action="deletePost">Löschen</button>`;
+        const editedTag = p.editedAt ? ' <span style="font-size:.72rem; color:#6f6350;">(bearbeitet)</span>' : '';
+        const quoteHtml = p.quote ? `<div class="post-quote"><strong>${escapeHtml(p.quote.author)}</strong> schrieb:<br>${escapeHtml(p.quote.message)}</div>` : '';
+        const badgesHtml = (p.authorBadges && p.authorBadges.length)
+          ? `<div class="badges-row">${p.authorBadges.map(b => `<span class="badge-pill" title="${escapeHtml(b.label)}">${b.icon} ${escapeHtml(b.label)}</span>`).join('')}</div>` : '';
+        el.innerHTML = `
+          ${avatarHtml(p.authorDisplayName)}
+          <div class="post-main">
+            <div class="post-head">
+              <span class="post-author-line">
+                <span class="post-author">${escapeHtml(p.authorDisplayName||'')}</span>
+                <span class="post-office">${escapeHtml(officeLabel(p.authorOffice))}</span>
+                <span class="post-count">${p.authorPostCount ? p.authorPostCount + ' Beiträge' : ''}</span>
+              </span>
+              <span class="post-date">${fmtDate(p.createdAt)}${editedTag}</span>
+            </div>
+            ${badgesHtml}
+            ${quoteHtml}
+            <div class="post-body" data-body-for="${p.id}">${p.deleted ? '<em style="color:#6f6350;">[Vom Moderator gelöscht — nur für Moderator:innen/Autor:in sichtbar]</em><br>'+renderMessage(p.message) : renderMessage(p.message)}</div>
+            <div class="attachments">${renderAttachments(p.attachments)}</div>
+            ${!p.deleted ? renderReactions(p, id) : ''}
+            ${actionsHtml ? '<div class="post-actions">'+actionsHtml+'</div>' : ''}
+          </div>
+        `;
+        postsEl.appendChild(el);
+      });
+
+      wireThreadEvents(id);
+    } catch (err) { postsEl.innerHTML = '<p style="color:var(--red-dark);">'+escapeHtml(err.message)+'</p>'; }
+  }
+
+  function wireThreadEvents(threadId){
+    const postsEl = document.getElementById('tvPosts');
+
+    postsEl.querySelectorAll('button[data-action]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const action = btn.dataset.action;
+        let reason = '';
+        if (action === 'deletePost') reason = prompt('Grund für die Löschung (optional):') || '';
+        await moderate({ action, threadId, postId: btn.dataset.postid, reason });
+        loadThread(threadId);
+      });
+    });
+
+    postsEl.querySelectorAll('button[data-editid]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const postId = btn.dataset.editid;
+        const bodyEl = postsEl.querySelector(`[data-body-for="${postId}"]`);
+        const currentText = bodyEl.textContent;
+        bodyEl.innerHTML = `<textarea class="edit-textarea" style="width:100%; min-height:100px; padding:10px; border-radius:5px; border:1.5px solid var(--cream-dark); font-family:inherit; font-size:.95rem;">${escapeHtml(currentText)}</textarea>
+          <div style="display:flex; gap:8px; margin-top:8px;">
+            <button class="btn btn-sm btn-primary" data-save="${postId}">Speichern</button>
+            <button class="btn btn-sm btn-ghost" data-cancel="1">Abbrechen</button>
+          </div>`;
+        bodyEl.querySelector('[data-save]').addEventListener('click', async () => {
+          const newMsg = bodyEl.querySelector('textarea').value.trim();
+          if (!newMsg) return;
+          const res = await fetch('/api/forum/edit', { method:'POST', headers: authHeaders(true), body: JSON.stringify({ threadId, postId, message:newMsg }) });
+          const data = await res.json();
+          if (!res.ok) { alert(data.error || 'Fehler beim Speichern.'); return; }
+          loadThread(threadId);
+        });
+        bodyEl.querySelector('[data-cancel]').addEventListener('click', () => loadThread(threadId));
+      });
+    });
+
+    postsEl.querySelectorAll('button[data-quoteid]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const postId = btn.dataset.quoteid;
+        const bodyEl = postsEl.querySelector(`[data-body-for="${postId}"]`);
+        const authorEl = bodyEl.closest('.post').querySelector('.post-author');
+        quoteData = { author: authorEl.textContent, message: bodyEl.textContent.trim().slice(0, 300) };
+        renderQuotePreview();
+        document.getElementById('rMessage').focus();
+        document.querySelector('.reply-panel').scrollIntoView({ behavior:'smooth', block:'center' });
+      });
+    });
+
+    postsEl.querySelectorAll('[data-picker-toggle]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const picker = document.getElementById('picker-' + btn.dataset.pickerToggle);
+        document.querySelectorAll('.reaction-picker.open').forEach(p => { if (p !== picker) p.classList.remove('open'); });
+        picker.classList.toggle('open');
+      });
+    });
+    document.addEventListener('click', () => document.querySelectorAll('.reaction-picker.open').forEach(p => p.classList.remove('open')));
+
+    postsEl.querySelectorAll('[data-react-emoji]').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const emoji = btn.dataset.reactEmoji, postId = btn.dataset.reactPost, tId = btn.dataset.reactThread;
+        await fetch('/api/forum/react', { method:'POST', headers: authHeaders(true), body: JSON.stringify({ threadId: tId, postId, emoji }) });
+        loadThread(tId);
+      });
+    });
+  }
+
+  function renderQuotePreview(){
+    const el = document.getElementById('quotePreview');
+    if (!quoteData) { el.innerHTML = ''; return; }
+    el.innerHTML = `<div class="post-quote">Antwort an <strong>${escapeHtml(quoteData.author)}</strong>: „${escapeHtml(quoteData.message)}"
+      <button type="button" class="btn btn-sm btn-ghost" id="clearQuoteBtn" style="margin-left:10px;">✕ entfernen</button></div>`;
+    document.getElementById('clearQuoteBtn').addEventListener('click', () => { quoteData = null; renderQuotePreview(); });
+  }
+
+  function renderRsvpBlock(thread, threadId){
+    const el = document.getElementById('tvRsvpBlock');
+    if (!thread.isEvent) { el.innerHTML = ''; return; }
+    const rsvp = thread.rsvp || { yes:[], maybe:[], no:[] };
+    const myStatus = rsvp.yes.includes(me.username) ? 'yes' : rsvp.maybe.includes(me.username) ? 'maybe' : rsvp.no.includes(me.username) ? 'no' : null;
+    const dateStr = thread.eventDate ? new Date(thread.eventDate).toLocaleDateString('de-DE', { weekday:'long', day:'2-digit', month:'2-digit', year:'numeric' }) : '';
+    el.innerHTML = `
+      <div class="rsvp-block">
+        <div class="rsvp-date">📅 Termin: ${escapeHtml(dateStr)}</div>
+        <div class="rsvp-buttons">
+          <button class="rsvp-btn ${myStatus==='yes'?'active':''}" data-rsvp="yes">✅ Bin dabei (${rsvp.yes.length})</button>
+          <button class="rsvp-btn ${myStatus==='maybe'?'active':''}" data-rsvp="maybe">🤔 Vielleicht (${rsvp.maybe.length})</button>
+          <button class="rsvp-btn ${myStatus==='no'?'active':''}" data-rsvp="no">❌ Kann nicht (${rsvp.no.length})</button>
+        </div>
+        <div class="rsvp-lists">
+          <div><h4>Bin dabei</h4><ul>${rsvp.yes.map(u=>`<li>${escapeHtml(u)}</li>`).join('') || '<li style="color:#aaa; list-style:none;">—</li>'}</ul></div>
+          <div><h4>Vielleicht</h4><ul>${rsvp.maybe.map(u=>`<li>${escapeHtml(u)}</li>`).join('') || '<li style="color:#aaa; list-style:none;">—</li>'}</ul></div>
+          <div><h4>Kann nicht</h4><ul>${rsvp.no.map(u=>`<li>${escapeHtml(u)}</li>`).join('') || '<li style="color:#aaa; list-style:none;">—</li>'}</ul></div>
+        </div>
+      </div>`;
+    el.querySelectorAll('.rsvp-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const status = btn.classList.contains('active') ? null : btn.dataset.rsvp;
+        await fetch('/api/forum/rsvp', { method:'POST', headers: authHeaders(true), body: JSON.stringify({ threadId, status }) });
+        loadThread(threadId);
+      });
+    });
+  }
+
+  // ---------- Kalender ----------
+  async function loadCalendar(){
+    const el = document.getElementById('calendarList');
+    el.innerHTML = '<div class="spinner-row"><div class="spinner"></div> Lädt Termine …</div>';
+    try {
+      const res = await fetch(API_FORUM + '?action=list', { headers: authHeaders() });
+      const data = await res.json();
+      const events = (data.threads || []).filter(t => t.isEvent && !t.deleted);
+      events.sort((a,b) => (a.eventDate||0) - (b.eventDate||0));
+      if (!events.length) { el.innerHTML = '<div class="empty-state">Noch keine Termine angelegt. Erstelle im Forum ein neues Thema und markiere es als „Termin".</div>'; return; }
+      el.innerHTML = '';
+      events.forEach((t, i) => {
+        const rsvp = t.rsvp || { yes:[], maybe:[], no:[] };
+        const row = document.createElement('div');
+        row.className = 'thread-row';
+        row.style.animationDelay = (i*0.05)+'s';
+        row.style.setProperty('--cat-color', categoryColor(t.category));
+        const dateStr = t.eventDate ? new Date(t.eventDate).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' }) : '?';
+        row.innerHTML = `
+          ${avatarHtml(t.authorDisplayName)}
+          <div><h3>📅 ${escapeHtml(t.title)}</h3><div class="thread-meta">${dateStr} · von ${escapeHtml(t.authorDisplayName)}</div></div>
+          <span class="thread-cat">${escapeHtml(t.category)}</span>
+          <div class="thread-replies">✅ ${rsvp.yes.length} · 🤔 ${rsvp.maybe.length} · ❌ ${rsvp.no.length}</div>`;
+        row.addEventListener('click', () => { showTab('list'); openThread(t.id, t.lastActivity); });
+        el.appendChild(row);
+      });
+    } catch (err) { el.innerHTML = '<p style="color:var(--red-dark);">Termine konnten nicht geladen werden.</p>'; }
+  }
+
+  // ---------- Mitgliederverzeichnis & Geburtstage ----------
+  async function loadMembers(){
+    const dirEl = document.getElementById('memberDirectory');
+    const bdEl = document.getElementById('birthdayList');
+    dirEl.innerHTML = '<div class="spinner-row"><div class="spinner"></div> Lädt …</div>';
+    bdEl.innerHTML = '';
+    try {
+      const res = await fetch('/api/members', { headers: authHeaders() });
+      const data = await res.json();
+      const users = data.users || [];
+
+      dirEl.innerHTML = '';
+      users.forEach(u => {
+        const row = document.createElement('div');
+        row.className = 'user-row member-card';
+        const badgesHtml = (u.badges && u.badges.length)
+          ? `<div class="badges-row" style="margin-top:6px;">${u.badges.map(b => `<span class="badge-pill" title="${escapeHtml(b.label)}">${b.icon} ${escapeHtml(b.label)}</span>`).join('')}</div>` : '';
+        row.innerHTML = `<div style="display:flex; align-items:center; gap:12px;">${avatarHtml(u.displayName)}<div class="who-info"><strong>${escapeHtml(u.displayName)}</strong><span style="font-size:.8rem; color:#6f6350;">${escapeHtml(u.officeLabel)} · ${u.postCount||0} Beiträge</span>${badgesHtml}</div></div>
+          <span style="font-size:.78rem; color:#6f6350;">dabei seit ${new Date(u.createdAt).toLocaleDateString('de-DE',{month:'2-digit',year:'numeric'})}</span>`;
+        dirEl.appendChild(row);
+      });
+
+      const withBday = users.filter(u => u.birthday);
+      const today = new Date();
+      const daysUntil = (mmdd) => {
+        const [mm, dd] = mmdd.split('-').map(Number);
+        let next = new Date(today.getFullYear(), mm-1, dd);
+        if (next < new Date(today.getFullYear(), today.getMonth(), today.getDate())) next.setFullYear(next.getFullYear()+1);
+        return Math.round((next - today) / 86400000);
+      };
+      withBday.sort((a,b) => daysUntil(a.birthday) - daysUntil(b.birthday));
+      if (!withBday.length) {
+        bdEl.innerHTML = '<p style="color:#6f6350;">Noch keine Geburtstage hinterlegt (im Profil ergänzbar).</p>';
+      } else {
+        withBday.slice(0, 8).forEach(u => {
+          const d = daysUntil(u.birthday);
+          const [mm, dd] = u.birthday.split('-');
+          const row = document.createElement('div');
+          row.className = 'user-row';
+          row.innerHTML = `<div style="display:flex; align-items:center; gap:12px;">${avatarHtml(u.displayName)}<div class="who-info"><strong>${escapeHtml(u.displayName)}</strong><span style="font-size:.8rem; color:#6f6350;">${dd}.${mm}.</span></div></div>
+            <span style="font-size:.82rem; color:var(--red-dark); font-weight:600;">${d===0 ? '🎉 Heute!' : d===1 ? 'Morgen' : 'in ' + d + ' Tagen'}</span>`;
+          bdEl.appendChild(row);
+        });
+      }
+    } catch (err) { dirEl.innerHTML = '<p style="color:var(--red-dark);">Mitglieder konnten nicht geladen werden.</p>'; }
+  }
+
+  async function moderate(body){
+    const res = await fetch(API_MOD, { method:'POST', headers: authHeaders(true), body: JSON.stringify(body) });
+    const data = await res.json();
+    if (!res.ok) alert(data.error || 'Aktion fehlgeschlagen.');
+  }
+
+  async function uploadFiles(fileInput, statusEl){
+    const files = Array.from(fileInput.files || []).slice(0,5);
+    const attachments = [];
+    for (const file of files) {
+      if (file.size > 4*1024*1024) throw new Error(`Datei "${file.name}" ist zu groß (max. 4 MB).`);
+      if (statusEl) { statusEl.textContent = `Lade ${file.name} hoch …`; statusEl.className = 'status-msg form'; }
+      const fd = new FormData(); fd.append('file', file);
+      const res = await fetch('/api/upload', { method:'POST', headers: authHeaders(), body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `Fehler beim Hochladen von "${file.name}".`);
+      attachments.push({ id: data.id, name: data.name, type: data.type, size: data.size });
+    }
+    return attachments;
+  }
+
+  document.getElementById('threadForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    const statusEl = document.getElementById('ntStatus');
+    statusEl.textContent = 'Wird gesendet …'; statusEl.className = 'status-msg form';
+    try {
+      const attachments = await uploadFiles(document.getElementById('ntFiles'), statusEl);
+      statusEl.textContent = 'Wird veröffentlicht …';
+      const isEvent = document.getElementById('ntIsEvent').checked;
+      const eventDate = document.getElementById('ntEventDate').value;
+      const res = await fetch(API_FORUM, { method:'POST', headers: authHeaders(true), body: JSON.stringify({
+        action:'newThread', category: document.getElementById('ntCategory').value,
+        title: document.getElementById('ntTitle').value, message: document.getElementById('ntMessage').value, attachments,
+        isEvent, eventDate: isEvent ? eventDate : null
+      })});
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Fehler beim Speichern.');
+      document.getElementById('threadForm').reset();
+      document.getElementById('ntEventDateWrap').style.display = 'none';
+      statusEl.textContent = 'Thema veröffentlicht!'; statusEl.className = 'status-msg form ok';
+      openThread(data.id, data.lastActivity);
+    } catch (err) { statusEl.textContent = err.message; statusEl.className = 'status-msg form'; }
+  });
+
+  document.getElementById('replyForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    const threadId = e.target.dataset.threadId;
+    const statusEl = document.getElementById('rStatus');
+    statusEl.textContent = 'Wird gesendet …'; statusEl.className = 'status-msg form';
+    try {
+      const attachments = await uploadFiles(document.getElementById('rFiles'), statusEl);
+      statusEl.textContent = 'Wird gesendet …';
+      const res = await fetch(API_FORUM, { method:'POST', headers: authHeaders(true), body: JSON.stringify({
+        action:'reply', threadId, message: document.getElementById('rMessage').value, attachments,
+        quote: quoteData
+      })});
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Fehler beim Speichern.');
+      document.getElementById('replyForm').reset();
+      quoteData = null; renderQuotePreview();
+      statusEl.textContent = 'Antwort gesendet!'; statusEl.className = 'status-msg form ok';
+      loadThread(threadId);
+    } catch (err) { statusEl.textContent = err.message; statusEl.className = 'status-msg form'; }
+  });
+
+  // ---------- Admin ----------
+  async function refreshPendingBadge(){
+    try {
+      const res = await fetch('/api/admin/pending', { headers: authHeaders() });
+      const data = await res.json();
+      const n = (data.users||[]).length;
+      const badge = document.getElementById('pendingBadge');
+      if (n > 0) { badge.textContent = n; badge.style.display = 'inline-block'; } else badge.style.display = 'none';
+    } catch(e){}
+  }
+
+  async function loadAdmin(){
+    await loadPending();
+    await loadUsers();
+    await loadLog();
+  }
+
+  async function loadPending(){
+    const el = document.getElementById('pendingList');
+    el.innerHTML = '<div class="spinner-row"><div class="spinner"></div> Lädt …</div>';
+    const res = await fetch('/api/admin/pending', { headers: authHeaders() });
+    const data = await res.json();
+    const users = data.users || [];
+    if (!users.length) { el.innerHTML = '<p style="color:#6f6350;">Keine wartenden Registrierungen.</p>'; return; }
+    el.innerHTML = '';
+    users.forEach(u => {
+      const row = document.createElement('div');
+      row.className = 'pending-row';
+      row.innerHTML = `<div class="who-info"><strong>${escapeHtml(u.displayName)}</strong><span style="font-size:.8rem; color:#6f6350;">@${escapeHtml(u.username)} · ${escapeHtml(u.officeLabel)}</span></div>
+        <div style="display:flex; gap:8px;"><button class="btn btn-sm btn-primary" data-approve="1">Freischalten</button><button class="btn btn-sm btn-danger" data-approve="0">Ablehnen</button></div>`;
+      row.querySelectorAll('button').forEach(btn => btn.addEventListener('click', async () => {
+        await fetch('/api/admin/approve', { method:'POST', headers: authHeaders(true), body: JSON.stringify({ username: u.username, approve: btn.dataset.approve === '1' }) });
+        loadPending(); refreshPendingBadge();
+      }));
+      el.appendChild(row);
+    });
+  }
+
+  async function loadUsers(){
+    const el = document.getElementById('usersList');
+    el.innerHTML = '<div class="spinner-row"><div class="spinner"></div> Lädt …</div>';
+    const res = await fetch('/api/admin/users', { headers: authHeaders() });
+    const data = await res.json();
+    const users = (data.users || []).filter(u => u.status === 'active');
+    const catalog = data.manualBadgeCatalog || [];
+    el.innerHTML = '';
+    users.forEach(u => {
+      const row = document.createElement('div');
+      row.className = 'user-row';
+      row.style.flexDirection = 'column';
+      row.style.alignItems = 'stretch';
+      const officeOpts = OFFICES.map(o => `<option value="${o.id}" ${o.id===u.office?'selected':''}>${o.label}</option>`).join('');
+      const badgeChecks = catalog.map(b => `
+        <label style="display:flex; align-items:center; gap:5px; font-size:.8rem; background:var(--cream-dark); padding:4px 10px; border-radius:12px;">
+          <input type="checkbox" data-badge-username="${u.username}" data-badge-id="${b.id}" class="manual-badge-check" ${(u.manualBadges||[]).includes(b.id)?'checked':''}> ${b.icon} ${b.label}
+        </label>`).join('');
+      row.innerHTML = `
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px;">
+          <div class="who-info"><strong>${escapeHtml(u.displayName)}</strong><span style="font-size:.8rem; color:#6f6350;">@${escapeHtml(u.username)} · ${u.postCount||0} Beiträge</span></div>
+          <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+            <label style="display:flex; align-items:center; gap:6px; font-size:.82rem;">Mitglied seit
+              <input type="number" data-membersince-username="${u.username}" class="membersince-input" value="${u.memberSince}" min="1900" max="2100" style="width:80px; padding:6px 8px; border-radius:5px; border:1.5px solid var(--cream-dark); background:var(--cream-dark);">
+            </label>
+            <select data-username="${u.username}" class="office-select">${officeOpts}</select>
+            <label class="admin-toggle"><input type="checkbox" data-username="${u.username}" class="admin-check" ${u.isAdmin?'checked':''}> Admin</label>
+          </div>
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:12px;">${badgeChecks}</div>`;
+      el.appendChild(row);
+    });
+    el.querySelectorAll('.office-select').forEach(sel => sel.addEventListener('change', async () => {
+      await fetch('/api/admin/update-user', { method:'POST', headers: authHeaders(true), body: JSON.stringify({ username: sel.dataset.username, office: sel.value }) });
+    }));
+    el.querySelectorAll('.admin-check').forEach(chk => chk.addEventListener('change', async () => {
+      await fetch('/api/admin/update-user', { method:'POST', headers: authHeaders(true), body: JSON.stringify({ username: chk.dataset.username, isAdmin: chk.checked }) });
+    }));
+    el.querySelectorAll('.membersince-input').forEach(inp => inp.addEventListener('change', async () => {
+      await fetch('/api/admin/update-user', { method:'POST', headers: authHeaders(true), body: JSON.stringify({ username: inp.dataset.membersinceUsername, memberSince: parseInt(inp.value,10) }) });
+    }));
+    el.querySelectorAll('.manual-badge-check').forEach(chk => chk.addEventListener('change', async () => {
+      const uname = chk.dataset.badgeUsername;
+      const checks = el.querySelectorAll(`.manual-badge-check[data-badge-username="${uname}"]`);
+      const selected = Array.from(checks).filter(c => c.checked).map(c => c.dataset.badgeId);
+      await fetch('/api/admin/update-user', { method:'POST', headers: authHeaders(true), body: JSON.stringify({ username: uname, manualBadges: selected }) });
+    }));
+  }
+
+  async function loadLog(){
+    const el = document.getElementById('logList');
+    el.innerHTML = '<div class="spinner-row"><div class="spinner"></div> Lädt …</div>';
+    const res = await fetch('/api/admin/log', { headers: authHeaders() });
+    const data = await res.json();
+    const log = data.log || [];
+    if (!log.length) { el.innerHTML = '<p style="color:#6f6350;">Noch keine Einträge.</p>'; return; }
+    el.innerHTML = '';
+    log.forEach(entry => {
+      const row = document.createElement('div');
+      row.className = 'log-row';
+      let snapshot = '';
+      if (entry.deletedContent) {
+        const dc = entry.deletedContent;
+        snapshot = `<div class="log-snapshot">${dc.author ? 'Von: '+escapeHtml(dc.author)+'\\n' : ''}${escapeHtml(dc.message || dc.title || '')}</div>`;
+      }
+      row.innerHTML = `<div class="log-summary">${escapeHtml(entry.summary)}</div><div class="log-time">${fmtDate(entry.timestamp)}</div>${snapshot}`;
+      el.appendChild(row);
+    });
+  }
+
+  tryAutoLogin();
+})();
+</script>
+
 </body>
 </html>
