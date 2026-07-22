@@ -58,7 +58,23 @@
   .navlinks a, .navlinks button{text-decoration:none; color:#d8d3cc; font-size:.9rem; font-weight:500; position:relative; background:none; border:none; cursor:pointer; font-family:inherit; padding:0;}
   .navlinks a:hover, .navlinks button:hover{color:var(--gold-light);}
   .who{font-family:'JetBrains Mono',monospace; font-size:.76rem; color:var(--gold-light); background:rgba(201,162,39,.14); padding:6px 12px; border-radius:20px; border:1px solid rgba(201,162,39,.3);}
-  @media(max-width:900px){ .navlinks{display:none;} }
+  #navToggle{display:none;}
+  .navBtn{display:none;}
+  @media(max-width:900px){
+    .navlinks{
+      position:absolute; top:100%; left:0; right:0;
+      flex-direction:column; align-items:stretch; gap:0;
+      background:var(--wood-dark);
+      max-height:0; overflow:hidden;
+      transition:max-height .3s var(--ease);
+      border-bottom:3px solid var(--red);
+    }
+    .navlinks li{width:100%;}
+    .navlinks a, .navlinks button{padding:14px 24px; display:block; width:100%; text-align:left; border-top:1px solid rgba(255,255,255,.08); box-sizing:border-box;}
+    .navlinks .who{display:inline-block; margin:10px 24px;}
+    #navToggle:checked ~ .navlinks{max-height:500px;}
+    .navBtn{display:block; background:none; border:none; color:#fff; font-size:1.6rem; cursor:pointer; line-height:1;}
+  }
 
   .rope{height:3px; background:linear-gradient(90deg, transparent, var(--red) 15%, var(--red) 85%, transparent); box-shadow:0 1px 12px rgba(180,34,44,.3);}
 
@@ -188,7 +204,11 @@
 
   /* ---- Layout mit Seitenleiste ---- */
   .list-layout{display:grid; grid-template-columns:1fr 280px; gap:26px; align-items:start;}
-  @media(max-width:900px){ .list-layout{grid-template-columns:1fr;} .list-sidebar{display:none;} }
+  @media(max-width:900px){
+    .list-layout{grid-template-columns:1fr;}
+    .list-sidebar{position:static; flex-direction:row; overflow-x:auto; gap:12px; padding-bottom:4px;}
+    .list-sidebar .sidebar-card{min-width:240px; flex:none;}
+  }
   .list-sidebar{display:flex; flex-direction:column; gap:16px; position:sticky; top:80px;}
   .sidebar-card{background:#fff; border-radius:16px; padding:18px 20px; box-shadow:0 1px 3px rgba(23,20,18,.06), inset 0 0 0 1px #f0ede8;}
   .sidebar-card h4{font-size:.82rem; text-transform:uppercase; letter-spacing:.04em; color:var(--red-dark); margin:0 0 12px;}
@@ -216,6 +236,17 @@
   .thread-replies{font-size:.8rem; color:var(--wood); text-align:right; white-space:nowrap;}
   .pin-tag{font-size:.68rem; background:var(--red); color:#fff; padding:2px 7px; border-radius:10px; font-family:'JetBrains Mono',monospace;}
   .new-tag{font-size:.62rem; background:#2f7d4a; color:#fff; padding:2px 7px; border-radius:10px; font-family:'JetBrains Mono',monospace; text-transform:uppercase;}
+  @media(max-width:640px){
+    .thread-row{
+      grid-template-columns:auto 1fr; grid-template-areas:"avatar title" "cat replies";
+      padding:14px 16px; gap:8px 12px;
+    }
+    .thread-row > .avatar{grid-area:avatar;}
+    .thread-row > div:nth-child(2){grid-area:title;}
+    .thread-cat{grid-area:cat; justify-self:start;}
+    .thread-replies{grid-area:replies; justify-self:end; text-align:right;}
+    .thread-row h3{font-size:.95rem;}
+  }
   .empty-state{padding:44px 20px; text-align:center; color:#6f6350; background:#fff; border-radius:16px; box-shadow:0 1px 3px rgba(23,20,18,.06), inset 0 0 0 1px #f0ede8;}
   .spinner-row{display:flex; align-items:center; gap:10px; color:#6f6350; padding:20px 4px;}
   .spinner{width:18px; height:18px; border-radius:50%; border:2.5px solid rgba(180,34,44,.2); border-top-color:var(--red); animation:spin .8s linear infinite;}
@@ -255,6 +286,11 @@
   .back-link{display:inline-flex; align-items:center; gap:6px; font-size:.86rem; color:var(--red-dark); text-decoration:none; margin-bottom:16px; font-weight:600; transition:gap .2s var(--ease);}
   .back-link:hover{gap:10px; color:var(--red);}
   .post{background:#fff; border-radius:16px; padding:20px 22px; margin-bottom:14px; animation:fadeUp .4s var(--ease) both; transition:box-shadow .25s var(--ease), transform .2s var(--ease); display:flex; gap:14px; box-shadow:0 1px 3px rgba(23,20,18,.06), inset 0 0 0 1px #f0ede8;}
+  @media(max-width:640px){
+    .post{padding:14px 16px; gap:10px; border-radius:14px;}
+    .attach-img{width:96px; height:96px;}
+    .top-actions h1{font-size:1.5rem;}
+  }
   .post:hover{box-shadow:0 10px 24px rgba(23,20,18,.1), inset 0 0 0 1px #f0ede8; transform:translateY(-2px);}
   .post.is-deleted{background:#fbeceb; box-shadow:0 1px 3px rgba(180,34,44,.08), inset 0 0 0 1px #e6c3bf;}
   .post-main{flex:1; min-width:0;}
@@ -350,6 +386,8 @@
       </svg>
       <span><span class="brand-name">Hölle-Leue</span><span class="brand-sub">Narrenzunft Freiburg</span></span>
     </a>
+    <input type="checkbox" id="navToggle">
+    <label class="navBtn" for="navToggle">☰</label>
     <ul class="navlinks">
       <li><a href="/index.html">Zur Website</a></li>
       <li><a href="/sage.html">Unsere Sage</a></li>
@@ -626,6 +664,11 @@
     const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
     localStorage.setItem(THEME_KEY, next);
     applyTheme(next);
+  });
+
+  // Mobiles Menü nach Klick auf einen Menüpunkt automatisch schließen
+  document.querySelectorAll('.navlinks a, .navlinks button').forEach(el => {
+    el.addEventListener('click', () => { document.getElementById('navToggle').checked = false; });
   });
 
   const authArea = document.getElementById('authArea');
