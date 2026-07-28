@@ -2,7 +2,7 @@
   // Der Name wird zum ersten Teil der Adresse:
   //   <name>.<konto-subdomain>.workers.dev
   // Beispiel: www.hoelle-leue.workers.dev
-  "name": "www",
+  "name": "www.hoelle-leue.workers.dev",
 
   "compatibility_date": "2026-07-19",
   "compatibility_flags": ["nodejs_compat"],
