@@ -477,7 +477,7 @@
       <li><a href="/sage.html">Unsere Sage</a></li>
       <li><a href="#haes">Häs</a></li>
       <li><a href="#termine">Termine</a></li>
-      <li><a href="#galerie">Galerie</a></li>
+      <li><a href="/galerie.html">Galerie</a></li>
       <li><a href="#mitmachen">Mitmachen</a></li>
       <li><a href="#kontakt">Kontakt</a></li>
       <li><a href="/mitglieder.html">Mitgliederbereich</a></li>
@@ -670,7 +670,7 @@
       <span class="eyebrow">Galerie</span>
       <h2>Impressionen aus dem Zunftleben</h2>
     </div>
-    <div class="gallery-grid reveal-stagger reveal" id="galleryGrid">
+    <div class="gallery-grid reveal-stagger reveal" id="galleryGrid" style="display:none;">
       <div class="photo" data-lightbox-src="/images/image4.jpg" data-lightbox-cap="image4.jpg"><img src="/images/image4.jpg" alt="Impression aus dem Zunftleben 1" loading="lazy" onerror="handleImgError(this)"><div class="ph-fallback"><span class="ico">📷</span>images/image4.jpg</div><div class="gallery-cap">image4.jpg</div></div>
       <div class="photo" data-lightbox-src="/images/image5.jpg" data-lightbox-cap="image5.jpg"><img src="/images/image5.jpg" alt="Impression aus dem Zunftleben 2" loading="lazy" onerror="handleImgError(this)"><div class="ph-fallback"><span class="ico">📷</span>images/image5.jpg</div><div class="gallery-cap">image5.jpg</div></div>
       <div class="photo" data-lightbox-src="/images/image6.jpg" data-lightbox-cap="image6.jpg"><img src="/images/image6.jpg" alt="Impression aus dem Zunftleben 3" loading="lazy" onerror="handleImgError(this)"><div class="ph-fallback"><span class="ico">📷</span>images/image6.jpg</div><div class="gallery-cap">image6.jpg</div></div>
@@ -678,7 +678,10 @@
       <div class="photo" data-lightbox-src="/images/image8.jpg" data-lightbox-cap="image8.jpg"><img src="/images/image8.jpg" alt="Impression aus dem Zunftleben 5" loading="lazy" onerror="handleImgError(this)"><div class="ph-fallback"><span class="ico">📷</span>images/image8.jpg</div><div class="gallery-cap">image8.jpg</div></div>
       <div class="photo" data-lightbox-src="/images/image9.jpg" data-lightbox-cap="image9.jpg"><img src="/images/image9.jpg" alt="Impression aus dem Zunftleben 6" loading="lazy" onerror="handleImgError(this)"><div class="ph-fallback"><span class="ico">📷</span>images/image9.jpg</div><div class="gallery-cap">image9.jpg</div></div>
     </div>
-    <p style="margin-top:18px; color:#5a4a36; font-size:.9rem;">Einfach echte Fotos als <code>image1.jpg</code> bis <code>image9.jpg</code> in den Ordner <code>/public/images/</code> im Repo legen (image1 = Hintergrundfoto oben, image2 = Über-uns-Foto, image3 = Häs-Foto, image4–9 = Galerie) — sie erscheinen dann automatisch anstelle der Platzhalter.</p>
+    <div id="livePreviewGrid" class="gallery-grid"></div>
+    <div style="margin-top:24px; text-align:center;">
+      <a href="/galerie.html" class="btn btn-primary btn-sm">Zur ganzen Galerie →</a>
+    </div>
   </div>
 </section>
 
@@ -1093,12 +1096,33 @@
   document.getElementById('eventModalClose').addEventListener('click', closeEventModal);
   eventModalBackdrop.addEventListener('click', (e) => { if (e.target === eventModalBackdrop) closeEventModal(); });
 
-  /* ---------- Bild-Lightbox (Galerie) ---------- */
+  /* ---------- Galerie-Vorschau (wird aus der Galerie-Verwaltung geladen) ---------- */
   (function(){
+    const grid = document.getElementById('livePreviewGrid');
+    const fallback = document.getElementById('galleryGrid');
+    function esc(s){ const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+
+    fetch('/api/gallery/public')
+      .then(r => r.json())
+      .then(data => {
+        const imgs = (data.images || []).slice(0, 6);
+        if (!imgs.length) { fallback.style.display = ''; return; }
+        grid.innerHTML = imgs.map(img => `
+          <div class="photo" data-lightbox-src="${img.url}" data-lightbox-cap="${esc(img.title || '')}">
+            <img src="${img.url}" alt="${esc(img.title || 'Galeriebild')}" loading="lazy">
+            ${img.title ? `<div class="gallery-cap">${esc(img.title)}</div>` : ''}
+          </div>`).join('');
+        initLightbox();
+      })
+      .catch(() => { fallback.style.display = ''; });
+  })();
+
+  /* ---------- Bild-Lightbox (Galerie) ---------- */
+  function initLightbox(){
     const lightbox = document.getElementById('lightbox');
     const lbImg = document.getElementById('lbImg');
     const lbCaption = document.getElementById('lbCaption');
-    const photos = Array.from(document.querySelectorAll('#galleryGrid .photo'));
+    const photos = Array.from(document.querySelectorAll('#livePreviewGrid .photo, #galleryGrid .photo'));
     let currentIndex = 0;
 
     function openLightbox(idx){
@@ -1126,7 +1150,8 @@
       if (e.key === 'ArrowLeft') showRelative(-1);
       if (e.key === 'ArrowRight') showRelative(1);
     });
-  })();
+  }
+  initLightbox();
 
   /* ---------- Kontakt-Pop-up ---------- */
   const contactBackdrop = document.getElementById('contactModalBackdrop');
