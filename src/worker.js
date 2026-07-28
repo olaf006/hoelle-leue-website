@@ -8,6 +8,7 @@
 
 const THREADS_KEY = 'threads';
 const AUDITLOG_KEY = 'auditlog';
+const DOCUMENTS_KEY = 'documents';
 const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4 MB
 const SESSION_DAYS = 30;
 const MAX_LOG_ENTRIES = 400;
@@ -359,18 +360,28 @@ async function handleForumPost(request, kv, currentUser){
       if (!isNaN(ts)) eventDate = ts;
     }
 
+    let poll = null;
+    if (body.poll && typeof body.poll === 'object' && Array.isArray(body.poll.options)) {
+      const question = sanitize(body.poll.question, 200);
+      const options = body.poll.options.map(o => sanitize(o, 100)).filter(Boolean).slice(0, 8);
+      if (question && options.length >= 2) {
+        poll = { question, allowMultiple: !!body.poll.allowMultiple, options: options.map(text => ({ id: makeId(), text, votes: [] })) };
+      }
+    }
+
     const id = makeId();
     const now = Date.now();
     const firstPost = { id: makeId(), author, authorDisplayName, authorOffice, authorPostCount: newPostCount, message, createdAt: now, attachments, deleted:false, reactions:{} };
     const threadDoc = {
       id, title, category, author, authorDisplayName, createdAt: now, lastActivity: now, deleted:false, pinned:false,
       isEvent, eventDate, rsvp: isEvent ? { yes:[], maybe:[], no:[] } : undefined,
+      poll,
       posts:[firstPost]
     };
     await kv.put('thread:' + id, JSON.stringify(threadDoc));
 
     const threads = await getJSON(kv, THREADS_KEY, []);
-    threads.push({ id, title, category, author, authorDisplayName, createdAt: now, lastActivity: now, replyCount:0, deleted:false, pinned:false, isEvent, eventDate, rsvp: threadDoc.rsvp });
+    threads.push({ id, title, category, author, authorDisplayName, createdAt: now, lastActivity: now, replyCount:0, deleted:false, pinned:false, isEvent, eventDate, rsvp: threadDoc.rsvp, isPoll: !!poll });
     await kv.put(THREADS_KEY, JSON.stringify(threads));
 
     return json(threadDoc);
@@ -424,6 +435,31 @@ async function handleRsvp(request, kv, currentUser){
   if (idx !== -1) { threads[idx].rsvp = threadDoc.rsvp; await kv.put(THREADS_KEY, JSON.stringify(threads)); }
 
   return json({ ok:true, rsvp: threadDoc.rsvp });
+}
+
+// ---------------- Umfragen (Polls) ----------------
+
+async function handleVote(request, kv, currentUser){
+  let body;
+  try { body = await request.json(); } catch(e){ return json({ error:'Ungültige Anfrage.' }, 400); }
+  const threadId = sanitize(body.threadId, 100);
+  const optionId = sanitize(body.optionId, 100);
+
+  const threadDoc = await getJSON(kv, 'thread:' + threadId, null);
+  if (!threadDoc || !threadDoc.poll) return json({ error:'Keine Umfrage gefunden.' }, 404);
+
+  const option = threadDoc.poll.options.find(o => o.id === optionId);
+  if (!option) return json({ error:'Option nicht gefunden.' }, 404);
+
+  if (!threadDoc.poll.allowMultiple) {
+    threadDoc.poll.options.forEach(o => { o.votes = o.votes.filter(u => u !== currentUser.username); });
+  }
+  const idx = option.votes.indexOf(currentUser.username);
+  if (idx === -1) option.votes.push(currentUser.username);
+  else option.votes.splice(idx, 1);
+
+  await kv.put('thread:' + threadId, JSON.stringify(threadDoc));
+  return json({ ok:true, poll: threadDoc.poll });
 }
 
 // ---------------- Reaktionen ----------------
@@ -631,6 +667,63 @@ async function handleFileGet(url, kv){
   return new Response(bytes, { headers: { 'Content-Type': fileDoc.type, 'Cache-Control':'private, max-age=3600' } });
 }
 
+// ---------------- Dokumente-Bereich ----------------
+
+async function handleDocumentsList(kv){
+  const docs = await getJSON(kv, DOCUMENTS_KEY, []);
+  docs.sort((a,b) => b.uploadedAt - a.uploadedAt);
+  return json({ documents: docs });
+}
+
+async function handleDocumentsUpload(request, kv, currentUser){
+  if (!currentUser.isAdmin) return json({ error:'Nur Admins können Dokumente hochladen.' }, 403);
+  let form;
+  try { form = await request.formData(); } catch(e){ return json({ error:'Ungültige Anfrage.' }, 400); }
+  const file = form.get('file');
+  if (!file || typeof file === 'string') return json({ error:'Keine Datei erhalten.' }, 400);
+  if (file.size > MAX_FILE_SIZE) return json({ error:`Datei zu groß (max. ${Math.round(MAX_FILE_SIZE/1024/1024)} MB).` }, 400);
+
+  const title = sanitize(form.get('title') || file.name, 150);
+  const description = sanitize(form.get('description') || '', 500);
+
+  const fileId = makeId();
+  const dataBase64 = await blobToBase64(file);
+  const name = sanitize(file.name || 'datei', 150);
+  const type = sanitize(file.type || 'application/octet-stream', 100);
+  await kv.put('file:' + fileId, JSON.stringify({ name, type, size: file.size, dataBase64, uploadedBy: currentUser.username, uploadedAt: Date.now() }));
+
+  const docs = await getJSON(kv, DOCUMENTS_KEY, []);
+  const doc = {
+    id: makeId(), title, description, fileId, fileName: name, fileType: type, fileSize: file.size,
+    uploadedBy: currentUser.username, uploadedByName: currentUser.displayName, uploadedAt: Date.now()
+  };
+  docs.push(doc);
+  await kv.put(DOCUMENTS_KEY, JSON.stringify(docs));
+
+  await addLogEntry(kv, {
+    action:'upload_document', actorUsername: currentUser.username, actorDisplayName: currentUser.displayName,
+    summary: `${currentUser.displayName} hat das Dokument „${title}" hochgeladen.`
+  });
+
+  return json({ ok:true, document: doc });
+}
+
+async function handleDocumentsDelete(request, kv, currentUser){
+  if (!currentUser.isAdmin) return json({ error:'Nur Admins können Dokumente löschen.' }, 403);
+  let body; try { body = await request.json(); } catch(e){ return json({ error:'Ungültige Anfrage.' }, 400); }
+  const docs = await getJSON(kv, DOCUMENTS_KEY, []);
+  const doc = docs.find(d => d.id === body.id);
+  if (!doc) return json({ error:'Dokument nicht gefunden.' }, 404);
+  const filtered = docs.filter(d => d.id !== body.id);
+  await kv.put(DOCUMENTS_KEY, JSON.stringify(filtered));
+  await kv.delete('file:' + doc.fileId);
+  await addLogEntry(kv, {
+    action:'delete_document', actorUsername: currentUser.username, actorDisplayName: currentUser.displayName,
+    summary: `${currentUser.displayName} hat das Dokument „${doc.title}" gelöscht.`
+  });
+  return json({ ok:true });
+}
+
 // ---------------- Admin ----------------
 
 async function handleAdminPending(kv){
@@ -793,6 +886,10 @@ export default {
         const r = await requireAuth(request, url, kv); if (r.error) return r.error;
         return await handleRsvp(request, kv, r.user);
       }
+      if (path === '/api/forum/vote' && request.method === 'POST') {
+        const r = await requireAuth(request, url, kv); if (r.error) return r.error;
+        return await handleVote(request, kv, r.user);
+      }
       if (path === '/api/forum/moderate' && request.method === 'POST') {
         const r = await requireAuth(request, url, kv); if (r.error) return r.error;
         return await handleModerate(request, kv, r.user);
@@ -805,6 +902,19 @@ export default {
       if (path === '/api/file' && request.method === 'GET') {
         const r = await requireAuth(request, url, kv); if (r.error) return r.error;
         return await handleFileGet(url, kv);
+      }
+
+      if (path === '/api/documents' && request.method === 'GET') {
+        const r = await requireAuth(request, url, kv); if (r.error) return r.error;
+        return await handleDocumentsList(kv);
+      }
+      if (path === '/api/documents' && request.method === 'POST') {
+        const r = await requireAuth(request, url, kv); if (r.error) return r.error;
+        return await handleDocumentsUpload(request, kv, r.user);
+      }
+      if (path === '/api/documents/delete' && request.method === 'POST') {
+        const r = await requireAuth(request, url, kv); if (r.error) return r.error;
+        return await handleDocumentsDelete(request, kv, r.user);
       }
 
       if (path === '/api/admin/pending' && request.method === 'GET') { const r = await requireAdmin(request, url, kv); if (r.error) return r.error; return await handleAdminPending(kv); }
