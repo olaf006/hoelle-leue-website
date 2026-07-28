@@ -9,6 +9,8 @@
 const THREADS_KEY = 'threads';
 const AUDITLOG_KEY = 'auditlog';
 const DOCUMENTS_KEY = 'documents';
+const GALLERY_IMAGES_KEY = 'gallery:images';
+const GALLERY_CATEGORIES_KEY = 'gallery:categories';
 const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4 MB
 const SESSION_DAYS = 30;
 const MAX_LOG_ENTRIES = 400;
@@ -724,6 +726,149 @@ async function handleDocumentsDelete(request, kv, currentUser){
   return json({ ok:true });
 }
 
+// ---------------- Galerie (öffentlich lesbar, von Admins verwaltbar) ----------------
+
+async function handleGalleryPublic(kv){
+  const categories = await getJSON(kv, GALLERY_CATEGORIES_KEY, []);
+  const images = await getJSON(kv, GALLERY_IMAGES_KEY, []);
+  categories.sort((a,b) => (a.order||0) - (b.order||0));
+  images.sort((a,b) => (a.order||0) - (b.order||0) || b.uploadedAt - a.uploadedAt);
+  const publicImages = images.map(i => ({
+    id: i.id, title: i.title, categoryId: i.categoryId, order: i.order,
+    url: '/api/gallery/image?id=' + encodeURIComponent(i.id), uploadedAt: i.uploadedAt
+  }));
+  return json({ categories, images: publicImages });
+}
+
+// Öffentliche Bildauslieferung — nur für Bilder, die wirklich in der Galerie stehen
+async function handleGalleryImage(url, kv){
+  const id = url.searchParams.get('id');
+  const images = await getJSON(kv, GALLERY_IMAGES_KEY, []);
+  const entry = images.find(i => i.id === id);
+  if (!entry) return new Response('Nicht gefunden', { status:404 });
+  const fileDoc = await getJSON(kv, 'file:' + entry.fileId, null);
+  if (!fileDoc) return new Response('Nicht gefunden', { status:404 });
+  const bytes = base64ToBytes(fileDoc.dataBase64);
+  return new Response(bytes, { headers: { 'Content-Type': fileDoc.type, 'Cache-Control':'public, max-age=86400' } });
+}
+
+async function handleGalleryUpload(request, kv, currentUser){
+  if (!currentUser.isAdmin) return json({ error:'Nur Admins können Galeriebilder hochladen.' }, 403);
+  let form;
+  try { form = await request.formData(); } catch(e){ return json({ error:'Ungültige Anfrage.' }, 400); }
+  const file = form.get('file');
+  if (!file || typeof file === 'string') return json({ error:'Keine Datei erhalten.' }, 400);
+  if (!(file.type || '').startsWith('image/')) return json({ error:'Bitte nur Bilddateien hochladen.' }, 400);
+  if (file.size > MAX_FILE_SIZE) return json({ error:`Bild zu groß (max. ${Math.round(MAX_FILE_SIZE/1024/1024)} MB).` }, 400);
+
+  const title = sanitize(form.get('title') || '', 150);
+  const categoryId = sanitize(form.get('categoryId') || '', 100) || null;
+
+  const fileId = makeId();
+  const dataBase64 = await blobToBase64(file);
+  await kv.put('file:' + fileId, JSON.stringify({
+    name: sanitize(file.name || 'bild', 150), type: sanitize(file.type, 100), size: file.size,
+    dataBase64, uploadedBy: currentUser.username, uploadedAt: Date.now()
+  }));
+
+  const images = await getJSON(kv, GALLERY_IMAGES_KEY, []);
+  const maxOrder = images.reduce((m,i) => Math.max(m, i.order||0), 0);
+  const entry = {
+    id: makeId(), fileId, title, categoryId, order: maxOrder + 1,
+    uploadedBy: currentUser.username, uploadedByName: currentUser.displayName, uploadedAt: Date.now()
+  };
+  images.push(entry);
+  await kv.put(GALLERY_IMAGES_KEY, JSON.stringify(images));
+
+  return json({ ok:true, image: entry });
+}
+
+async function handleGalleryUpdate(request, kv, currentUser){
+  if (!currentUser.isAdmin) return json({ error:'Nur Admins können die Galerie bearbeiten.' }, 403);
+  let body; try { body = await request.json(); } catch(e){ return json({ error:'Ungültige Anfrage.' }, 400); }
+  const images = await getJSON(kv, GALLERY_IMAGES_KEY, []);
+  const entry = images.find(i => i.id === body.id);
+  if (!entry) return json({ error:'Bild nicht gefunden.' }, 404);
+  if (typeof body.title === 'string') entry.title = sanitize(body.title, 150);
+  if (body.categoryId !== undefined) entry.categoryId = body.categoryId ? sanitize(body.categoryId, 100) : null;
+  await kv.put(GALLERY_IMAGES_KEY, JSON.stringify(images));
+  return json({ ok:true, image: entry });
+}
+
+async function handleGalleryReorder(request, kv, currentUser){
+  if (!currentUser.isAdmin) return json({ error:'Nur Admins können sortieren.' }, 403);
+  let body; try { body = await request.json(); } catch(e){ return json({ error:'Ungültige Anfrage.' }, 400); }
+  if (!Array.isArray(body.order)) return json({ error:'Ungültige Reihenfolge.' }, 400);
+  const images = await getJSON(kv, GALLERY_IMAGES_KEY, []);
+  body.order.forEach((id, idx) => {
+    const entry = images.find(i => i.id === id);
+    if (entry) entry.order = idx + 1;
+  });
+  await kv.put(GALLERY_IMAGES_KEY, JSON.stringify(images));
+  return json({ ok:true });
+}
+
+async function handleGalleryDelete(request, kv, currentUser){
+  if (!currentUser.isAdmin) return json({ error:'Nur Admins können Bilder löschen.' }, 403);
+  let body; try { body = await request.json(); } catch(e){ return json({ error:'Ungültige Anfrage.' }, 400); }
+  const images = await getJSON(kv, GALLERY_IMAGES_KEY, []);
+  const entry = images.find(i => i.id === body.id);
+  if (!entry) return json({ error:'Bild nicht gefunden.' }, 404);
+  await kv.put(GALLERY_IMAGES_KEY, JSON.stringify(images.filter(i => i.id !== body.id)));
+  await kv.delete('file:' + entry.fileId);
+  return json({ ok:true });
+}
+
+async function handleGalleryCategory(request, kv, currentUser){
+  if (!currentUser.isAdmin) return json({ error:'Nur Admins können Kategorien verwalten.' }, 403);
+  let body; try { body = await request.json(); } catch(e){ return json({ error:'Ungültige Anfrage.' }, 400); }
+  const categories = await getJSON(kv, GALLERY_CATEGORIES_KEY, []);
+
+  if (body.action === 'create') {
+    const name = sanitize(body.name, 60);
+    if (!name) return json({ error:'Name darf nicht leer sein.' }, 400);
+    const maxOrder = categories.reduce((m,c) => Math.max(m, c.order||0), 0);
+    const cat = { id: makeId(), name, order: maxOrder + 1 };
+    categories.push(cat);
+    await kv.put(GALLERY_CATEGORIES_KEY, JSON.stringify(categories));
+    return json({ ok:true, category: cat });
+  }
+
+  if (body.action === 'rename') {
+    const cat = categories.find(c => c.id === body.id);
+    if (!cat) return json({ error:'Kategorie nicht gefunden.' }, 404);
+    const name = sanitize(body.name, 60);
+    if (!name) return json({ error:'Name darf nicht leer sein.' }, 400);
+    cat.name = name;
+    await kv.put(GALLERY_CATEGORIES_KEY, JSON.stringify(categories));
+    return json({ ok:true, category: cat });
+  }
+
+  if (body.action === 'delete') {
+    const cat = categories.find(c => c.id === body.id);
+    if (!cat) return json({ error:'Kategorie nicht gefunden.' }, 404);
+    await kv.put(GALLERY_CATEGORIES_KEY, JSON.stringify(categories.filter(c => c.id !== body.id)));
+    // Bilder dieser Kategorie bleiben erhalten, landen aber in "Ohne Kategorie"
+    const images = await getJSON(kv, GALLERY_IMAGES_KEY, []);
+    let changed = false;
+    images.forEach(i => { if (i.categoryId === body.id) { i.categoryId = null; changed = true; } });
+    if (changed) await kv.put(GALLERY_IMAGES_KEY, JSON.stringify(images));
+    return json({ ok:true });
+  }
+
+  if (body.action === 'reorder') {
+    if (!Array.isArray(body.order)) return json({ error:'Ungültige Reihenfolge.' }, 400);
+    body.order.forEach((id, idx) => {
+      const cat = categories.find(c => c.id === id);
+      if (cat) cat.order = idx + 1;
+    });
+    await kv.put(GALLERY_CATEGORIES_KEY, JSON.stringify(categories));
+    return json({ ok:true });
+  }
+
+  return json({ error:'Unbekannte Aktion.' }, 400);
+}
+
 // ---------------- Admin ----------------
 
 async function handleAdminPending(kv){
@@ -924,9 +1069,41 @@ export default {
       if (path === '/api/admin/log' && request.method === 'GET') { const r = await requireAdmin(request, url, kv); if (r.error) return r.error; return await handleAdminLog(kv); }
       if (path === '/api/admin/export' && request.method === 'GET') { const r = await requireAdmin(request, url, kv); if (r.error) return r.error; return await handleAdminExport(kv); }
 
+      // ---- Galerie ----
+      if (path === '/api/gallery/public' && request.method === 'GET') return await handleGalleryPublic(kv);
+      if (path === '/api/gallery/image' && request.method === 'GET') return await handleGalleryImage(url, kv);
+      if (path === '/api/gallery/upload' && request.method === 'POST') {
+        const r = await requireAdmin(request, url, kv); if (r.error) return r.error;
+        return await handleGalleryUpload(request, kv, r.user);
+      }
+      if (path === '/api/gallery/update' && request.method === 'POST') {
+        const r = await requireAdmin(request, url, kv); if (r.error) return r.error;
+        return await handleGalleryUpdate(request, kv, r.user);
+      }
+      if (path === '/api/gallery/reorder' && request.method === 'POST') {
+        const r = await requireAdmin(request, url, kv); if (r.error) return r.error;
+        return await handleGalleryReorder(request, kv, r.user);
+      }
+      if (path === '/api/gallery/delete' && request.method === 'POST') {
+        const r = await requireAdmin(request, url, kv); if (r.error) return r.error;
+        return await handleGalleryDelete(request, kv, r.user);
+      }
+      if (path === '/api/gallery/category' && request.method === 'POST') {
+        const r = await requireAdmin(request, url, kv); if (r.error) return r.error;
+        return await handleGalleryCategory(request, kv, r.user);
+      }
+
       if (path.startsWith('/api/')) return json({ error:'Nicht gefunden.' }, 404);
     } catch (err) {
       return json({ error: 'Serverfehler: ' + (err && err.message ? err.message : String(err)) }, 500);
+    }
+
+    // Saubere URLs: /sage, /galerie, /impressum ... auf die passende .html-Datei abbilden.
+    // So funktionieren beide Varianten (mit und ohne .html) zuverlässig.
+    const PAGES = ['sage','galerie','impressum','datenschutz','mitglieder','index'];
+    const clean = path.replace(/^\/+|\/+$/g, '');
+    if (PAGES.includes(clean)) {
+      return env.ASSETS.fetch(new Request(new URL('/' + clean + '.html', url.origin), request));
     }
 
     return env.ASSETS.fetch(request);
