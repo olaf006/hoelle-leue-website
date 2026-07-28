@@ -64,6 +64,24 @@
   .navlinks a, .navlinks button{text-decoration:none; color:#d8d3cc; font-size:.9rem; font-weight:500; position:relative; background:none; border:none; cursor:pointer; font-family:inherit; padding:0;}
   .navlinks a:hover, .navlinks button:hover{color:var(--gold-light);}
   .who{font-family:'JetBrains Mono',monospace; font-size:.76rem; color:var(--gold-light); background:rgba(201,162,39,.14); padding:6px 12px; border-radius:20px; border:1px solid rgba(201,162,39,.3);}
+
+  /* ---- Benachrichtigungsglocke ---- */
+  #navBellBtn{position:relative; font-size:1.15rem; background:none; border:none; cursor:pointer; color:#d8d3cc;}
+  .bell-badge{
+    position:absolute; top:-4px; right:-8px; background:var(--red); color:#fff; font-size:.6rem; font-weight:700;
+    min-width:16px; height:16px; border-radius:8px; display:flex; align-items:center; justify-content:center;
+    padding:0 4px; font-family:'JetBrains Mono',monospace;
+  }
+  .bell-dropdown{
+    display:none; position:absolute; top:120%; right:0; width:290px; background:#fff; border-radius:14px;
+    box-shadow:0 14px 34px rgba(23,20,18,.25); padding:10px; z-index:100; max-height:360px; overflow-y:auto;
+  }
+  .bell-dropdown.open{display:block;}
+  .bell-item{padding:10px 12px; border-radius:10px; cursor:pointer; transition:background .15s var(--ease); font-size:.85rem;}
+  .bell-item:hover{background:var(--cream-dark);}
+  .bell-item strong{display:block; color:var(--wood-dark); font-size:.88rem;}
+  .bell-item span{color:#6f6350; font-size:.76rem;}
+  .bell-empty{padding:16px 12px; text-align:center; color:#8a7e6f; font-size:.85rem;}
   #navToggle{display:none;}
   .navBtn{display:none;}
   @media(max-width:900px){
@@ -357,6 +375,25 @@
   .rsvp-lists h4{font-size:.78rem; text-transform:uppercase; letter-spacing:.05em; margin:0 0 6px; color:#6f6350;}
   .rsvp-lists ul{margin:0; padding-left:1.1em;}
 
+  /* ---- Umfragen (Polls) ---- */
+  .poll-option-row{display:flex; gap:8px; margin-bottom:8px; align-items:center;}
+  .poll-option-row input{flex:1;}
+  .poll-option-row button{
+    background:none; border:none; color:var(--red-dark); cursor:pointer; font-size:1.1rem; padding:4px 8px; flex:none;
+  }
+  .poll-block{background:var(--cream-dark); border-radius:16px; padding:22px 24px; margin:16px 0 22px; box-shadow:inset 0 1px 3px rgba(23,20,18,.05);}
+  .poll-question{font-weight:700; color:var(--wood-dark); margin-bottom:14px; font-family:'Fraunces',serif; font-size:1.05rem;}
+  .poll-option{
+    position:relative; background:#fff; border-radius:10px; padding:11px 16px; margin-bottom:8px; cursor:pointer;
+    overflow:hidden; transition:transform .15s var(--ease); box-shadow:0 1px 3px rgba(23,20,18,.06);
+  }
+  .poll-option:hover{transform:translateY(-1px);}
+  .poll-option.voted{box-shadow:inset 0 0 0 2px var(--gold);}
+  .poll-option-fill{position:absolute; left:0; top:0; bottom:0; background:rgba(201,162,39,.18); z-index:0; transition:width .4s var(--ease);}
+  .poll-option-content{position:relative; z-index:1; display:flex; justify-content:space-between; gap:10px; font-size:.9rem;}
+  .poll-option-content .po-pct{font-weight:700; color:var(--wood-dark); font-family:'JetBrains Mono',monospace; font-size:.82rem;}
+  .poll-meta{font-size:.78rem; color:#6f6350; margin-top:6px;}
+
   .status-msg.form{color:var(--red-dark);}
   .status-msg.form.ok{color:#2f6b34;}
 
@@ -404,6 +441,10 @@
       <li><a href="/sage.html">Unsere Sage</a></li>
       <li><a href="/mitglieder.html" class="active">Forum</a></li>
       <li><button id="themeToggle" title="Hell/Dunkel umschalten">🌙</button></li>
+      <li id="navBellLi" style="display:none; position:relative;">
+        <button id="navBellBtn" title="Benachrichtigungen">🔔<span class="bell-badge" id="bellBadge" style="display:none;">0</span></button>
+        <div class="bell-dropdown" id="bellDropdown"></div>
+      </li>
       <li id="navAdminLi" style="display:none;"><button id="navAdminBtn">Admin</button></li>
       <li id="navWhoLi" style="display:none;"><span class="who" id="navWho"></span></li>
       <li id="navLogoutLi" style="display:none;"><button id="navLogoutBtn">Abmelden</button></li>
@@ -452,6 +493,7 @@
       <div class="tabs" id="tabs">
         <button type="button" class="tab-btn active" data-tab="list">Forum</button>
         <button type="button" class="tab-btn" data-tab="calendar">Kalender</button>
+        <button type="button" class="tab-btn" data-tab="documents">Dokumente</button>
         <button type="button" class="tab-btn" data-tab="members">Mitglieder</button>
         <button type="button" class="tab-btn" data-tab="profile">Mein Profil</button>
         <button type="button" class="tab-btn" data-tab="admin" id="tabAdminBtn" style="display:none;">Admin<span class="badge" id="pendingBadge" style="display:none;">0</span></button>
@@ -522,6 +564,17 @@
                 <input type="date" id="ntEventDate">
               </div>
             </div>
+            <div class="light-field" style="background:var(--cream-dark); padding:14px 16px; border-radius:6px;">
+              <label style="display:flex; align-items:center; gap:8px; margin-bottom:0;"><input type="checkbox" id="ntIsPoll" style="width:auto;"> 🗳️ Umfrage hinzufügen</label>
+              <div id="ntPollWrap" style="display:none; margin-top:12px;">
+                <label>Frage</label>
+                <input type="text" id="ntPollQuestion" maxlength="200" placeholder="z. B. Welches Motto fürs Vereinsfest?" style="margin-bottom:10px;">
+                <label>Antwortoptionen</label>
+                <div id="ntPollOptions"></div>
+                <button type="button" class="btn btn-sm btn-ghost" id="btnAddPollOption" style="margin-top:8px;">+ Option hinzufügen</button>
+                <label style="display:flex; align-items:center; gap:8px; margin-top:12px; margin-bottom:0;"><input type="checkbox" id="ntPollMultiple" style="width:auto;"> Mehrfachauswahl erlauben</label>
+              </div>
+            </div>
             <div class="form-actions"><button type="submit" class="btn btn-primary">Thema veröffentlichen</button></div>
             <div class="status-msg form" id="ntStatus"></div>
           </form>
@@ -541,6 +594,7 @@
           </div>
         </div>
         <div id="tvRsvpBlock"></div>
+        <div id="tvPollBlock"></div>
         <div id="tvPosts"></div>
         <div class="reply-panel panel">
           <h3 style="font-size:1.02rem;">Antworten</h3>
@@ -562,6 +616,33 @@
         </div>
         <p style="color:#6f6350; margin-bottom:20px;">Als „Termin" markierte Themen erscheinen hier automatisch. Klick auf einen Termin, um zu- oder abzusagen.</p>
         <div id="calendarList"></div>
+      </div>
+
+      <div id="documentsView" class="view">
+        <div class="top-actions">
+          <div>
+            <span class="eyebrow">Mitgliederbereich</span>
+            <h1 style="margin-top:4px;">Dokumente</h1>
+          </div>
+          <button class="btn btn-primary" id="btnShowDocUpload" style="display:none;">+ Dokument hochladen</button>
+        </div>
+        <p style="color:#6f6350; margin-bottom:20px;">Satzung, Protokolle, Formulare und andere wichtige Unterlagen der Zunft.</p>
+
+        <div class="panel" id="docUploadPanel" style="display:none; margin-bottom:20px;">
+          <h2 style="font-size:1.1rem;">Neues Dokument hochladen</h2>
+          <form id="docUploadForm">
+            <div class="light-field"><label>Titel</label><input type="text" id="docTitle" required maxlength="150" placeholder="z. B. Satzung 2024"></div>
+            <div class="light-field"><label>Beschreibung (optional)</label><input type="text" id="docDescription" maxlength="500" placeholder="Kurze Beschreibung"></div>
+            <div class="light-field"><label>Datei</label><input type="file" id="docFile" required></div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">Hochladen</button>
+              <button type="button" class="btn btn-ghost" id="btnCancelDocUpload">Abbrechen</button>
+            </div>
+            <div class="status-msg form" id="docUploadStatus"></div>
+          </form>
+        </div>
+
+        <div id="documentsList"></div>
       </div>
 
       <div id="membersView" class="view">
@@ -826,6 +907,7 @@
     document.getElementById('navWho').textContent = me.displayName + ' · ' + me.officeLabel;
     document.getElementById('navWhoLi').style.display = 'block';
     document.getElementById('navLogoutLi').style.display = 'block';
+    document.getElementById('navBellLi').style.display = 'block';
     if (me.isAdmin) { document.getElementById('navAdminLi').style.display = 'block'; document.getElementById('tabAdminBtn').style.display = 'inline-block'; refreshPendingBadge(); }
     fillProfile();
     showTab('list');
@@ -941,7 +1023,7 @@
   const tabViews = {
     list: document.getElementById('listView'), profile: document.getElementById('profileView'),
     admin: document.getElementById('adminView'), calendar: document.getElementById('calendarView'),
-    members: document.getElementById('membersView')
+    members: document.getElementById('membersView'), documents: document.getElementById('documentsView')
   };
   const subViews = { newThread: document.getElementById('newThreadForm'), thread: document.getElementById('threadView') };
 
@@ -955,6 +1037,7 @@
     if (name === 'admin') loadAdmin();
     if (name === 'calendar') loadCalendar();
     if (name === 'members') loadMembers();
+    if (name === 'documents') loadDocuments();
   }
   tabBtns.forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
 
@@ -972,6 +1055,28 @@
 
   document.getElementById('ntIsEvent').addEventListener('change', (e) => {
     document.getElementById('ntEventDateWrap').style.display = e.target.checked ? 'block' : 'none';
+  });
+
+  // ---------- Umfrage-Optionen im Formular ----------
+  function addPollOptionRow(value){
+    const wrap = document.getElementById('ntPollOptions');
+    const row = document.createElement('div');
+    row.className = 'poll-option-row';
+    row.innerHTML = `<input type="text" class="poll-opt-input" maxlength="100" placeholder="Option" value="${value ? escapeHtml(value) : ''}">
+      <button type="button" title="Entfernen">✕</button>`;
+    row.querySelector('button').addEventListener('click', () => {
+      if (document.querySelectorAll('.poll-option-row').length > 2) row.remove();
+    });
+    wrap.appendChild(row);
+  }
+  function resetPollOptions(){
+    document.getElementById('ntPollOptions').innerHTML = '';
+    addPollOptionRow(); addPollOptionRow();
+  }
+  resetPollOptions();
+  document.getElementById('btnAddPollOption').addEventListener('click', () => addPollOptionRow());
+  document.getElementById('ntIsPoll').addEventListener('change', (e) => {
+    document.getElementById('ntPollWrap').style.display = e.target.checked ? 'block' : 'none';
   });
 
   // ---------- Toolbar: Suche / Sortierung / Kategorien ----------
@@ -1036,7 +1141,7 @@
       const unread = isUnread(t);
       row.innerHTML = `
         ${avatarHtml(t.authorDisplayName, null, t.authorAvatarId)}
-        <div><h3>${t.pinned ? '<span class="pin-tag">📌 Angeheftet</span>' : ''}${unread ? '<span class="new-tag">Neu</span>' : ''}${escapeHtml(t.title)}${t.deleted ? ' <span class="badge">gelöscht</span>' : ''}</h3>
+        <div><h3>${t.pinned ? '<span class="pin-tag">📌 Angeheftet</span>' : ''}${t.isPoll ? '<span class="pin-tag" style="background:var(--gold);">🗳️ Umfrage</span>' : ''}${unread ? '<span class="new-tag">Neu</span>' : ''}${escapeHtml(t.title)}${t.deleted ? ' <span class="badge">gelöscht</span>' : ''}</h3>
         <div class="thread-meta">von ${escapeHtml(t.authorDisplayName)} · ${fmtDate(t.createdAt)}</div></div>
         <span class="thread-cat">${escapeHtml(t.category)}</span>
         <div class="thread-replies">${t.replyCount||0} Antwort(en)<br>${fmtDate(t.lastActivity)}</div>`;
@@ -1151,8 +1256,41 @@
       renderStatsBar();
       renderSidebarEvents();
       renderSidebarBirthdays();
+      renderBell();
     } catch (err) { listEl.innerHTML = '<p style="color:var(--red-dark);">'+escapeHtml(err.message)+'</p>'; }
   }
+
+  // ---------- Benachrichtigungsglocke ----------
+  function renderBell(){
+    const myUnread = allThreads.filter(t => t.author === me.username && !t.deleted && isUnread(t));
+    const badge = document.getElementById('bellBadge');
+    if (myUnread.length) { badge.textContent = myUnread.length; badge.style.display = 'flex'; }
+    else badge.style.display = 'none';
+
+    const dropdown = document.getElementById('bellDropdown');
+    if (!myUnread.length) {
+      dropdown.innerHTML = '<div class="bell-empty">Keine neuen Antworten auf deine Themen.</div>';
+      return;
+    }
+    myUnread.sort((a,b) => b.lastActivity - a.lastActivity);
+    dropdown.innerHTML = myUnread.map(t => `
+      <div class="bell-item" data-thread-id="${t.id}" data-last-activity="${t.lastActivity}">
+        <strong>${escapeHtml(t.title)}</strong>
+        <span>${t.replyCount||0} Antwort(en) · zuletzt ${fmtDate(t.lastActivity)}</span>
+      </div>`).join('');
+    dropdown.querySelectorAll('.bell-item').forEach(item => {
+      item.addEventListener('click', () => {
+        dropdown.classList.remove('open');
+        showTab('list');
+        openThread(item.dataset.threadId, parseInt(item.dataset.lastActivity, 10));
+      });
+    });
+  }
+  document.getElementById('navBellBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    document.getElementById('bellDropdown').classList.toggle('open');
+  });
+  document.addEventListener('click', () => document.getElementById('bellDropdown').classList.remove('open'));
 
   function openThread(id, lastActivity){ markSeen(id, lastActivity || Date.now()); showSub('thread'); loadThread(id); }
 
@@ -1226,6 +1364,7 @@
       renderQuotePreview();
 
       renderRsvpBlock(thread, id);
+      renderPollBlock(thread, id);
 
       postsEl.innerHTML = '';
       thread.posts.forEach((p, i) => {
@@ -1379,6 +1518,37 @@
     });
   }
 
+  function renderPollBlock(thread, threadId){
+    const el = document.getElementById('tvPollBlock');
+    if (!thread.poll) { el.innerHTML = ''; return; }
+    const poll = thread.poll;
+    const totalVotes = poll.options.reduce((s,o) => s + o.votes.length, 0);
+    const optionsHtml = poll.options.map(o => {
+      const pct = totalVotes ? Math.round((o.votes.length / totalVotes) * 100) : 0;
+      const mine = o.votes.includes(me.username);
+      return `
+        <div class="poll-option ${mine?'voted':''}" data-option-id="${o.id}">
+          <div class="poll-option-fill" style="width:${pct}%;"></div>
+          <div class="poll-option-content">
+            <span>${mine ? '✓ ' : ''}${escapeHtml(o.text)}</span>
+            <span class="po-pct">${pct}% · ${o.votes.length}</span>
+          </div>
+        </div>`;
+    }).join('');
+    el.innerHTML = `
+      <div class="poll-block">
+        <div class="poll-question">🗳️ ${escapeHtml(poll.question)}</div>
+        ${optionsHtml}
+        <div class="poll-meta">${totalVotes} Stimme(n) insgesamt ${poll.allowMultiple ? '· Mehrfachauswahl erlaubt' : '· eine Auswahl pro Person'}</div>
+      </div>`;
+    el.querySelectorAll('.poll-option').forEach(opt => {
+      opt.addEventListener('click', async () => {
+        await fetch('/api/forum/vote', { method:'POST', headers: authHeaders(true), body: JSON.stringify({ threadId, optionId: opt.dataset.optionId }) });
+        loadThread(threadId);
+      });
+    });
+  }
+
   // ---------- Kalender ----------
   async function loadCalendar(){
     const el = document.getElementById('calendarList');
@@ -1407,6 +1577,79 @@
       });
     } catch (err) { el.innerHTML = '<p style="color:var(--red-dark);">Termine konnten nicht geladen werden.</p>'; }
   }
+
+  // ---------- Dokumente ---------
+  function docIcon(type){
+    if ((type||'').includes('pdf')) return '📕';
+    if ((type||'').includes('word') || (type||'').includes('document')) return '📘';
+    if ((type||'').includes('sheet') || (type||'').includes('excel')) return '📗';
+    if ((type||'').startsWith('image/')) return '🖼️';
+    return '📄';
+  }
+
+  async function loadDocuments(){
+    const el = document.getElementById('documentsList');
+    document.getElementById('btnShowDocUpload').style.display = me.isAdmin ? 'inline-flex' : 'none';
+    el.innerHTML = '<div class="spinner-row"><div class="spinner"></div> Lädt Dokumente …</div>';
+    try {
+      const res = await fetch('/api/documents', { headers: authHeaders() });
+      const data = await res.json();
+      const docs = data.documents || [];
+      if (!docs.length) { el.innerHTML = '<div class="empty-state">Noch keine Dokumente hochgeladen.</div>'; return; }
+      el.innerHTML = '';
+      docs.forEach((d, i) => {
+        const row = document.createElement('div');
+        row.className = 'thread-row';
+        row.style.animationDelay = (i*0.04)+'s';
+        row.style.cursor = 'default';
+        row.style.setProperty('--cat-color', '#8a7e6f');
+        row.innerHTML = `
+          <span style="font-size:1.6rem;">${docIcon(d.fileType)}</span>
+          <div><h3>${escapeHtml(d.title)}</h3>
+            <div class="thread-meta">${d.description ? escapeHtml(d.description)+' · ' : ''}von ${escapeHtml(d.uploadedByName)} · ${fmtDate(d.uploadedAt)} · ${formatSize(d.fileSize)}</div>
+          </div>
+          <a class="btn btn-sm btn-primary" href="${fileUrl(d.fileId)}" target="_blank" rel="noopener" download="${escapeHtml(d.fileName)}">Herunterladen</a>
+          ${me.isAdmin ? `<button class="btn btn-sm btn-danger" data-delete-doc="${d.id}">Löschen</button>` : '<span></span>'}`;
+        el.appendChild(row);
+      });
+      el.querySelectorAll('[data-delete-doc]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          if (!confirm('Dieses Dokument wirklich löschen?')) return;
+          await fetch('/api/documents/delete', { method:'POST', headers: authHeaders(true), body: JSON.stringify({ id: btn.dataset.deleteDoc }) });
+          loadDocuments();
+        });
+      });
+    } catch (err) { el.innerHTML = '<p style="color:var(--red-dark);">Dokumente konnten nicht geladen werden.</p>'; }
+  }
+
+  document.getElementById('btnShowDocUpload').addEventListener('click', () => {
+    document.getElementById('docUploadPanel').style.display = 'block';
+  });
+  document.getElementById('btnCancelDocUpload').addEventListener('click', () => {
+    document.getElementById('docUploadPanel').style.display = 'none';
+    document.getElementById('docUploadForm').reset();
+  });
+  document.getElementById('docUploadForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    const statusEl = document.getElementById('docUploadStatus');
+    const file = document.getElementById('docFile').files[0];
+    if (!file) return;
+    if (file.size > 4*1024*1024) { statusEl.textContent = 'Datei zu groß (max. 4 MB).'; statusEl.className = 'status-msg form'; return; }
+    statusEl.textContent = 'Wird hochgeladen …'; statusEl.className = 'status-msg form';
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('title', document.getElementById('docTitle').value);
+      fd.append('description', document.getElementById('docDescription').value);
+      const res = await fetch('/api/documents', { method:'POST', headers: authHeaders(), body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Fehler beim Hochladen.');
+      document.getElementById('docUploadForm').reset();
+      document.getElementById('docUploadPanel').style.display = 'none';
+      statusEl.textContent = '';
+      loadDocuments();
+    } catch (err) { statusEl.textContent = err.message; statusEl.className = 'status-msg form'; }
+  });
 
   // ---------- Mitgliederverzeichnis & Geburtstage ----------
   async function loadMembers(){
@@ -1485,15 +1728,23 @@
       statusEl.textContent = 'Wird veröffentlicht …';
       const isEvent = document.getElementById('ntIsEvent').checked;
       const eventDate = document.getElementById('ntEventDate').value;
+      let poll = null;
+      if (document.getElementById('ntIsPoll').checked) {
+        const question = document.getElementById('ntPollQuestion').value.trim();
+        const options = Array.from(document.querySelectorAll('.poll-opt-input')).map(i => i.value.trim()).filter(Boolean);
+        if (question && options.length >= 2) poll = { question, options, allowMultiple: document.getElementById('ntPollMultiple').checked };
+      }
       const res = await fetch(API_FORUM, { method:'POST', headers: authHeaders(true), body: JSON.stringify({
         action:'newThread', category: document.getElementById('ntCategory').value,
         title: document.getElementById('ntTitle').value, message: document.getElementById('ntMessage').value, attachments,
-        isEvent, eventDate: isEvent ? eventDate : null
+        isEvent, eventDate: isEvent ? eventDate : null, poll
       })});
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Fehler beim Speichern.');
       document.getElementById('threadForm').reset();
       document.getElementById('ntEventDateWrap').style.display = 'none';
+      document.getElementById('ntPollWrap').style.display = 'none';
+      resetPollOptions();
       statusEl.textContent = 'Thema veröffentlicht!'; statusEl.className = 'status-msg form ok';
       openThread(data.id, data.lastActivity);
     } catch (err) { statusEl.textContent = err.message; statusEl.className = 'status-msg form'; }
