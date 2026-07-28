@@ -1147,22 +1147,54 @@
     el: null, img: null, caption: null, counter: null
   };
 
-  function lbOpen(idx){
+  function lbOpen(idx, keepTransform){
     if (!lb.photos.length) return;
     lb.index = idx;
     const el = lb.photos[idx];
     lb.img.src = el.dataset.lightboxSrc;
-    lb.img.style.transform = '';
-    lb.img.style.opacity = '';
+    if (!keepTransform) {
+      lb.img.style.transition = '';
+      lb.img.style.transform = '';
+      lb.img.style.opacity = '';
+    }
     lb.caption.textContent = el.dataset.lightboxCap || '';
     lb.counter.textContent = (idx + 1) + ' / ' + lb.photos.length;
     lb.el.classList.add('open');
     document.body.style.overflow = 'hidden';
+    lbPreload(idx);
   }
   function lbClose(){ lb.el.classList.remove('open'); document.body.style.overflow = ''; }
+
+  function lbPreload(idx){
+    [idx - 1, idx + 1].forEach(i => {
+      const el = lb.photos[(i + lb.photos.length) % lb.photos.length];
+      if (el) { const pre = new Image(); pre.src = el.dataset.lightboxSrc; }
+    });
+  }
+
+  let lbAnimating = false;
   function lbMove(delta){
-    if (!lb.photos.length) return;
-    lbOpen((lb.index + delta + lb.photos.length) % lb.photos.length);
+    if (!lb.photos.length || lbAnimating) return;
+    lbAnimating = true;
+    const outX = delta > 0 ? '-55%' : '55%';
+    const inX  = delta > 0 ? '55%'  : '-55%';
+
+    lb.img.style.transition = 'transform .16s ease-in, opacity .16s ease-in';
+    lb.img.style.transform = 'translateX(' + outX + ')';
+    lb.img.style.opacity = '0';
+
+    setTimeout(() => {
+      lbOpen((lb.index + delta + lb.photos.length) % lb.photos.length, true);
+      lb.img.style.transition = 'none';
+      lb.img.style.transform = 'translateX(' + inX + ')';
+      lb.img.style.opacity = '0';
+      requestAnimationFrame(() => {
+        lb.img.style.transition = 'transform .24s cubic-bezier(.22,.9,.32,1), opacity .24s ease-out';
+        lb.img.style.transform = 'translateX(0)';
+        lb.img.style.opacity = '1';
+        setTimeout(() => { lb.img.style.transition = ''; lbAnimating = false; }, 250);
+      });
+    }, 160);
   }
 
   function initLightbox(){
@@ -1198,30 +1230,34 @@
     let tsX = 0, tsY = 0, dX = 0, dY = 0, swiping = false;
     const THRESH = 55;
     lb.el.addEventListener('touchstart', (e) => {
-      if (e.touches.length !== 1) return;
+      if (e.touches.length !== 1 || lbAnimating) return;
       tsX = e.touches[0].clientX; tsY = e.touches[0].clientY;
       dX = 0; dY = 0; swiping = true;
+      lb.img.style.transition = 'none';
     }, { passive: true });
     lb.el.addEventListener('touchmove', (e) => {
       if (!swiping || e.touches.length !== 1) return;
       dX = e.touches[0].clientX - tsX;
       dY = e.touches[0].clientY - tsY;
       if (Math.abs(dX) > Math.abs(dY)) {
-        lb.img.style.transform = 'translateX(' + (dX * 0.55) + 'px)';
+        lb.img.style.transform = 'translateX(' + (dX * 0.6) + 'px)';
         lb.img.style.opacity = String(Math.max(0.45, 1 - Math.abs(dX) / 500));
       } else if (dY > 0) {
-        lb.img.style.transform = 'translateY(' + (dY * 0.4) + 'px)';
+        lb.img.style.transform = 'translateY(' + (dY * 0.4) + 'px) scale(' + Math.max(0.85, 1 - dY / 900) + ')';
         lb.img.style.opacity = String(Math.max(0.4, 1 - dY / 400));
       }
     }, { passive: true });
     lb.el.addEventListener('touchend', () => {
       if (!swiping) return;
       swiping = false;
-      lb.img.style.transition = 'transform .25s ease, opacity .25s ease';
       if (Math.abs(dX) > Math.abs(dY) && Math.abs(dX) > THRESH) lbMove(dX < 0 ? 1 : -1);
       else if (dY > THRESH * 1.6) lbClose();
-      else { lb.img.style.transform = ''; lb.img.style.opacity = ''; }
-      setTimeout(() => { lb.img.style.transition = ''; }, 260);
+      else {
+        lb.img.style.transition = 'transform .25s cubic-bezier(.22,.9,.32,1), opacity .25s ease';
+        lb.img.style.transform = '';
+        lb.img.style.opacity = '';
+        setTimeout(() => { lb.img.style.transition = ''; }, 260);
+      }
     });
   }
   initLightbox();
