@@ -403,6 +403,45 @@
   .modal-actions .btn-ghost{background:var(--cream); color:var(--wood-dark); box-shadow:0 1px 2px rgba(23,20,18,.08), inset 0 0 0 1.5px #e5e0d6;}
   .modal-actions .btn-ghost:hover{box-shadow:0 8px 18px rgba(23,20,18,.12), inset 0 0 0 1.5px var(--gold);}
 
+  /* -------- Mitgliedsantrag-Formular -------- */
+  .apply-modal-card{max-width:620px; max-height:88vh; overflow-y:auto;}
+  .apply-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  .apply-grid-zip{grid-template-columns:110px 1fr;}
+  @media(max-width:560px){ .apply-grid, .apply-grid-zip{grid-template-columns:1fr;} }
+  .apply-field{margin-bottom:14px;}
+  .apply-field label{display:block; font-size:.8rem; font-weight:600; color:var(--wood-dark); margin-bottom:6px;}
+  .apply-field input[type="text"], .apply-field input[type="email"], .apply-field input[type="tel"],
+  .apply-field input[type="date"], .apply-field select, .apply-field textarea{
+    width:100%; padding:12px 14px; border-radius:12px; border:none; background:var(--cream-dark);
+    font-family:inherit; font-size:.95rem; color:var(--ink);
+    box-shadow:inset 0 1px 3px rgba(23,20,18,.06); transition:box-shadow .2s var(--ease), background .2s var(--ease);
+  }
+  .apply-field input:focus, .apply-field select:focus, .apply-field textarea:focus{
+    outline:none; background:var(--cream); box-shadow:0 0 0 3px rgba(201,162,39,.25);
+  }
+  .apply-field textarea{resize:vertical;}
+  .apply-choices{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  @media(max-width:560px){ .apply-choices{grid-template-columns:1fr;} }
+  .apply-choice{
+    display:flex; align-items:flex-start; gap:9px; padding:12px 14px; border-radius:12px;
+    background:var(--cream-dark); cursor:pointer; font-size:.88rem; font-weight:400 !important;
+    box-shadow:inset 0 0 0 2px transparent; transition:box-shadow .2s var(--ease);
+  }
+  .apply-choice:has(input:checked){box-shadow:inset 0 0 0 2px var(--red); background:rgba(180,34,44,.06);}
+  .apply-choice input{margin-top:3px; flex:none;}
+  .apply-choice small{color:#6f6350;}
+  .apply-hint{display:block; font-size:.75rem; color:#6f6350; margin-top:6px; line-height:1.45;}
+  .apply-consent{
+    display:flex; align-items:flex-start; gap:10px; margin:18px 0 12px; font-size:.85rem;
+    color:#3a332c; line-height:1.5; cursor:pointer;
+  }
+  .apply-consent input{margin-top:3px; flex:none; width:18px; height:18px;}
+  .apply-note{font-size:.78rem; color:#6f6350; background:var(--cream-dark); padding:12px 14px; border-radius:10px; margin:0 0 16px;}
+  .apply-status{font-size:.86rem; margin-top:12px; min-height:1.2em; color:var(--red-dark);}
+  .apply-status.ok{color:#2f6b34;}
+  /* Honeypot — für Menschen unsichtbar, Bots füllen es aus */
+  .apply-hp{position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden;}
+
   /* -------- Termin-Pop-up (größer) -------- */
   .event-modal-card{max-width:600px;}
   .event-date-badge{
@@ -711,7 +750,10 @@
         <h2>Lust auf nette Leute, viel Spaß und Fasnet?</h2>
         <p>Wenn du alle drei Fragen mit Ja beantworten kannst, bist du bei uns richtig. Egal ob als aktive:r Hästräger:in oder passives Mitglied — wir freuen uns, dich kennenzulernen.</p>
       </div>
-      <button type="button" class="btn btn-primary" id="btnContactPopup">Jetzt Kontakt aufnehmen</button>
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <button type="button" class="btn btn-primary" id="btnApplyPopup">Jetzt Mitglied werden</button>
+        <button type="button" class="btn btn-ghost" id="btnContactPopup">Erst Kontakt aufnehmen</button>
+      </div>
     </div>
   </div>
 </section>
@@ -789,6 +831,83 @@
   <button type="button" class="lb-nav lb-next" id="lbNext" aria-label="Nächstes Bild">›</button>
   <div class="lb-hint">← wischen zum Blättern →</div>
   <div class="lb-caption" id="lbCaption"></div>
+</div>
+
+<div class="modal-backdrop" id="applyModalBackdrop">
+  <div class="modal-card apply-modal-card" role="dialog" aria-modal="true" aria-labelledby="applyModalTitle">
+    <button type="button" class="modal-close" id="applyModalClose" aria-label="Schließen">✕</button>
+
+    <div id="applyFormView">
+      <h2 id="applyModalTitle">Mitglied werden</h2>
+      <p class="modal-sub">Fülle einfach das Formular aus — wir melden uns dann bei dir. Die Angaben entsprechen unserem Mitgliedsantrag.</p>
+
+      <form id="applyForm" autocomplete="on">
+        <div class="apply-grid">
+          <div class="apply-field"><label for="apFirstName">Vorname *</label><input type="text" id="apFirstName" required maxlength="60" autocomplete="given-name"></div>
+          <div class="apply-field"><label for="apLastName">Name *</label><input type="text" id="apLastName" required maxlength="60" autocomplete="family-name"></div>
+        </div>
+        <div class="apply-field"><label for="apStreet">Straße, Hausnummer *</label><input type="text" id="apStreet" required maxlength="120" autocomplete="street-address"></div>
+        <div class="apply-grid apply-grid-zip">
+          <div class="apply-field"><label for="apZip">PLZ *</label><input type="text" id="apZip" required maxlength="10" inputmode="numeric" autocomplete="postal-code"></div>
+          <div class="apply-field"><label for="apCity">Wohnort *</label><input type="text" id="apCity" required maxlength="80" autocomplete="address-level2"></div>
+        </div>
+        <div class="apply-field"><label for="apBirthDate">Geburtsdatum *</label><input type="date" id="apBirthDate" required></div>
+        <div class="apply-grid">
+          <div class="apply-field"><label for="apPhone">Telefon</label><input type="tel" id="apPhone" maxlength="40" autocomplete="tel"></div>
+          <div class="apply-field"><label for="apMobile">Handy</label><input type="tel" id="apMobile" maxlength="40"></div>
+        </div>
+        <div class="apply-field"><label for="apEmail">E-Mail *</label><input type="email" id="apEmail" required maxlength="120" autocomplete="email"></div>
+
+        <div class="apply-field">
+          <label>Mitgliedschaft *</label>
+          <div class="apply-choices">
+            <label class="apply-choice"><input type="radio" name="membershipType" value="Aktiv" checked> <span><strong>Aktiv</strong><br><small>mit Häs beim Umzug dabei</small></span></label>
+            <label class="apply-choice"><input type="radio" name="membershipType" value="Passiv"> <span><strong>Passiv</strong><br><small>unterstützend, ohne Häs</small></span></label>
+          </div>
+        </div>
+
+        <div class="apply-field">
+          <label for="apPayment">Gewünschte Zahlungsweise *</label>
+          <select id="apPayment">
+            <option>Banküberweisung</option>
+            <option>SEPA-Lastschrift</option>
+            <option>Barzahlung</option>
+          </select>
+          <small class="apply-hint">Bei SEPA-Lastschrift schicken wir dir das Mandat separat zu — Bankdaten geben wir hier bewusst nicht online ein.</small>
+        </div>
+
+        <div class="apply-field" id="apGuardianWrap" style="display:none;">
+          <label for="apGuardian">Name der/des Erziehungsberechtigten *</label>
+          <input type="text" id="apGuardian" maxlength="120">
+          <small class="apply-hint">Bei Minderjährigen unterschreibt die/der Erziehungsberechtigte den endgültigen Antrag.</small>
+        </div>
+
+        <div class="apply-field"><label for="apMessage">Nachricht (optional)</label><textarea id="apMessage" maxlength="1000" rows="3" placeholder="Fragen oder Anmerkungen?"></textarea></div>
+
+        <!-- Spamschutz: für Menschen unsichtbar -->
+        <div class="apply-hp"><label>Website<input type="text" id="apWebsite" tabindex="-1" autocomplete="off"></label></div>
+
+        <label class="apply-consent">
+          <input type="checkbox" id="apConsent" required>
+          <span>Ich habe die <a href="/datenschutz.html" target="_blank" rel="noopener">Datenschutzerklärung</a> gelesen und bin damit einverstanden, dass meine Angaben zur Bearbeitung meines Mitgliedsantrags gespeichert und verarbeitet werden. *</span>
+        </label>
+
+        <p class="apply-note">Mit dem Absenden entsteht noch keine Mitgliedschaft — wir melden uns bei dir und schicken dir Satzung und den endgültigen Antrag zur Unterschrift.</p>
+
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary btn-sm" id="applySubmitBtn">Antrag absenden</button>
+        </div>
+        <div class="apply-status" id="applyStatus"></div>
+      </form>
+    </div>
+
+    <div id="applySuccessView" style="display:none; text-align:center; padding:20px 0;">
+      <div style="font-size:3rem; margin-bottom:10px;">🎉</div>
+      <h2>Antrag ist angekommen!</h2>
+      <p style="color:#3a332c; max-width:42ch; margin:0 auto 20px;">Vielen Dank für dein Interesse an den Friburger Hölle-Leue. Wir melden uns in den nächsten Tagen bei dir.</p>
+      <button type="button" class="btn btn-primary btn-sm" id="applyDoneBtn">Schließen</button>
+    </div>
+  </div>
 </div>
 
 <div class="modal-backdrop" id="contactModalBackdrop">
@@ -1261,6 +1380,87 @@
     });
   }
   initLightbox();
+
+  /* ---------- Mitgliedsantrag ---------- */
+  (function(){
+    const backdrop = document.getElementById('applyModalBackdrop');
+    const form = document.getElementById('applyForm');
+    const statusEl = document.getElementById('applyStatus');
+    const submitBtn = document.getElementById('applySubmitBtn');
+
+    function openApply(){
+      document.getElementById('applyFormView').style.display = 'block';
+      document.getElementById('applySuccessView').style.display = 'none';
+      statusEl.textContent = ''; statusEl.className = 'apply-status';
+      backdrop.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeApply(){ backdrop.classList.remove('open'); document.body.style.overflow = ''; }
+
+    document.getElementById('btnApplyPopup').addEventListener('click', openApply);
+    document.getElementById('applyModalClose').addEventListener('click', closeApply);
+    document.getElementById('applyDoneBtn').addEventListener('click', closeApply);
+    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeApply(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeApply(); });
+
+    // Bei Minderjährigen zusätzliches Feld einblenden
+    const birthInput = document.getElementById('apBirthDate');
+    birthInput.addEventListener('change', () => {
+      const wrap = document.getElementById('apGuardianWrap');
+      const guardianInput = document.getElementById('apGuardian');
+      if (!birthInput.value) { wrap.style.display = 'none'; guardianInput.required = false; return; }
+      const birth = new Date(birthInput.value);
+      const now = new Date();
+      let age = now.getFullYear() - birth.getFullYear();
+      const m = now.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--;
+      const minor = age < 18;
+      wrap.style.display = minor ? 'block' : 'none';
+      guardianInput.required = minor;
+      if (!minor) guardianInput.value = '';
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      statusEl.textContent = 'Antrag wird gesendet …'; statusEl.className = 'apply-status';
+      submitBtn.disabled = true;
+
+      const payload = {
+        firstName: document.getElementById('apFirstName').value,
+        lastName: document.getElementById('apLastName').value,
+        street: document.getElementById('apStreet').value,
+        zip: document.getElementById('apZip').value,
+        city: document.getElementById('apCity').value,
+        birthDate: document.getElementById('apBirthDate').value,
+        phone: document.getElementById('apPhone').value,
+        mobile: document.getElementById('apMobile').value,
+        email: document.getElementById('apEmail').value,
+        membershipType: (document.querySelector('input[name="membershipType"]:checked') || {}).value,
+        paymentMethod: document.getElementById('apPayment').value,
+        guardian: document.getElementById('apGuardian').value,
+        message: document.getElementById('apMessage').value,
+        privacyConsent: document.getElementById('apConsent').checked,
+        website: document.getElementById('apWebsite').value
+      };
+
+      try {
+        const res = await fetch('/api/membership/apply', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Der Antrag konnte nicht gesendet werden.');
+        form.reset();
+        document.getElementById('apGuardianWrap').style.display = 'none';
+        document.getElementById('applyFormView').style.display = 'none';
+        document.getElementById('applySuccessView').style.display = 'block';
+      } catch (err) {
+        statusEl.textContent = err.message + ' Alternativ erreichst du uns direkt unter hoelle-leue@web.de.';
+        statusEl.className = 'apply-status';
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  })();
 
   /* ---------- Kontakt-Pop-up ---------- */
   const contactBackdrop = document.getElementById('contactModalBackdrop');
