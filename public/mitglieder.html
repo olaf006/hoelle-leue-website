@@ -772,6 +772,10 @@
 
       <div id="adminView" class="view">
         <div class="admin-section">
+          <h2>📋 Mitgliedsanträge<span class="badge" id="applicationsBadge" style="display:none;">0</span></h2>
+          <div id="applicationsList"></div>
+        </div>
+        <div class="admin-section">
           <h2>Wartende Registrierungen</h2>
           <div id="pendingList"></div>
         </div>
@@ -2040,9 +2044,76 @@
   }
 
   async function loadAdmin(){
+    await loadApplications();
     await loadPending();
     await loadUsers();
     await loadLog();
+  }
+
+  // ---------- Mitgliedsanträge ----------
+  async function loadApplications(){
+    const el = document.getElementById('applicationsList');
+    el.innerHTML = '<div class="spinner-row"><div class="spinner"></div> Lädt …</div>';
+    try {
+      const res = await fetch('/api/admin/applications', { headers: authHeaders() });
+      const data = await res.json();
+      const apps = data.applications || [];
+      const openCount = apps.filter(a => a.status !== 'erledigt').length;
+      const badge = document.getElementById('applicationsBadge');
+      if (openCount) { badge.textContent = openCount; badge.style.display = 'inline-block'; }
+      else badge.style.display = 'none';
+
+      if (!apps.length) { el.innerHTML = '<p style="color:#6f6350;">Noch keine Anträge über die Website eingegangen.</p>'; return; }
+
+      el.innerHTML = apps.map(a => {
+        const statusColor = a.status === 'erledigt' ? '#2f7d4a' : a.status === 'in Bearbeitung' ? '#c9a227' : '#b4222c';
+        const mailNote = a.emailSent
+          ? '<span style="color:#2f7d4a; font-size:.75rem;">✓ per E-Mail weitergeleitet</span>'
+          : '<span style="color:#8a7e6f; font-size:.75rem;" title="' + escapeHtml(a.emailError || '') + '">nur hier gespeichert (kein E-Mail-Versand eingerichtet)</span>';
+        return `<div class="log-row" style="gap:10px;">
+          <div style="display:flex; justify-content:space-between; width:100%; gap:12px; flex-wrap:wrap; align-items:flex-start;">
+            <div>
+              <strong style="font-size:1rem;">${escapeHtml(a.firstName)} ${escapeHtml(a.lastName)}</strong>
+              <span style="display:inline-block; margin-left:8px; font-size:.7rem; background:${statusColor}; color:#fff; padding:2px 9px; border-radius:10px;">${escapeHtml(a.status)}</span>
+              <div style="font-size:.8rem; color:#6f6350; margin-top:2px;">${escapeHtml(a.membershipType)}e Mitgliedschaft · eingegangen ${fmtDate(a.submittedAt)}</div>
+            </div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <select data-app-status="${a.id}" style="padding:6px 10px; border-radius:9px; border:none; background:var(--cream-dark); font-family:inherit; font-size:.8rem;">
+                <option ${a.status==='neu'?'selected':''}>neu</option>
+                <option ${a.status==='in Bearbeitung'?'selected':''}>in Bearbeitung</option>
+                <option ${a.status==='erledigt'?'selected':''}>erledigt</option>
+              </select>
+              <button class="btn btn-sm btn-danger" data-app-delete="${a.id}">Löschen</button>
+            </div>
+          </div>
+          <div class="log-snapshot" style="width:100%;">
+<strong>Anschrift:</strong> ${escapeHtml(a.street)}, ${escapeHtml(a.zip)} ${escapeHtml(a.city)}
+<strong>Geburtsdatum:</strong> ${escapeHtml(a.birthDate)}
+<strong>E-Mail:</strong> <a href="mailto:${escapeHtml(a.email)}" style="color:var(--red-dark);">${escapeHtml(a.email)}</a>
+${a.phone ? '<strong>Telefon:</strong> ' + escapeHtml(a.phone) + '\n' : ''}${a.mobile ? '<strong>Handy:</strong> ' + escapeHtml(a.mobile) + '\n' : ''}<strong>Zahlungsweise:</strong> ${escapeHtml(a.paymentMethod)}
+${a.guardian ? '<strong>Erziehungsberechtigte:r:</strong> ' + escapeHtml(a.guardian) + '\n' : ''}${a.message ? '<strong>Nachricht:</strong> ' + escapeHtml(a.message) : ''}</div>
+          <div>${mailNote}</div>
+        </div>`;
+      }).join('');
+
+      el.querySelectorAll('[data-app-status]').forEach(sel => {
+        sel.addEventListener('change', async () => {
+          await fetch('/api/admin/applications/update', { method:'POST', headers: authHeaders(true),
+            body: JSON.stringify({ action:'setStatus', id: sel.dataset.appStatus, status: sel.value }) });
+          loadApplications();
+        });
+      });
+      el.querySelectorAll('[data-app-delete]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          if (!confirm('Diesen Antrag wirklich löschen? Das lässt sich nicht rückgängig machen.')) return;
+          await fetch('/api/admin/applications/update', { method:'POST', headers: authHeaders(true),
+            body: JSON.stringify({ action:'delete', id: btn.dataset.appDelete }) });
+          loadApplications();
+        });
+      });
+    } catch (err) {
+      el.innerHTML = '<p style="color:var(--red-dark);">Anträge konnten nicht geladen werden.</p>';
+    }
   }
 
   async function loadPending(){
