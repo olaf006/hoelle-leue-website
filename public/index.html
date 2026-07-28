@@ -435,12 +435,12 @@
   .lightbox{
     position:fixed; inset:0; background:rgba(10,8,6,.94); z-index:300;
     display:none; align-items:center; justify-content:center;
-    opacity:0; transition:opacity .25s var(--ease);
+    opacity:0; transition:opacity .25s var(--ease); touch-action:none;
   }
   .lightbox.open{display:flex; opacity:1;}
-  .lb-img{max-width:88vw; max-height:82vh; border-radius:8px; box-shadow:0 20px 60px rgba(0,0,0,.5); animation:popIn .3s var(--ease) both;}
-  .lb-close{position:absolute; top:20px; right:24px; background:none; border:none; color:#fff; font-size:1.8rem; cursor:pointer; opacity:.8; transition:opacity .2s var(--ease);}
-  .lb-close:hover{opacity:1;}
+  .lb-img{max-width:88vw; max-height:82vh; border-radius:8px; box-shadow:0 20px 60px rgba(0,0,0,.5); animation:popIn .3s var(--ease) both; user-select:none; -webkit-user-drag:none;}
+  .lb-close{position:absolute; top:20px; right:24px; background:rgba(255,255,255,.12); border:none; color:#fff; font-size:1.5rem; cursor:pointer; width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center;}
+  .lb-close:hover{background:rgba(255,255,255,.25);}
   .lb-nav{
     position:absolute; top:50%; transform:translateY(-50%); background:rgba(255,255,255,.1); border:none;
     color:#fff; font-size:2.2rem; width:52px; height:52px; border-radius:50%; cursor:pointer;
@@ -449,7 +449,26 @@
   .lb-nav:hover{background:rgba(255,255,255,.22);}
   .lb-prev{left:20px;} .lb-next{right:20px;}
   .lb-caption{position:absolute; bottom:24px; left:0; right:0; text-align:center; color:#d8d3cc; font-family:'JetBrains Mono',monospace; font-size:.8rem;}
-  @media(max-width:640px){ .lb-nav{width:42px; height:42px; font-size:1.7rem;} .lb-prev{left:8px;} .lb-next{right:8px;} }
+  .lb-counter{
+    position:absolute; top:24px; left:50%; transform:translateX(-50%);
+    color:#e8e3da; font-family:'JetBrains Mono',monospace; font-size:.8rem;
+    background:rgba(255,255,255,.12); padding:6px 14px; border-radius:20px;
+  }
+  .lb-hint{display:none;}
+  @media(max-width:820px){
+    .lb-img{max-width:94vw; max-height:66vh;}
+    .lb-nav{top:auto; bottom:26px; transform:none; width:64px; height:64px; font-size:2rem; background:rgba(255,255,255,.16);}
+    .lb-prev{left:24px;} .lb-next{right:24px;}
+    .lb-close{top:14px; right:14px; width:48px; height:48px;}
+    .lb-caption{bottom:104px;}
+    .lb-counter{top:18px;}
+    .lb-hint{
+      display:block; position:absolute; bottom:100px; left:0; right:0; text-align:center;
+      color:rgba(232,227,218,.55); font-size:.75rem; pointer-events:none;
+      animation:hintFade 4s ease forwards;
+    }
+  }
+  @keyframes hintFade{0%,60%{opacity:1;} 100%{opacity:0;}}
 </style>
 </head>
 <body>
@@ -763,10 +782,12 @@
 </div>
 
 <div class="lightbox" id="lightbox">
+  <div class="lb-counter" id="lbCounter"></div>
   <button type="button" class="lb-close" id="lbClose" aria-label="Schließen">✕</button>
   <button type="button" class="lb-nav lb-prev" id="lbPrev" aria-label="Vorheriges Bild">‹</button>
   <img class="lb-img" id="lbImg" src="" alt="">
   <button type="button" class="lb-nav lb-next" id="lbNext" aria-label="Nächstes Bild">›</button>
+  <div class="lb-hint">← wischen zum Blättern →</div>
   <div class="lb-caption" id="lbCaption"></div>
 </div>
 
@@ -1118,37 +1139,89 @@
   })();
 
   /* ---------- Bild-Lightbox (Galerie) ---------- */
+  /* ---------- Bild-Lightbox (Startseite) ---------- */
+  const lb = {
+    photos: [],
+    index: 0,
+    bound: false,
+    el: null, img: null, caption: null, counter: null
+  };
+
+  function lbOpen(idx){
+    if (!lb.photos.length) return;
+    lb.index = idx;
+    const el = lb.photos[idx];
+    lb.img.src = el.dataset.lightboxSrc;
+    lb.img.style.transform = '';
+    lb.img.style.opacity = '';
+    lb.caption.textContent = el.dataset.lightboxCap || '';
+    lb.counter.textContent = (idx + 1) + ' / ' + lb.photos.length;
+    lb.el.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function lbClose(){ lb.el.classList.remove('open'); document.body.style.overflow = ''; }
+  function lbMove(delta){
+    if (!lb.photos.length) return;
+    lbOpen((lb.index + delta + lb.photos.length) % lb.photos.length);
+  }
+
   function initLightbox(){
-    const lightbox = document.getElementById('lightbox');
-    const lbImg = document.getElementById('lbImg');
-    const lbCaption = document.getElementById('lbCaption');
-    const photos = Array.from(document.querySelectorAll('#livePreviewGrid .photo, #galleryGrid .photo'));
-    let currentIndex = 0;
+    lb.el = document.getElementById('lightbox');
+    lb.img = document.getElementById('lbImg');
+    lb.caption = document.getElementById('lbCaption');
+    lb.counter = document.getElementById('lbCounter');
 
-    function openLightbox(idx){
-      currentIndex = idx;
-      const el = photos[idx];
-      lbImg.src = el.dataset.lightboxSrc;
-      lbCaption.textContent = el.dataset.lightboxCap || '';
-      lightbox.classList.add('open');
-      document.body.style.overflow = 'hidden';
-    }
-    function closeLightbox(){ lightbox.classList.remove('open'); document.body.style.overflow = ''; }
-    function showRelative(delta){ openLightbox((currentIndex + delta + photos.length) % photos.length); }
+    lb.photos = Array.from(document.querySelectorAll('#livePreviewGrid .photo, #galleryGrid .photo'))
+                     .filter(el => !el.classList.contains('missing'));
 
-    photos.forEach((el, idx) => {
-      if (el.classList.contains('missing')) return;
-      el.addEventListener('click', () => { if (!el.classList.contains('missing')) openLightbox(idx); });
+    lb.photos.forEach(el => {
+      if (el.dataset.lbBound) return;
+      el.dataset.lbBound = '1';
+      el.addEventListener('click', () => lbOpen(lb.photos.indexOf(el)));
     });
-    document.getElementById('lbClose').addEventListener('click', closeLightbox);
-    document.getElementById('lbPrev').addEventListener('click', () => showRelative(-1));
-    document.getElementById('lbNext').addEventListener('click', () => showRelative(1));
-    lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
+
+    if (lb.bound) return;
+    lb.bound = true;
+
+    document.getElementById('lbClose').addEventListener('click', lbClose);
+    document.getElementById('lbPrev').addEventListener('click', () => lbMove(-1));
+    document.getElementById('lbNext').addEventListener('click', () => lbMove(1));
+    lb.el.addEventListener('click', (e) => { if (e.target === lb.el) lbClose(); });
     document.addEventListener('keydown', (e) => {
-      if (!lightbox.classList.contains('open')) return;
-      if (e.key === 'Escape') closeLightbox();
-      if (e.key === 'ArrowLeft') showRelative(-1);
-      if (e.key === 'ArrowRight') showRelative(1);
+      if (!lb.el.classList.contains('open')) return;
+      if (e.key === 'Escape') lbClose();
+      if (e.key === 'ArrowLeft') lbMove(-1);
+      if (e.key === 'ArrowRight') lbMove(1);
+    });
+
+    // ---- Wisch-Gesten fürs Handy ----
+    let tsX = 0, tsY = 0, dX = 0, dY = 0, swiping = false;
+    const THRESH = 55;
+    lb.el.addEventListener('touchstart', (e) => {
+      if (e.touches.length !== 1) return;
+      tsX = e.touches[0].clientX; tsY = e.touches[0].clientY;
+      dX = 0; dY = 0; swiping = true;
+    }, { passive: true });
+    lb.el.addEventListener('touchmove', (e) => {
+      if (!swiping || e.touches.length !== 1) return;
+      dX = e.touches[0].clientX - tsX;
+      dY = e.touches[0].clientY - tsY;
+      if (Math.abs(dX) > Math.abs(dY)) {
+        lb.img.style.transform = 'translateX(' + (dX * 0.55) + 'px)';
+        lb.img.style.opacity = String(Math.max(0.45, 1 - Math.abs(dX) / 500));
+      } else if (dY > 0) {
+        lb.img.style.transform = 'translateY(' + (dY * 0.4) + 'px)';
+        lb.img.style.opacity = String(Math.max(0.4, 1 - dY / 400));
+      }
+    }, { passive: true });
+    lb.el.addEventListener('touchend', () => {
+      if (!swiping) return;
+      swiping = false;
+      lb.img.style.transition = 'transform .25s ease, opacity .25s ease';
+      if (Math.abs(dX) > Math.abs(dY) && Math.abs(dX) > THRESH) lbMove(dX < 0 ? 1 : -1);
+      else if (dY > THRESH * 1.6) lbClose();
+      else { lb.img.style.transform = ''; lb.img.style.opacity = ''; }
+      setTimeout(() => { lb.img.style.transition = ''; }, 260);
     });
   }
   initLightbox();
