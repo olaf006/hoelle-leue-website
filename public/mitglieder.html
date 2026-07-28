@@ -394,6 +394,33 @@
   .poll-option-content .po-pct{font-weight:700; color:var(--wood-dark); font-family:'JetBrains Mono',monospace; font-size:.82rem;}
   .poll-meta{font-size:.78rem; color:#6f6350; margin-top:6px;}
 
+  /* ---- Galerie-Verwaltung ---- */
+  .gal-cat-row{
+    display:flex; align-items:center; gap:10px; padding:10px 14px; background:var(--cream-dark);
+    border-radius:12px; margin-bottom:8px; flex-wrap:wrap;
+  }
+  .gal-cat-row .gc-name{flex:1; min-width:120px; font-weight:600; color:var(--wood-dark);}
+  .gal-cat-row .gc-count{font-size:.78rem; color:#6f6350;}
+  .gal-img-row{
+    display:grid; grid-template-columns:auto 1fr auto; gap:14px; align-items:center;
+    padding:12px 14px; background:var(--cream); border-radius:14px; margin-bottom:10px;
+    box-shadow:0 1px 3px rgba(23,20,18,.06), inset 0 0 0 1px var(--cream-dark);
+  }
+  @media(max-width:640px){ .gal-img-row{grid-template-columns:auto 1fr; } .gal-img-actions{grid-column:1 / -1; justify-content:flex-end;} }
+  .gal-thumb{width:72px; height:56px; object-fit:cover; border-radius:8px; flex:none;}
+  .gal-img-fields{display:flex; flex-direction:column; gap:6px; min-width:0;}
+  .gal-img-fields input, .gal-img-fields select{
+    padding:8px 12px; border-radius:10px; border:none; background:var(--cream-dark);
+    font-family:inherit; font-size:.85rem; width:100%;
+  }
+  .gal-img-actions{display:flex; gap:6px; align-items:center; flex-wrap:wrap;}
+  .gal-move-btn{
+    background:var(--cream-dark); border:none; border-radius:8px; width:32px; height:32px;
+    cursor:pointer; font-size:.95rem; color:var(--wood-dark); transition:background .15s var(--ease);
+  }
+  .gal-move-btn:hover{background:var(--gold); color:#fff;}
+  .gal-move-btn:disabled{opacity:.35; cursor:default;}
+
   .status-msg.form{color:var(--red-dark);}
   .status-msg.form.ok{color:#2f6b34;}
 
@@ -439,6 +466,7 @@
     <ul class="navlinks">
       <li><a href="/index.html">Zur Website</a></li>
       <li><a href="/sage.html">Unsere Sage</a></li>
+      <li><a href="/galerie.html">Galerie</a></li>
       <li><a href="/mitglieder.html" class="active">Forum</a></li>
       <li><button id="themeToggle" title="Hell/Dunkel umschalten">🌙</button></li>
       <li id="navBellLi" style="display:none; position:relative;">
@@ -494,6 +522,7 @@
         <button type="button" class="tab-btn active" data-tab="list">Forum</button>
         <button type="button" class="tab-btn" data-tab="calendar">Kalender</button>
         <button type="button" class="tab-btn" data-tab="documents">Dokumente</button>
+        <button type="button" class="tab-btn" data-tab="gallery" id="tabGalleryBtn" style="display:none;">Galerie-Verwaltung</button>
         <button type="button" class="tab-btn" data-tab="members">Mitglieder</button>
         <button type="button" class="tab-btn" data-tab="profile">Mein Profil</button>
         <button type="button" class="tab-btn" data-tab="admin" id="tabAdminBtn" style="display:none;">Admin<span class="badge" id="pendingBadge" style="display:none;">0</span></button>
@@ -616,6 +645,46 @@
         </div>
         <p style="color:#6f6350; margin-bottom:20px;">Als „Termin" markierte Themen erscheinen hier automatisch. Klick auf einen Termin, um zu- oder abzusagen.</p>
         <div id="calendarList"></div>
+      </div>
+
+      <div id="galleryView" class="view">
+        <div class="page-head">
+          <span class="eyebrow">Verwaltung</span>
+          <h1 style="margin-top:4px;">Galerie verwalten</h1>
+        </div>
+        <p style="color:#6f6350; margin-bottom:22px;">Bilder hochladen, betiteln, in Kategorien einsortieren und sortieren — alles direkt hier, ohne GitHub. Änderungen sind sofort auf der <a href="/galerie.html" target="_blank" rel="noopener" style="color:var(--red-dark); font-weight:600;">öffentlichen Galerie-Seite</a> sichtbar.</p>
+
+        <div class="panel" style="margin-bottom:22px;">
+          <h2 style="font-size:1.05rem;">1. Kategorien</h2>
+          <p style="font-size:.85rem; color:#6f6350; margin-top:-6px;">Zum Beispiel „Umzüge 2026", „Häs & Larven", „Vereinsfeste".</p>
+          <div id="galCategoryList" style="margin:14px 0;"></div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <input type="text" id="galNewCatName" placeholder="Neue Kategorie" maxlength="60" style="flex:1; min-width:180px; padding:11px 14px; border-radius:12px; border:none; background:var(--cream-dark); font-family:inherit;">
+            <button class="btn btn-sm btn-primary" id="btnAddCategory">+ Kategorie anlegen</button>
+          </div>
+          <div class="status-msg form" id="galCatStatus"></div>
+        </div>
+
+        <div class="panel" style="margin-bottom:22px;">
+          <h2 style="font-size:1.05rem;">2. Bilder hochladen</h2>
+          <div class="light-field"><label>Bild(er) auswählen (mehrere gleichzeitig möglich, je max. 4 MB)</label>
+            <input type="file" id="galUploadFiles" accept="image/*" multiple>
+          </div>
+          <div class="light-field"><label>Titel (optional — bei mehreren Bildern wird durchnummeriert)</label>
+            <input type="text" id="galUploadTitle" maxlength="150" placeholder="z. B. Hemdglunkerumzug 2026">
+          </div>
+          <div class="light-field"><label>Kategorie</label>
+            <select id="galUploadCategory"></select>
+          </div>
+          <button class="btn btn-primary" id="btnGalUpload">Hochladen</button>
+          <div class="status-msg form" id="galUploadStatus"></div>
+        </div>
+
+        <div class="panel">
+          <h2 style="font-size:1.05rem;">3. Bilder verwalten</h2>
+          <p style="font-size:.85rem; color:#6f6350; margin-top:-6px;">Mit ↑ / ↓ die Reihenfolge ändern — so erscheinen sie auch auf der Galerie-Seite.</p>
+          <div id="galImageList" style="margin-top:14px;"></div>
+        </div>
       </div>
 
       <div id="documentsView" class="view">
@@ -908,7 +977,12 @@
     document.getElementById('navWhoLi').style.display = 'block';
     document.getElementById('navLogoutLi').style.display = 'block';
     document.getElementById('navBellLi').style.display = 'block';
-    if (me.isAdmin) { document.getElementById('navAdminLi').style.display = 'block'; document.getElementById('tabAdminBtn').style.display = 'inline-block'; refreshPendingBadge(); }
+    if (me.isAdmin) {
+      document.getElementById('navAdminLi').style.display = 'block';
+      document.getElementById('tabAdminBtn').style.display = 'inline-block';
+      document.getElementById('tabGalleryBtn').style.display = 'inline-block';
+      refreshPendingBadge();
+    }
     fillProfile();
     showTab('list');
   }
@@ -1023,7 +1097,8 @@
   const tabViews = {
     list: document.getElementById('listView'), profile: document.getElementById('profileView'),
     admin: document.getElementById('adminView'), calendar: document.getElementById('calendarView'),
-    members: document.getElementById('membersView'), documents: document.getElementById('documentsView')
+    members: document.getElementById('membersView'), documents: document.getElementById('documentsView'),
+    gallery: document.getElementById('galleryView')
   };
   const subViews = { newThread: document.getElementById('newThreadForm'), thread: document.getElementById('threadView') };
 
@@ -1038,6 +1113,7 @@
     if (name === 'calendar') loadCalendar();
     if (name === 'members') loadMembers();
     if (name === 'documents') loadDocuments();
+    if (name === 'gallery') loadGalleryAdmin();
   }
   tabBtns.forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
 
@@ -1650,6 +1726,187 @@
       loadDocuments();
     } catch (err) { statusEl.textContent = err.message; statusEl.className = 'status-msg form'; }
   });
+
+  // ---------- Galerie-Verwaltung ----------
+  let galCategories = [];
+  let galImages = [];
+
+  async function loadGalleryAdmin(){
+    const listEl = document.getElementById('galImageList');
+    listEl.innerHTML = '<div class="spinner-row"><div class="spinner"></div> Lädt …</div>';
+    try {
+      const res = await fetch('/api/gallery/public');
+      const data = await res.json();
+      galCategories = data.categories || [];
+      galImages = data.images || [];
+      renderGalCategories();
+      renderGalUploadCategorySelect();
+      renderGalImages();
+    } catch (err) {
+      listEl.innerHTML = '<p style="color:var(--red-dark);">Galerie konnte nicht geladen werden.</p>';
+    }
+  }
+
+  function renderGalCategories(){
+    const el = document.getElementById('galCategoryList');
+    if (!galCategories.length) {
+      el.innerHTML = '<p style="font-size:.85rem; color:#6f6350;">Noch keine Kategorien — Bilder landen dann unter „Sonstige".</p>';
+      return;
+    }
+    el.innerHTML = galCategories.map(c => {
+      const count = galImages.filter(i => i.categoryId === c.id).length;
+      return `<div class="gal-cat-row">
+        <span class="gc-name">${escapeHtml(c.name)}</span>
+        <span class="gc-count">${count} Bild(er)</span>
+        <button class="btn btn-sm btn-ghost" data-rename-cat="${c.id}" data-cat-name="${escapeHtml(c.name)}">Umbenennen</button>
+        <button class="btn btn-sm btn-danger" data-delete-cat="${c.id}">Löschen</button>
+      </div>`;
+    }).join('');
+
+    el.querySelectorAll('[data-rename-cat]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const newName = prompt('Neuer Name für die Kategorie:', btn.dataset.catName);
+        if (!newName || !newName.trim()) return;
+        await galCategoryAction({ action:'rename', id: btn.dataset.renameCat, name: newName.trim() });
+        loadGalleryAdmin();
+      });
+    });
+    el.querySelectorAll('[data-delete-cat]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Kategorie löschen? Die Bilder bleiben erhalten und landen unter „Sonstige".')) return;
+        await galCategoryAction({ action:'delete', id: btn.dataset.deleteCat });
+        loadGalleryAdmin();
+      });
+    });
+  }
+
+  async function galCategoryAction(payload){
+    const statusEl = document.getElementById('galCatStatus');
+    try {
+      const res = await fetch('/api/gallery/category', { method:'POST', headers: authHeaders(true), body: JSON.stringify(payload) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Fehler.');
+      statusEl.textContent = ''; statusEl.className = 'status-msg form';
+      return data;
+    } catch (err) { statusEl.textContent = err.message; statusEl.className = 'status-msg form'; }
+  }
+
+  document.getElementById('btnAddCategory').addEventListener('click', async () => {
+    const input = document.getElementById('galNewCatName');
+    const name = input.value.trim();
+    if (!name) return;
+    await galCategoryAction({ action:'create', name });
+    input.value = '';
+    loadGalleryAdmin();
+  });
+
+  function renderGalUploadCategorySelect(){
+    const sel = document.getElementById('galUploadCategory');
+    sel.innerHTML = '<option value="">— Ohne Kategorie —</option>' +
+      galCategories.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+  }
+
+  document.getElementById('btnGalUpload').addEventListener('click', async () => {
+    const statusEl = document.getElementById('galUploadStatus');
+    const fileInput = document.getElementById('galUploadFiles');
+    const files = Array.from(fileInput.files || []);
+    if (!files.length) { statusEl.textContent = 'Bitte zuerst Bilder auswählen.'; statusEl.className = 'status-msg form'; return; }
+
+    const baseTitle = document.getElementById('galUploadTitle').value.trim();
+    const categoryId = document.getElementById('galUploadCategory').value;
+    let done = 0;
+
+    for (const file of files) {
+      if (file.size > 4*1024*1024) { statusEl.textContent = `„${file.name}" ist zu groß (max. 4 MB) — übersprungen.`; statusEl.className = 'status-msg form'; continue; }
+      statusEl.textContent = `Lädt ${done+1} von ${files.length} …`; statusEl.className = 'status-msg form';
+      const title = baseTitle ? (files.length > 1 ? `${baseTitle} ${done+1}` : baseTitle) : '';
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('title', title);
+      fd.append('categoryId', categoryId);
+      try {
+        const res = await fetch('/api/gallery/upload', { method:'POST', headers: authHeaders(), body: fd });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Fehler.');
+        done++;
+      } catch (err) { statusEl.textContent = err.message; statusEl.className = 'status-msg form'; }
+    }
+
+    fileInput.value = '';
+    document.getElementById('galUploadTitle').value = '';
+    statusEl.textContent = `${done} Bild(er) hochgeladen!`; statusEl.className = 'status-msg form ok';
+    loadGalleryAdmin();
+  });
+
+  function renderGalImages(){
+    const el = document.getElementById('galImageList');
+    if (!galImages.length) {
+      el.innerHTML = '<div class="empty-state">Noch keine Bilder in der Galerie.</div>';
+      return;
+    }
+    el.innerHTML = galImages.map((img, idx) => `
+      <div class="gal-img-row" data-img-id="${img.id}">
+        <img class="gal-thumb" src="${img.url}" alt="">
+        <div class="gal-img-fields">
+          <input type="text" data-title-for="${img.id}" value="${escapeHtml(img.title || '')}" placeholder="Titel (optional)" maxlength="150">
+          <select data-category-for="${img.id}">
+            <option value="">— Ohne Kategorie —</option>
+            ${galCategories.map(c => `<option value="${c.id}" ${c.id===img.categoryId?'selected':''}>${escapeHtml(c.name)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="gal-img-actions">
+          <button class="gal-move-btn" data-move-up="${img.id}" ${idx===0?'disabled':''} title="Nach oben">↑</button>
+          <button class="gal-move-btn" data-move-down="${img.id}" ${idx===galImages.length-1?'disabled':''} title="Nach unten">↓</button>
+          <button class="btn btn-sm btn-danger" data-delete-img="${img.id}">Löschen</button>
+        </div>
+      </div>`).join('');
+
+    // Titel / Kategorie sofort speichern
+    el.querySelectorAll('[data-title-for]').forEach(input => {
+      input.addEventListener('change', async () => {
+        await fetch('/api/gallery/update', { method:'POST', headers: authHeaders(true),
+          body: JSON.stringify({ id: input.dataset.titleFor, title: input.value }) });
+        const img = galImages.find(i => i.id === input.dataset.titleFor);
+        if (img) img.title = input.value;
+      });
+    });
+    el.querySelectorAll('[data-category-for]').forEach(sel => {
+      sel.addEventListener('change', async () => {
+        await fetch('/api/gallery/update', { method:'POST', headers: authHeaders(true),
+          body: JSON.stringify({ id: sel.dataset.categoryFor, categoryId: sel.value || null }) });
+        const img = galImages.find(i => i.id === sel.dataset.categoryFor);
+        if (img) img.categoryId = sel.value || null;
+        renderGalCategories();
+      });
+    });
+
+    // Sortieren
+    el.querySelectorAll('[data-move-up]').forEach(btn => {
+      btn.addEventListener('click', () => moveGalImage(btn.dataset.moveUp, -1));
+    });
+    el.querySelectorAll('[data-move-down]').forEach(btn => {
+      btn.addEventListener('click', () => moveGalImage(btn.dataset.moveDown, 1));
+    });
+
+    el.querySelectorAll('[data-delete-img]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Dieses Bild wirklich aus der Galerie löschen?')) return;
+        await fetch('/api/gallery/delete', { method:'POST', headers: authHeaders(true), body: JSON.stringify({ id: btn.dataset.deleteImg }) });
+        loadGalleryAdmin();
+      });
+    });
+  }
+
+  async function moveGalImage(id, delta){
+    const idx = galImages.findIndex(i => i.id === id);
+    const target = idx + delta;
+    if (idx === -1 || target < 0 || target >= galImages.length) return;
+    const [moved] = galImages.splice(idx, 1);
+    galImages.splice(target, 0, moved);
+    renderGalImages();
+    await fetch('/api/gallery/reorder', { method:'POST', headers: authHeaders(true),
+      body: JSON.stringify({ order: galImages.map(i => i.id) }) });
+  }
 
   // ---------- Mitgliederverzeichnis & Geburtstage ----------
   async function loadMembers(){
