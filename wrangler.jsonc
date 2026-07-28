@@ -19,6 +19,6 @@
   // Ohne die richtige ID startet der Worker ohne Speicher und Forum,
   // Galerie sowie Mitgliedsanträge funktionieren nicht.
   "kv_namespaces": [
-    { "binding": "FORUM_KV", "id": "HIER-DEINE-NAMESPACE-ID-EINFUEGEN" }
+    { "binding": "FORUM_KV", "id": "7e96f8a769c84987b55e5e9129a0aa63" }
   ]
 }
