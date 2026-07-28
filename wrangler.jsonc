@@ -1,13 +1,24 @@
 {
-  "name": "hoelle-leue-website",
+  // Der Name wird zum ersten Teil der Adresse:
+  //   <name>.<konto-subdomain>.workers.dev
+  // Beispiel: www.hoelle-leue.workers.dev
+  "name": "www",
+
   "compatibility_date": "2026-07-19",
   "compatibility_flags": ["nodejs_compat"],
   "main": "src/worker.js",
+
   "assets": {
     "directory": "./public",
     "binding": "ASSETS"
   },
+
+  // WICHTIG: Hier muss die echte Namespace-ID eures KV-Speichers stehen!
+  // Zu finden im Cloudflare-Dashboard unter:
+  //   Storage & Databases -> KV -> euer Namespace (z. B. "forum-data") -> Spalte "ID"
+  // Ohne die richtige ID startet der Worker ohne Speicher und Forum,
+  // Galerie sowie Mitgliedsanträge funktionieren nicht.
   "kv_namespaces": [
-    { "binding": "FORUM_KV", "id": "7e96f8a769c84987b55e5e9129a0aa63" }
+    { "binding": "FORUM_KV", "id": "HIER-DEINE-NAMESPACE-ID-EINFUEGEN" }
   ]
 }
