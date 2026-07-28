@@ -50,7 +50,28 @@
   main{padding:56px 0 90px;}
   .eyebrow{font-family:'JetBrains Mono', monospace; text-transform:uppercase; letter-spacing:.14em; font-size:.72rem; color:var(--red-dark); font-weight:500; display:block; margin-bottom:10px;}
 
-  .cat-filters{display:flex; gap:8px; flex-wrap:wrap; margin:26px 0 30px;}
+  .cat-filters{display:flex; gap:8px; flex-wrap:wrap; margin:20px 0 30px;}
+
+  /* Suche */
+  .gallery-toolbar{display:flex; gap:14px; align-items:center; flex-wrap:wrap; margin-top:26px;}
+  .search-box{position:relative; flex:1; min-width:220px; max-width:420px;}
+  .search-box input{
+    width:100%; padding:13px 42px 13px 42px; border-radius:14px; border:none; background:var(--cream);
+    font-family:inherit; font-size:.92rem; color:var(--ink);
+    box-shadow:0 1px 3px rgba(23,20,18,.08), inset 0 0 0 1.5px var(--cream-dark);
+    transition:box-shadow .2s var(--ease);
+  }
+  .search-box input:focus{outline:none; box-shadow:0 2px 10px rgba(23,20,18,.1), inset 0 0 0 2px var(--gold);}
+  .search-box .sico{position:absolute; left:15px; top:50%; transform:translateY(-50%); font-size:.9rem; opacity:.55;}
+  .search-clear{
+    position:absolute; right:10px; top:50%; transform:translateY(-50%); display:none;
+    background:var(--cream-dark); border:none; border-radius:50%; width:26px; height:26px;
+    cursor:pointer; color:var(--wood); font-size:.78rem; line-height:1;
+  }
+  .search-clear:hover{background:var(--gold); color:#fff;}
+  .search-box.has-text .search-clear{display:block;}
+  .result-count{font-size:.85rem; color:#6f6350;}
+  mark{background:rgba(201,162,39,.4); color:inherit; border-radius:3px; padding:0 2px;}
   .cat-filter{
     padding:9px 18px; border-radius:20px; border:none; background:var(--cream); font-family:inherit; font-size:.85rem;
     cursor:pointer; color:var(--wood); font-weight:600; transition:all .2s var(--ease);
@@ -94,6 +115,18 @@
     background:rgba(255,255,255,.12); padding:6px 14px; border-radius:20px;
   }
   .lb-hint{display:none;}
+  .lb-share{
+    position:absolute; top:20px; right:78px; background:rgba(255,255,255,.12); border:none; color:#fff;
+    font-size:1.1rem; cursor:pointer; width:44px; height:44px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; transition:background .2s var(--ease);
+  }
+  .lb-share:hover{background:rgba(255,255,255,.25);}
+  .lb-toast{
+    position:absolute; top:78px; left:50%; transform:translateX(-50%);
+    background:rgba(255,255,255,.16); color:#fff; padding:8px 16px; border-radius:20px;
+    font-size:.82rem; opacity:0; pointer-events:none; transition:opacity .25s var(--ease);
+  }
+  .lb-toast.show{opacity:1;}
 
   @media(max-width:820px){
     .lb-img{max-width:94vw; max-height:66vh;}
@@ -104,6 +137,7 @@
     }
     .lb-prev{left:24px;} .lb-next{right:24px;}
     .lb-close{top:14px; right:14px; width:48px; height:48px;}
+    .lb-share{top:14px; right:72px; width:48px; height:48px;}
     .lb-caption{bottom:104px; font-size:.9rem;}
     .lb-counter{top:18px;}
     .lb-hint{
@@ -151,6 +185,15 @@
     <h1 style="margin-bottom:8px;">Impressionen aus dem Zunftleben</h1>
     <p style="color:#3a332c; max-width:58ch;">Bilder von Umzügen, Festen und dem Vereinsleben der Friburger Hölle-Leue.</p>
 
+    <div class="gallery-toolbar">
+      <div class="search-box">
+        <span class="sico">🔍</span>
+        <input type="text" id="gallerySearch" placeholder="Bilder nach Titel suchen …" autocomplete="off">
+        <button type="button" class="search-clear" id="searchClear" aria-label="Suche löschen">✕</button>
+      </div>
+      <span class="result-count" id="resultCount"></span>
+    </div>
+
     <div class="cat-filters" id="catFilters"></div>
     <div id="galleryContent">
       <div class="spinner-row"><div class="spinner"></div> Galerie wird geladen …</div>
@@ -160,11 +203,13 @@
 
 <div class="lightbox" id="lightbox">
   <div class="lb-counter" id="lbCounter"></div>
+  <button type="button" class="lb-share" id="lbShare" title="Link zu diesem Bild kopieren">🔗</button>
   <button type="button" class="lb-close" id="lbClose" aria-label="Schließen">✕</button>
   <button type="button" class="lb-nav lb-prev" id="lbPrev" aria-label="Vorheriges Bild">‹</button>
   <img class="lb-img" id="lbImg" src="" alt="">
   <button type="button" class="lb-nav lb-next" id="lbNext" aria-label="Nächstes Bild">›</button>
   <div class="lb-hint">← wischen zum Blättern →</div>
+  <div class="lb-toast" id="lbToast">Link kopiert!</div>
   <div class="lb-caption" id="lbCaption"></div>
 </div>
 
@@ -179,9 +224,19 @@
   let categories = [];
   let images = [];
   let activeCat = 'alle';
+  let searchQuery = '';
   let visibleImages = [];
 
   function escapeHtml(str){ const d = document.createElement('div'); d.textContent = str == null ? '' : String(str); return d.innerHTML; }
+
+  // Suchbegriff im Titel hervorheben
+  function highlight(text, query){
+    const safe = escapeHtml(text);
+    if (!query) return safe;
+    const idx = safe.toLowerCase().indexOf(query.toLowerCase());
+    if (idx === -1) return safe;
+    return safe.slice(0, idx) + '<mark>' + safe.slice(idx, idx + query.length) + '</mark>' + safe.slice(idx + query.length);
+  }
 
   async function load(){
     try {
@@ -191,6 +246,7 @@
       images = data.images || [];
       renderFilters();
       renderGrid();
+      openFromLink();
     } catch (err) {
       document.getElementById('galleryContent').innerHTML =
         '<div class="empty-state">Die Galerie konnte gerade nicht geladen werden. Bitte später noch einmal versuchen.</div>';
@@ -203,14 +259,14 @@
     const used = new Set(images.map(i => i.categoryId).filter(Boolean));
     const cats = categories.filter(c => used.has(c.id));
     const hasUncategorised = images.some(i => !i.categoryId);
-    let html = `<button class="cat-filter ${activeCat==='alle'?'active':''}" data-cat="alle">Alle (${images.length})</button>`;
+    let html = '<button class="cat-filter ' + (activeCat==='alle'?'active':'') + '" data-cat="alle">Alle (' + images.length + ')</button>';
     cats.forEach(c => {
       const n = images.filter(i => i.categoryId === c.id).length;
-      html += `<button class="cat-filter ${activeCat===c.id?'active':''}" data-cat="${c.id}">${escapeHtml(c.name)} (${n})</button>`;
+      html += '<button class="cat-filter ' + (activeCat===c.id?'active':'') + '" data-cat="' + c.id + '">' + escapeHtml(c.name) + ' (' + n + ')</button>';
     });
     if (hasUncategorised && cats.length) {
       const n = images.filter(i => !i.categoryId).length;
-      html += `<button class="cat-filter ${activeCat==='ohne'?'active':''}" data-cat="ohne">Sonstige (${n})</button>`;
+      html += '<button class="cat-filter ' + (activeCat==='ohne'?'active':'') + '" data-cat="ohne">Sonstige (' + n + ')</button>';
     }
     el.innerHTML = html;
     el.querySelectorAll('.cat-filter').forEach(btn => {
@@ -220,41 +276,117 @@
 
   function renderGrid(){
     const el = document.getElementById('galleryContent');
-    visibleImages = images.filter(i => activeCat === 'alle' ? true : activeCat === 'ohne' ? !i.categoryId : i.categoryId === activeCat);
+    const q = searchQuery.trim().toLowerCase();
+
+    visibleImages = images
+      .filter(i => activeCat === 'alle' ? true : activeCat === 'ohne' ? !i.categoryId : i.categoryId === activeCat)
+      .filter(i => !q || (i.title || '').toLowerCase().includes(q));
+
+    // Trefferanzeige
+    const countEl = document.getElementById('resultCount');
+    if (q) countEl.textContent = visibleImages.length + ' Treffer für „' + searchQuery.trim() + '"';
+    else countEl.textContent = '';
 
     if (!visibleImages.length) {
-      el.innerHTML = '<div class="empty-state">Hier sind noch keine Bilder eingestellt — schaut bald wieder vorbei!</div>';
+      el.innerHTML = q
+        ? '<div class="empty-state">Keine Bilder mit „' + escapeHtml(searchQuery.trim()) + '" gefunden.<br><span style="font-size:.85rem;">Tipp: Nur betitelte Bilder lassen sich durchsuchen.</span></div>'
+        : '<div class="empty-state">Hier sind noch keine Bilder eingestellt — schaut bald wieder vorbei!</div>';
       return;
     }
-    el.innerHTML = `<div class="gallery-grid">` + visibleImages.map((img, idx) => `
-      <div class="g-item" data-index="${idx}" style="animation-delay:${Math.min(idx*0.04, 0.5)}s">
-        <img src="${img.url}" alt="${escapeHtml(img.title || 'Galeriebild')}" loading="lazy">
-        ${img.title ? `<div class="g-cap">${escapeHtml(img.title)}</div>` : ''}
-      </div>`).join('') + `</div>`;
+
+    el.innerHTML = '<div class="gallery-grid">' + visibleImages.map((img, idx) =>
+      '<div class="g-item" data-index="' + idx + '" style="animation-delay:' + Math.min(idx*0.04, 0.5) + 's">' +
+        '<img src="' + img.url + '" alt="' + escapeHtml(img.title || 'Galeriebild') + '" loading="lazy">' +
+        (img.title ? '<div class="g-cap">' + highlight(img.title, searchQuery.trim()) + '</div>' : '') +
+      '</div>').join('') + '</div>';
+
     el.querySelectorAll('.g-item').forEach(item => {
       item.addEventListener('click', () => openLightbox(parseInt(item.dataset.index, 10)));
     });
   }
 
+  // ---- Suche ----
+  const searchInput = document.getElementById('gallerySearch');
+  const searchBox = searchInput.closest('.search-box');
+  let searchTimer = null;
+  searchInput.addEventListener('input', () => {
+    searchQuery = searchInput.value;
+    searchBox.classList.toggle('has-text', !!searchQuery);
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(renderGrid, 160);
+  });
+  document.getElementById('searchClear').addEventListener('click', () => {
+    searchInput.value = ''; searchQuery = '';
+    searchBox.classList.remove('has-text');
+    renderGrid(); searchInput.focus();
+  });
+
   // ---- Lightbox ----
   const lightbox = document.getElementById('lightbox');
   const lbImg = document.getElementById('lbImg');
   const lbCaption = document.getElementById('lbCaption');
+  const lbCounter = document.getElementById('lbCounter');
+  const lbToast = document.getElementById('lbToast');
   let currentIndex = 0;
+  let animating = false;
 
-  function openLightbox(idx){
+  // Nachbarbilder vorladen, damit das Blättern flüssig wirkt
+  function preloadNeighbours(idx){
+    [idx - 1, idx + 1].forEach(i => {
+      const img = visibleImages[(i + visibleImages.length) % visibleImages.length];
+      if (img) { const pre = new Image(); pre.src = img.url; }
+    });
+  }
+
+  function setImage(idx){
     currentIndex = idx;
     const img = visibleImages[idx];
     lbImg.src = img.url;
+    lbCaption.textContent = img.title || '';
+    lbCounter.textContent = (idx + 1) + ' / ' + visibleImages.length;
+    history.replaceState(null, '', '#bild=' + encodeURIComponent(img.id));
+    preloadNeighbours(idx);
+  }
+
+  function openLightbox(idx){
+    setImage(idx);
+    lbImg.style.transition = '';
     lbImg.style.transform = '';
     lbImg.style.opacity = '';
-    lbCaption.textContent = img.title || '';
-    document.getElementById('lbCounter').textContent = (idx + 1) + ' / ' + visibleImages.length;
     lightbox.classList.add('open');
     document.body.style.overflow = 'hidden';
   }
-  function closeLightbox(){ lightbox.classList.remove('open'); document.body.style.overflow = ''; }
-  function showRelative(d){ if (visibleImages.length) openLightbox((currentIndex + d + visibleImages.length) % visibleImages.length); }
+
+  function closeLightbox(){
+    lightbox.classList.remove('open');
+    document.body.style.overflow = '';
+    history.replaceState(null, '', window.location.pathname);
+  }
+
+  // Gleit-Animation: altes Bild raus, neues von der anderen Seite rein
+  function showRelative(delta){
+    if (!visibleImages.length || animating) return;
+    animating = true;
+    const outX = delta > 0 ? '-55%' : '55%';
+    const inX  = delta > 0 ? '55%'  : '-55%';
+
+    lbImg.style.transition = 'transform .16s ease-in, opacity .16s ease-in';
+    lbImg.style.transform = 'translateX(' + outX + ')';
+    lbImg.style.opacity = '0';
+
+    setTimeout(() => {
+      setImage((currentIndex + delta + visibleImages.length) % visibleImages.length);
+      lbImg.style.transition = 'none';
+      lbImg.style.transform = 'translateX(' + inX + ')';
+      lbImg.style.opacity = '0';
+      requestAnimationFrame(() => {
+        lbImg.style.transition = 'transform .24s cubic-bezier(.22,.9,.32,1), opacity .24s ease-out';
+        lbImg.style.transform = 'translateX(0)';
+        lbImg.style.opacity = '1';
+        setTimeout(() => { lbImg.style.transition = ''; animating = false; }, 250);
+      });
+    }, 160);
+  }
 
   document.getElementById('lbClose').addEventListener('click', closeLightbox);
   document.getElementById('lbPrev').addEventListener('click', () => showRelative(-1));
@@ -267,17 +399,52 @@
     if (e.key === 'ArrowRight') showRelative(1);
   });
 
+  // ---- Link zu einem Bild teilen ----
+  document.getElementById('lbShare').addEventListener('click', async () => {
+    const img = visibleImages[currentIndex];
+    if (!img) return;
+    const url = window.location.origin + window.location.pathname + '#bild=' + encodeURIComponent(img.id);
+    const title = img.title || 'Bild der Friburger Hölle-Leue';
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        lbToast.classList.add('show');
+        setTimeout(() => lbToast.classList.remove('show'), 1800);
+      }
+    } catch(e) { /* Nutzer hat abgebrochen */ }
+  });
+
+  // Direktlink beim Laden öffnen (z.B. .../galerie.html#bild=abc123)
+  function openFromLink(){
+    const m = window.location.hash.match(/^#bild=(.+)$/);
+    if (!m) return;
+    const id = decodeURIComponent(m[1]);
+    const idx = visibleImages.findIndex(i => i.id === id);
+    if (idx !== -1) { openLightbox(idx); return; }
+    // Bild liegt evtl. in einer anderen Kategorie — Filter zurücksetzen und erneut suchen
+    const globalIdx = images.findIndex(i => i.id === id);
+    if (globalIdx !== -1) {
+      activeCat = 'alle'; searchQuery = ''; searchInput.value = '';
+      searchBox.classList.remove('has-text');
+      renderFilters(); renderGrid();
+      const newIdx = visibleImages.findIndex(i => i.id === id);
+      if (newIdx !== -1) openLightbox(newIdx);
+    }
+  }
+
   // ---- Wisch-Gesten fürs Handy ----
   let touchStartX = 0, touchStartY = 0, touchDeltaX = 0, touchDeltaY = 0, isSwiping = false;
   const SWIPE_THRESHOLD = 55;
 
   lightbox.addEventListener('touchstart', (e) => {
-    if (e.touches.length !== 1) return;
+    if (e.touches.length !== 1 || animating) return;
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
     touchDeltaX = 0; touchDeltaY = 0;
     isSwiping = true;
-    lbImg.classList.add('swiping');
+    lbImg.style.transition = 'none';
   }, { passive: true });
 
   lightbox.addEventListener('touchmove', (e) => {
@@ -285,11 +452,10 @@
     touchDeltaX = e.touches[0].clientX - touchStartX;
     touchDeltaY = e.touches[0].clientY - touchStartY;
     if (Math.abs(touchDeltaX) > Math.abs(touchDeltaY)) {
-      // Bild folgt dem Finger, damit sich das Wischen natürlich anfühlt
-      lbImg.style.transform = `translateX(${touchDeltaX * 0.55}px)`;
+      lbImg.style.transform = 'translateX(' + (touchDeltaX * 0.6) + 'px)';
       lbImg.style.opacity = String(Math.max(0.45, 1 - Math.abs(touchDeltaX) / 500));
     } else if (touchDeltaY > 0) {
-      lbImg.style.transform = `translateY(${touchDeltaY * 0.4}px)`;
+      lbImg.style.transform = 'translateY(' + (touchDeltaY * 0.4) + 'px) scale(' + Math.max(0.85, 1 - touchDeltaY / 900) + ')';
       lbImg.style.opacity = String(Math.max(0.4, 1 - touchDeltaY / 400));
     }
   }, { passive: true });
@@ -297,18 +463,18 @@
   lightbox.addEventListener('touchend', () => {
     if (!isSwiping) return;
     isSwiping = false;
-    lbImg.classList.remove('swiping');
-    lbImg.style.transition = 'transform .25s ease, opacity .25s ease';
 
     if (Math.abs(touchDeltaX) > Math.abs(touchDeltaY) && Math.abs(touchDeltaX) > SWIPE_THRESHOLD) {
       showRelative(touchDeltaX < 0 ? 1 : -1);
     } else if (touchDeltaY > SWIPE_THRESHOLD * 1.6) {
-      closeLightbox();  // nach unten wischen = schließen
+      closeLightbox();
     } else {
+      // zurückschnappen
+      lbImg.style.transition = 'transform .25s cubic-bezier(.22,.9,.32,1), opacity .25s ease';
       lbImg.style.transform = '';
       lbImg.style.opacity = '';
+      setTimeout(() => { lbImg.style.transition = ''; }, 260);
     }
-    setTimeout(() => { lbImg.style.transition = ''; }, 260);
   });
 
   document.querySelectorAll('.navlinks a').forEach(a => {
