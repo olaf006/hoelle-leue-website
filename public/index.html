@@ -256,6 +256,37 @@
   .fact-card .num{font-family:'Fraunces',serif; font-size:2.1rem; color:var(--gold-light); font-weight:700; display:block;}
   .fact-card .lbl{font-size:.85rem; color:var(--cream-dark);}
 
+  /* -------- Vorstand / Team -------- */
+  .team-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 220px)); gap:28px;}
+  .team-card{text-align:center;}
+  .team-photo{--ar:1/1; border-radius:50%; max-width:180px; margin:0 auto 14px;}
+  .team-card h3{font-size:1.05rem; margin-bottom:2px;}
+  .team-role{font-family:'JetBrains Mono',monospace; font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; color:var(--red-dark);}
+
+  /* -------- Video-Einbindung -------- */
+  .video-frame{
+    position:relative; width:100%; max-width:840px; margin:0 auto; aspect-ratio:16/9;
+    border-radius:14px; overflow:hidden; box-shadow:var(--shadow); background:var(--wood-dark);
+  }
+  .video-frame iframe{position:absolute; inset:0; width:100%; height:100%; border:none;}
+  .video-placeholder{
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:10px; color:#c9c4bb; font-family:'JetBrains Mono',monospace; font-size:.85rem;
+  }
+  .video-placeholder .ico{font-size:2.4rem;}
+
+  /* -------- Spenden -------- */
+  .donate-box{
+    display:grid; grid-template-columns:1.3fr .8fr; gap:36px; align-items:center;
+    background:#fff; border-radius:16px; padding:36px 40px; box-shadow:0 4px 16px rgba(23,20,18,.08);
+  }
+  @media(max-width:760px){ .donate-box{grid-template-columns:1fr;} }
+  .donate-details{background:var(--cream-dark); border-radius:12px; padding:22px 26px;}
+  .donate-row{display:flex; justify-content:space-between; gap:12px; padding:8px 0; border-bottom:1px solid #e5ddc9; font-size:.9rem;}
+  .donate-row:last-of-type{border-bottom:none;}
+  .donate-row strong{color:var(--wood-dark);}
+  .donate-row span{color:#6f6350;}
+
   /* -------- Zeitleiste (Geschichte) -------- */
   .timeline{position:relative; padding-left:44px; max-width:700px;}
   .timeline::before{content:''; position:absolute; left:11px; top:6px; bottom:6px; width:2px; background:#ddd7cc;}
@@ -555,6 +586,34 @@
   </div>
 </section>
 
+<section id="vorstand">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow">Der Vorstand</span>
+      <h2>Wer hinter der Zunft steht</h2>
+    </div>
+    <div class="team-grid reveal-stagger reveal">
+      <div class="team-card">
+        <div class="photo team-photo">
+          <img src="/images/team/juergen-rieder.jpg" alt="Jürgen Rieder" loading="lazy" onerror="handleImgError(this)">
+          <div class="ph-fallback"><span class="ico">📷</span>images/team/juergen-rieder.jpg</div>
+        </div>
+        <h3>Jürgen Rieder</h3>
+        <span class="team-role">Vorsitzender</span>
+      </div>
+      <div class="team-card">
+        <div class="photo team-photo">
+          <img src="/images/team/marco-mueller.jpg" alt="Marco Müller" loading="lazy" onerror="handleImgError(this)">
+          <div class="ph-fallback"><span class="ico">📷</span>images/team/marco-mueller.jpg</div>
+        </div>
+        <h3>Marco Müller</h3>
+        <span class="team-role">Vorstand</span>
+      </div>
+    </div>
+    <p style="margin-top:22px; color:#3a332c; font-size:.9rem;">Vollständiger Vorstand gemäß Vereinsregister — bei Fragen rund um die Zunft meldet euch gerne <a href="#" id="teamContactLink" style="color:var(--red-dark); font-weight:600;">direkt bei uns</a>.</p>
+  </div>
+</section>
+
 <section class="haes" id="haes">
   <div class="wrap haes-grid">
     <div class="photo haes-photo reveal">
@@ -590,6 +649,21 @@
   </div>
 </section>
 
+<section id="video">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow">In Bewegung</span>
+      <h2>Die Fasnet zum Reinhören und Reinschauen</h2>
+    </div>
+    <div class="video-frame reveal" id="videoFrame">
+      <div class="video-placeholder">
+        <span class="ico">🎬</span>
+        <p>Video folgt in Kürze</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section id="galerie" style="background:var(--cream-dark);">
   <div class="wrap">
     <div class="section-head reveal">
@@ -616,6 +690,24 @@
         <p>Wenn du alle drei Fragen mit Ja beantworten kannst, bist du bei uns richtig. Egal ob als aktive:r Hästräger:in oder passives Mitglied — wir freuen uns, dich kennenzulernen.</p>
       </div>
       <button type="button" class="btn btn-primary" id="btnContactPopup">Jetzt Kontakt aufnehmen</button>
+    </div>
+  </div>
+</section>
+
+<section id="spenden" style="background:var(--cream-dark);">
+  <div class="wrap">
+    <div class="donate-box reveal">
+      <div>
+        <span class="eyebrow">Unterstützung</span>
+        <h2 style="margin-top:6px;">Die Zunft mit einer Spende unterstützen</h2>
+        <p style="max-width:56ch; color:#3a332c;">Häs, Larven und die Ausrichtung unserer Umzüge kosten Geld — jede Spende hilft uns, das Brauchtum im Rieselfeld lebendig zu halten. Als gemeinnütziger Verein freuen wir uns über jede Unterstützung.</p>
+      </div>
+      <div class="donate-details">
+        <div class="donate-row"><strong>Bank</strong><span>Bankname folgt</span></div>
+        <div class="donate-row"><strong>IBAN</strong><span>IBAN folgt</span></div>
+        <div class="donate-row"><strong>Verwendungszweck</strong><span>Spende Hölle-Leue</span></div>
+        <a href="#" class="btn btn-primary btn-sm" style="margin-top:14px;" id="donatePaypalBtn">PayPal-Link folgt</a>
+      </div>
     </div>
   </div>
 </section>
@@ -706,6 +798,37 @@
     const photo = imgEl.closest('.photo');
     if (photo) photo.classList.add('missing');
   }
+
+  /* ---------- Video-Einbindung ----------
+     Sobald ihr ein Video habt: einfach die YouTube-Video-ID unten eintragen
+     (der Teil nach "v=" in der YouTube-URL, z.B. bei
+     https://www.youtube.com/watch?v=dQw4w9WgXcQ wäre das "dQw4w9WgXcQ").
+     Leer lassen = Platzhalter "Video folgt in Kürze" wird angezeigt. */
+  const GUILD_VIDEO_ID = '';
+  (function(){
+    if (!GUILD_VIDEO_ID) return;
+    const frame = document.getElementById('videoFrame');
+    frame.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${GUILD_VIDEO_ID}" title="Friburger Hölle-Leue Video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>`;
+  })();
+
+  /* ---------- Spendendaten ----------
+     Sobald ihr ein echtes Spendenkonto/PayPal habt: hier eintragen,
+     dann ersetzen sich die Platzhalter automatisch. */
+  const DONATE_BANK = '';
+  const DONATE_IBAN = '';
+  const DONATE_PAYPAL_URL = '';
+  (function(){
+    const rows = document.querySelectorAll('#spenden .donate-row span');
+    if (DONATE_BANK && rows[0]) rows[0].textContent = DONATE_BANK;
+    if (DONATE_IBAN && rows[1]) rows[1].textContent = DONATE_IBAN;
+    const paypalBtn = document.getElementById('donatePaypalBtn');
+    if (DONATE_PAYPAL_URL && paypalBtn) {
+      paypalBtn.href = DONATE_PAYPAL_URL;
+      paypalBtn.target = '_blank';
+      paypalBtn.rel = 'noopener';
+      paypalBtn.textContent = 'Jetzt per PayPal spenden';
+    }
+  })();
 
   /* ---------- Ostern (Gauß'sche Osterformel) ---------- */
   function easterDate(year){
@@ -1010,6 +1133,7 @@
   function openContactModal(){ contactBackdrop.classList.add('open'); document.body.style.overflow = 'hidden'; }
   function closeContactModal(){ contactBackdrop.classList.remove('open'); document.body.style.overflow = ''; }
   document.getElementById('btnContactPopup').addEventListener('click', openContactModal);
+  document.getElementById('teamContactLink').addEventListener('click', (e) => { e.preventDefault(); openContactModal(); });
   document.getElementById('contactModalClose').addEventListener('click', closeContactModal);
   contactBackdrop.addEventListener('click', (e) => { if (e.target === contactBackdrop) closeContactModal(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeContactModal(); closeEventModal(); } });
