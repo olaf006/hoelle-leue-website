@@ -78,16 +78,41 @@
   .spinner{width:20px; height:20px; border-radius:50%; border:2.5px solid rgba(180,34,44,.2); border-top-color:var(--red); animation:spin .8s linear infinite;}
 
   /* Lightbox */
-  .lightbox{position:fixed; inset:0; background:rgba(10,8,6,.94); z-index:300; display:none; align-items:center; justify-content:center; opacity:0; transition:opacity .25s var(--ease);}
+  .lightbox{position:fixed; inset:0; background:rgba(10,8,6,.94); z-index:300; display:none; align-items:center; justify-content:center; opacity:0; transition:opacity .25s var(--ease); touch-action:none;}
   .lightbox.open{display:flex; opacity:1;}
-  .lb-img{max-width:88vw; max-height:80vh; border-radius:8px; box-shadow:0 20px 60px rgba(0,0,0,.5); animation:popIn .3s var(--ease) both;}
-  .lb-close{position:absolute; top:20px; right:24px; background:none; border:none; color:#fff; font-size:1.8rem; cursor:pointer; opacity:.8;}
-  .lb-close:hover{opacity:1;}
+  .lb-img{max-width:88vw; max-height:80vh; border-radius:8px; box-shadow:0 20px 60px rgba(0,0,0,.5); animation:popIn .3s var(--ease) both; user-select:none; -webkit-user-drag:none;}
+  .lb-img.swiping{transition:none;}
+  .lb-close{position:absolute; top:20px; right:24px; background:rgba(255,255,255,.12); border:none; color:#fff; font-size:1.5rem; cursor:pointer; width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center;}
+  .lb-close:hover{background:rgba(255,255,255,.25);}
   .lb-nav{position:absolute; top:50%; transform:translateY(-50%); background:rgba(255,255,255,.1); border:none; color:#fff; font-size:2.2rem; width:52px; height:52px; border-radius:50%; cursor:pointer; transition:background .2s var(--ease); line-height:1;}
   .lb-nav:hover{background:rgba(255,255,255,.22);}
   .lb-prev{left:20px;} .lb-next{right:20px;}
   .lb-caption{position:absolute; bottom:24px; left:0; right:0; text-align:center; color:#e8e3da; font-size:.95rem; padding:0 20px;}
-  @media(max-width:640px){ .lb-nav{width:42px; height:42px; font-size:1.7rem;} .lb-prev{left:8px;} .lb-next{right:8px;} }
+  .lb-counter{
+    position:absolute; top:24px; left:50%; transform:translateX(-50%);
+    color:#e8e3da; font-family:'JetBrains Mono',monospace; font-size:.8rem;
+    background:rgba(255,255,255,.12); padding:6px 14px; border-radius:20px;
+  }
+  .lb-hint{display:none;}
+
+  @media(max-width:820px){
+    .lb-img{max-width:94vw; max-height:66vh;}
+    /* Pfeile nach unten in den Daumenbereich, deutlich größer */
+    .lb-nav{
+      top:auto; bottom:26px; transform:none; width:64px; height:64px; font-size:2rem;
+      background:rgba(255,255,255,.16); backdrop-filter:blur(4px);
+    }
+    .lb-prev{left:24px;} .lb-next{right:24px;}
+    .lb-close{top:14px; right:14px; width:48px; height:48px;}
+    .lb-caption{bottom:104px; font-size:.9rem;}
+    .lb-counter{top:18px;}
+    .lb-hint{
+      display:block; position:absolute; bottom:100px; left:0; right:0; text-align:center;
+      color:rgba(232,227,218,.55); font-size:.75rem; pointer-events:none;
+      animation:hintFade 4s ease forwards;
+    }
+  }
+  @keyframes hintFade{0%,60%{opacity:1;} 100%{opacity:0;}}
 
   footer{background:var(--wood-dark); color:#c9c4bb; padding:30px 0; text-align:center; font-size:.85rem;}
   footer a{color:var(--gold-light); text-decoration:none;}
@@ -134,10 +159,12 @@
 </main>
 
 <div class="lightbox" id="lightbox">
+  <div class="lb-counter" id="lbCounter"></div>
   <button type="button" class="lb-close" id="lbClose" aria-label="Schließen">✕</button>
   <button type="button" class="lb-nav lb-prev" id="lbPrev" aria-label="Vorheriges Bild">‹</button>
   <img class="lb-img" id="lbImg" src="" alt="">
   <button type="button" class="lb-nav lb-next" id="lbNext" aria-label="Nächstes Bild">›</button>
+  <div class="lb-hint">← wischen zum Blättern →</div>
   <div class="lb-caption" id="lbCaption"></div>
 </div>
 
@@ -219,7 +246,10 @@
     currentIndex = idx;
     const img = visibleImages[idx];
     lbImg.src = img.url;
+    lbImg.style.transform = '';
+    lbImg.style.opacity = '';
     lbCaption.textContent = img.title || '';
+    document.getElementById('lbCounter').textContent = (idx + 1) + ' / ' + visibleImages.length;
     lightbox.classList.add('open');
     document.body.style.overflow = 'hidden';
   }
@@ -235,6 +265,50 @@
     if (e.key === 'Escape') closeLightbox();
     if (e.key === 'ArrowLeft') showRelative(-1);
     if (e.key === 'ArrowRight') showRelative(1);
+  });
+
+  // ---- Wisch-Gesten fürs Handy ----
+  let touchStartX = 0, touchStartY = 0, touchDeltaX = 0, touchDeltaY = 0, isSwiping = false;
+  const SWIPE_THRESHOLD = 55;
+
+  lightbox.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) return;
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    touchDeltaX = 0; touchDeltaY = 0;
+    isSwiping = true;
+    lbImg.classList.add('swiping');
+  }, { passive: true });
+
+  lightbox.addEventListener('touchmove', (e) => {
+    if (!isSwiping || e.touches.length !== 1) return;
+    touchDeltaX = e.touches[0].clientX - touchStartX;
+    touchDeltaY = e.touches[0].clientY - touchStartY;
+    if (Math.abs(touchDeltaX) > Math.abs(touchDeltaY)) {
+      // Bild folgt dem Finger, damit sich das Wischen natürlich anfühlt
+      lbImg.style.transform = `translateX(${touchDeltaX * 0.55}px)`;
+      lbImg.style.opacity = String(Math.max(0.45, 1 - Math.abs(touchDeltaX) / 500));
+    } else if (touchDeltaY > 0) {
+      lbImg.style.transform = `translateY(${touchDeltaY * 0.4}px)`;
+      lbImg.style.opacity = String(Math.max(0.4, 1 - touchDeltaY / 400));
+    }
+  }, { passive: true });
+
+  lightbox.addEventListener('touchend', () => {
+    if (!isSwiping) return;
+    isSwiping = false;
+    lbImg.classList.remove('swiping');
+    lbImg.style.transition = 'transform .25s ease, opacity .25s ease';
+
+    if (Math.abs(touchDeltaX) > Math.abs(touchDeltaY) && Math.abs(touchDeltaX) > SWIPE_THRESHOLD) {
+      showRelative(touchDeltaX < 0 ? 1 : -1);
+    } else if (touchDeltaY > SWIPE_THRESHOLD * 1.6) {
+      closeLightbox();  // nach unten wischen = schließen
+    } else {
+      lbImg.style.transform = '';
+      lbImg.style.opacity = '';
+    }
+    setTimeout(() => { lbImg.style.transition = ''; }, 260);
   });
 
   document.querySelectorAll('.navlinks a').forEach(a => {
