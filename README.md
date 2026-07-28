@@ -31,3 +31,14 @@ Für jeden Termin gibt es im Pop-up einen Button „Bilder vergangener Jahre ans
 | Fasnetmendig | `termine/fasnetmendig-1.jpg` bis `-3.jpg` |
 | Fasnetzieschdig | `termine/fasnetzieschdig-1.jpg` bis `-3.jpg` |
 | Fasnetverbrennung | `termine/fasnetverbrennung-1.jpg` bis `-3.jpg` |
+
+## Vorstand-Fotos
+
+Für die Vorstand-Sektion auf der Hauptseite liegen die Fotos in `public/images/team/`:
+
+| Person | Dateiname |
+|---|---|
+| Jürgen Rieder | `team/juergen-rieder.jpg` |
+| Marco Müller | `team/marco-mueller.jpg` |
+
+Am besten quadratische Porträtfotos (werden automatisch rund zugeschnitten). Auch hier: fehlt ein Foto, erscheint einfach ein Platzhalter.
