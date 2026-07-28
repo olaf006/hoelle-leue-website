@@ -23,8 +23,44 @@ Der wichtigste Bereich für die laufende Pflege:
 Alles erscheint **sofort** auf der öffentlichen Galerie-Seite (`/galerie.html`) und in der
 Galerie-Vorschau auf der Startseite. Kein Deploy, kein Warten.
 
+> **Tipp — Titel lohnen sich:** Besucher:innen können die Galerie nach Titeln durchsuchen.
+> Wer seine Bilder betitelt („Hemdglunkerumzug 2026", „Narrenbaumstellen"), macht sie
+> auffindbar. Bilder ohne Titel erscheinen zwar in der Galerie, sind aber nicht suchbar.
+
+> **Einzelne Bilder teilen:** In der Großansicht gibt es einen 🔗-Button. Damit lässt sich
+> ein Link direkt zu genau diesem Bild kopieren bzw. teilen — praktisch für die
+> Vereins-WhatsApp-Gruppe.
+
 > **Bildgröße:** max. 4 MB pro Bild. Handyfotos vorher ggf. verkleinern
 > (z. B. beim Versenden „mittlere Größe" wählen oder ein kostenloses Tool nutzen).
+
+### 📋 Mitgliedsanträge (Reiter „Admin")
+
+Über die Startseite können Interessierte den Antrag online ausfüllen („Mitglied werden").
+Jeder Antrag landet **immer** hier im Admin-Bereich — auch wenn der E-Mail-Versand
+(noch) nicht eingerichtet ist. So geht garantiert nichts verloren.
+
+Pro Antrag seht ihr alle Angaben und könnt den Status auf „neu", „in Bearbeitung" oder
+„erledigt" setzen. Die Zahl neben der Überschrift zeigt die offenen Anträge.
+
+> **Bewusst nicht online erhoben:** Bankdaten. Das SEPA-Mandat muss weiterhin
+> unterschrieben auf Papier eingeholt werden — so wie bisher.
+
+#### E-Mail-Weiterleitung einrichten (optional, einmalig)
+
+Damit Anträge zusätzlich per E-Mail an `hoelle-leue@web.de` gehen:
+
+1. Kostenloses Konto bei **[resend.com](https://resend.com)** anlegen (3.000 Mails/Monat gratis).
+2. Dort unter „API Keys" einen Schlüssel erstellen und kopieren.
+3. Im Cloudflare-Dashboard: euer Projekt → **Settings** → **Variables and Secrets** →
+   **Add** → Typ **Secret**, Name `RESEND_API_KEY`, Wert = der kopierte Schlüssel → speichern.
+4. Optional ebenso `APPLICATION_TO_EMAIL` (Empfängeradresse, Standard ist `hoelle-leue@web.de`)
+   und `APPLICATION_FROM_EMAIL` (Absender).
+
+> **Wichtig:** Für einen eigenen Absender (z. B. `info@hoelle-leue.de`) muss die Domain bei
+> Resend verifiziert werden. Ohne Verifizierung funktioniert nur die Testadresse von Resend.
+> Solange nichts eingerichtet ist, erscheinen die Anträge einfach nur hier im Admin-Bereich —
+> das funktioniert vollständig, ihr müsst nur selbst reinschauen.
 
 ### 📁 Dokumente (Reiter „Dokumente")
 Satzung, Protokolle, Formulare hochladen — sichtbar für alle angemeldeten Mitglieder.
