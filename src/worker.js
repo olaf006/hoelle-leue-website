@@ -11,6 +11,7 @@ const AUDITLOG_KEY = 'auditlog';
 const DOCUMENTS_KEY = 'documents';
 const GALLERY_IMAGES_KEY = 'gallery:images';
 const GALLERY_CATEGORIES_KEY = 'gallery:categories';
+const APPLICATIONS_KEY = 'applications';
 const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4 MB
 const SESSION_DAYS = 30;
 const MAX_LOG_ENTRIES = 400;
@@ -869,6 +870,163 @@ async function handleGalleryCategory(request, kv, currentUser){
   return json({ error:'Unbekannte Aktion.' }, 400);
 }
 
+// ---------------- Mitgliedsantrag ----------------
+
+function escapeForHtml(str){
+  return String(str == null ? '' : str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function buildApplicationEmail(app){
+  const row = (label, value) => value
+    ? `<tr><td style="padding:6px 14px 6px 0;color:#6b6258;vertical-align:top;">${escapeForHtml(label)}</td><td style="padding:6px 0;font-weight:600;">${escapeForHtml(value)}</td></tr>`
+    : '';
+  return `<div style="font-family:Arial,Helvetica,sans-serif;color:#1a1613;max-width:620px;">
+    <h2 style="color:#b4222c;margin-bottom:4px;">Neuer Mitgliedsantrag</h2>
+    <p style="color:#6b6258;margin-top:0;">Eingegangen über die Website am ${new Date(app.submittedAt).toLocaleString('de-DE')}</p>
+    <table style="border-collapse:collapse;font-size:15px;">
+      ${row('Name', app.lastName)}
+      ${row('Vorname', app.firstName)}
+      ${row('Straße, Hausnummer', app.street)}
+      ${row('PLZ / Wohnort', (app.zip || '') + ' ' + (app.city || ''))}
+      ${row('Geburtsdatum', app.birthDate)}
+      ${row('Telefon', app.phone)}
+      ${row('Handy', app.mobile)}
+      ${row('E-Mail', app.email)}
+      ${row('Mitgliedschaft', app.membershipType)}
+      ${row('Zahlungsweise', app.paymentMethod)}
+      ${row('Erziehungsberechtigte:r', app.guardian)}
+      ${row('Nachricht', app.message)}
+    </table>
+    <p style="margin-top:22px;padding:14px 16px;background:#f0e6d0;border-radius:8px;font-size:14px;color:#3a332c;">
+      <strong>Hinweis:</strong> Bankdaten wurden bewusst nicht online erhoben.
+      Für das SEPA-Lastschriftmandat bitte separat das unterschriebene Formular einholen.
+    </p>
+  </div>`;
+}
+
+// Versand nur, wenn ein Resend-API-Schlüssel als Secret hinterlegt ist.
+// Ohne Schlüssel bleibt der Antrag trotzdem im Admin-Bereich sichtbar.
+async function sendApplicationEmail(env, app){
+  if (!env.RESEND_API_KEY) return { sent:false, reason:'kein API-Schlüssel hinterlegt' };
+  const to = env.APPLICATION_TO_EMAIL || 'hoelle-leue@web.de';
+  const from = env.APPLICATION_FROM_EMAIL || 'Website <onboarding@resend.dev>';
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from, to: [to],
+        reply_to: app.email || undefined,
+        subject: `Neuer Mitgliedsantrag: ${app.firstName} ${app.lastName}`,
+        html: buildApplicationEmail(app)
+      })
+    });
+    if (!res.ok) {
+      const txt = await res.text();
+      return { sent:false, reason: 'Resend-Fehler: ' + txt.slice(0, 200) };
+    }
+    return { sent:true };
+  } catch (err) {
+    return { sent:false, reason: String(err).slice(0, 200) };
+  }
+}
+
+async function handleMembershipApply(request, env, kv){
+  let body;
+  try { body = await request.json(); } catch(e){ return json({ error:'Ungültige Anfrage.' }, 400); }
+
+  // Honeypot: unsichtbares Feld — wird es ausgefüllt, war es ein Bot
+  if (body.website) return json({ ok:true });
+
+  // Einfacher Missbrauchsschutz: max. 5 Anträge pro Stunde und IP
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+  const rateKey = 'ratelimit:apply:' + ip;
+  const hits = parseInt((await kv.get(rateKey)) || '0', 10);
+  if (hits >= 5) return json({ error:'Zu viele Anfragen. Bitte versuche es später noch einmal oder schreib uns direkt eine E-Mail.' }, 429);
+  await kv.put(rateKey, String(hits + 1), { expirationTtl: 3600 });
+
+  const firstName = sanitize(body.firstName, 60);
+  const lastName = sanitize(body.lastName, 60);
+  const email = sanitize(body.email, 120);
+  const street = sanitize(body.street, 120);
+  const zip = sanitize(body.zip, 10);
+  const city = sanitize(body.city, 80);
+  const birthDate = sanitize(body.birthDate, 20);
+
+  if (!firstName || !lastName) return json({ error:'Bitte Vor- und Nachname angeben.' }, 400);
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error:'Bitte eine gültige E-Mail-Adresse angeben.' }, 400);
+  if (!street || !zip || !city) return json({ error:'Bitte die vollständige Anschrift angeben.' }, 400);
+  if (!birthDate) return json({ error:'Bitte das Geburtsdatum angeben.' }, 400);
+  if (!body.privacyConsent) return json({ error:'Bitte der Datenschutzerklärung zustimmen.' }, 400);
+
+  const membershipType = ['Aktiv','Passiv'].includes(body.membershipType) ? body.membershipType : 'Aktiv';
+  const paymentMethod = ['Barzahlung','Banküberweisung','SEPA-Lastschrift'].includes(body.paymentMethod) ? body.paymentMethod : 'Banküberweisung';
+
+  const app = {
+    id: makeId(),
+    firstName, lastName, email, street, zip, city, birthDate,
+    phone: sanitize(body.phone, 40),
+    mobile: sanitize(body.mobile, 40),
+    membershipType, paymentMethod,
+    guardian: sanitize(body.guardian, 120),
+    message: sanitize(body.message, 1000),
+    submittedAt: Date.now(),
+    status: 'neu'
+  };
+
+  const apps = await getJSON(kv, APPLICATIONS_KEY, []);
+  apps.unshift(app);
+  if (apps.length > 300) apps.length = 300;
+  await kv.put(APPLICATIONS_KEY, JSON.stringify(apps));
+
+  const mail = await sendApplicationEmail(env, app);
+  app.emailSent = mail.sent;
+  if (!mail.sent) app.emailError = mail.reason;
+  const apps2 = await getJSON(kv, APPLICATIONS_KEY, []);
+  const stored = apps2.find(a => a.id === app.id);
+  if (stored) { stored.emailSent = mail.sent; if (!mail.sent) stored.emailError = mail.reason; await kv.put(APPLICATIONS_KEY, JSON.stringify(apps2)); }
+
+  await addLogEntry(kv, {
+    action:'membership_application',
+    actorUsername:'(Website)', actorDisplayName: firstName + ' ' + lastName,
+    summary: `Neuer Mitgliedsantrag von ${firstName} ${lastName} (${membershipType}) ist eingegangen.`
+  });
+
+  return json({ ok:true, emailSent: mail.sent });
+}
+
+async function handleApplicationsList(kv){
+  const apps = await getJSON(kv, APPLICATIONS_KEY, []);
+  return json({ applications: apps });
+}
+
+async function handleApplicationsUpdate(request, kv, currentUser){
+  let body; try { body = await request.json(); } catch(e){ return json({ error:'Ungültige Anfrage.' }, 400); }
+  const apps = await getJSON(kv, APPLICATIONS_KEY, []);
+
+  if (body.action === 'delete') {
+    const app = apps.find(a => a.id === body.id);
+    if (!app) return json({ error:'Antrag nicht gefunden.' }, 404);
+    await kv.put(APPLICATIONS_KEY, JSON.stringify(apps.filter(a => a.id !== body.id)));
+    await addLogEntry(kv, {
+      action:'delete_application', actorUsername: currentUser.username, actorDisplayName: currentUser.displayName,
+      summary: `${currentUser.displayName} hat den Mitgliedsantrag von ${app.firstName} ${app.lastName} gelöscht.`
+    });
+    return json({ ok:true });
+  }
+
+  if (body.action === 'setStatus') {
+    const app = apps.find(a => a.id === body.id);
+    if (!app) return json({ error:'Antrag nicht gefunden.' }, 404);
+    app.status = ['neu','in Bearbeitung','erledigt'].includes(body.status) ? body.status : 'neu';
+    await kv.put(APPLICATIONS_KEY, JSON.stringify(apps));
+    return json({ ok:true, application: app });
+  }
+
+  return json({ error:'Unbekannte Aktion.' }, 400);
+}
+
 // ---------------- Admin ----------------
 
 async function handleAdminPending(kv){
@@ -1091,6 +1249,17 @@ export default {
       if (path === '/api/gallery/category' && request.method === 'POST') {
         const r = await requireAdmin(request, url, kv); if (r.error) return r.error;
         return await handleGalleryCategory(request, kv, r.user);
+      }
+
+      // ---- Mitgliedsantrag ----
+      if (path === '/api/membership/apply' && request.method === 'POST') return await handleMembershipApply(request, env, kv);
+      if (path === '/api/admin/applications' && request.method === 'GET') {
+        const r = await requireAdmin(request, url, kv); if (r.error) return r.error;
+        return await handleApplicationsList(kv);
+      }
+      if (path === '/api/admin/applications/update' && request.method === 'POST') {
+        const r = await requireAdmin(request, url, kv); if (r.error) return r.error;
+        return await handleApplicationsUpdate(request, kv, r.user);
       }
 
       if (path.startsWith('/api/')) return json({ error:'Nicht gefunden.' }, 404);
